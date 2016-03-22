@@ -1,0 +1,3 @@
+#headers
+org_fairsim_accel_*.h
+lib*.so
