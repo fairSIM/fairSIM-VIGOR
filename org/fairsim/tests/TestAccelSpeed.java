@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 */
 
-package org.fairsim.fiji;
+package org.fairsim.tests;
 
 import org.fairsim.linalg.*;
 import org.fairsim.fiji.ImageVector;
@@ -25,6 +25,9 @@ import org.fairsim.utils.Tool;
 import org.fairsim.utils.Conf;
 import org.fairsim.utils.ImageDisplay;
 import org.fairsim.sim_algorithm.*;
+
+import org.fairsim.accel.AccelVectorFactory;
+import org.fairsim.utils.SimpleMT;
 
 import ij.plugin.PlugIn;
 import ij.IJ;
@@ -41,7 +44,7 @@ import ij.gui.Overlay;
 /** Small Fiji plugin, running all parameter estimation and reconstruction
  *  steps. Good starting point to look at the code w/o going through all the
  *  GUI components. */
-public class TestPlugin implements PlugIn {
+public class TestAccelSpeed implements PlugIn {
 
     /** Global variables */
     boolean showDialog =  false;    // if set, dialog to set parameters is shown at plugin start 
@@ -50,7 +53,7 @@ public class TestPlugin implements PlugIn {
     int nrDirs   = 3;		    // #angles or pattern orientations
     int nrPhases = 5;		    // #phases (at least 2*bands -1 )
 
-    double emWavelen = 560;	    // emission wavelength		    
+    double emWavelen = 680;	    // emission wavelength		    
     double otfNA     = 1.4;	    // NA of objective
     double otfCorr   = 0.31;	    // OTF correction factor
     double pxSize    = 0.080;	    // pixel size (microns)
@@ -60,12 +63,13 @@ public class TestPlugin implements PlugIn {
     double attFWHM     = 1.2;	    // FWHM of attenuation (cycles/micron)
     boolean doAttenuation = true;  // use attenuation?
 
-    boolean otfBeforeShift = true;  // multiply the OTF before or after shift to px,py
+    // currently deprecated, OTF is always applied before shift
+    //boolean otfBeforeShift = true;  // multiply the OTF before or after shift to px,py
 
     boolean findPeak    = true;	    // run localization and fit of shfit vector
     boolean refinePhase = false;    // run auto-correlation phase estimation (Wicker et. al)
 	
-    final int visualFeedback = 3;   // amount of intermediate results to create (-1,0,1,2,3)
+    final int visualFeedback = -1;   // amount of intermediate results to create (-1,0,1,2,3)
 
     final double apoB=.9, apoF=2; // Bend and mag. factor of APO
 
@@ -93,6 +97,49 @@ public class TestPlugin implements PlugIn {
 	runReconstruction(inSt);
     }
    
+    /** Start from the command line to run the plugin */
+    public static void main( String [] arg ) {
+
+	if (arg.length<2) {
+	    System.out.println("[TIFF-file] [JAVA|C|CUDA]");
+	    return;
+	}
+	
+	boolean set=false;
+	
+	String wd = System.getProperty("user.dir")+"/accel/";
+	Tool.trace("loading library from: "+wd);
+
+	if (arg[1].equals("C")) {
+	    System.load(wd+"libstdcimpl.so");
+	    Tool.trace("Running with standard C support now");
+	    Vec.setVectorFactory( AccelVectorFactory.getFactory()); 
+	    //SimpleMT.useParallel(false);
+	    set=true;
+	}
+	if (arg[1].equals("CUDA")) {
+	    System.load(wd+"libcudaimpl.so");
+	    Tool.trace("Running with CUDA support now");
+	    Vec.setVectorFactory( AccelVectorFactory.getFactory()); 
+	    set=true;
+	    SimpleMT.useParallel(false);
+	}
+	if (arg[1].equals("JAVA")) {
+	    set=true;
+	}
+	if (set==false) {
+	    System.out.println("pass either: JAVA, C, CUDA");
+	    return;
+	}
+    
+	//SimpleMT.useParallel( false );
+	ImagePlus ip = IJ.openImage(arg[0]);
+	//ip.show();
+
+	TestAccelSpeed tp = new TestAccelSpeed();
+	tp.runReconstruction( ip.getStack() );
+    }
+
 
     /** Step-by-step reconstruction process. */
     public void runReconstruction( ImageStack inSt ) {
@@ -146,6 +193,7 @@ public class TestPlugin implements PlugIn {
 
 	// Various timers
 	Tool.Timer tAll  = Tool.getTimer();	// everything
+	Tool.Timer tInFft = Tool.getTimer();	// Input FFT
 	Tool.Timer tEst  = Tool.getTimer();	// parameter estimation
 	Tool.Timer tPha  = Tool.getTimer();	// phase-by-autocorrelation
 	Tool.Timer tWien = Tool.getTimer();	// Wiener filter setup
@@ -158,6 +206,13 @@ public class TestPlugin implements PlugIn {
 	for (int i=0; i<inSt.getSize();i++) { 
 	    imgs[i]  = ImageVector.copy( inSt.getProcessor(i+1) );
 	    SimUtils.fadeBorderCos( imgs[i] , 10);
+	    // for debug, output some information
+	    //Tool.trace( String.format("image %2d norm: %15.2f", i, imgs[i].norm2()));
+	}
+
+	{
+	    Vec2d.Cplx tmpV = Vec2d.createCplx( param );
+	    tmpV.fft2d(false);
 	}
 	
 
@@ -165,9 +220,17 @@ public class TestPlugin implements PlugIn {
 	Vec2d.Cplx [][] inFFT = new Vec2d.Cplx[ inSt.getSize()/nrPhases ][nrPhases];
 	for (int i=0; i<inSt.getSize();i++) { 
 		inFFT[i/nrPhases][i%nrPhases] = Vec2d.createCplx( w, h);
+	}
+
+	tRec.start();
+	tInFft.start();
+	for (int i=0; i<inSt.getSize();i++) { 
 		inFFT[i/nrPhases][i%nrPhases].copy( imgs[i] );
 		Transforms.fft2d( inFFT[i/nrPhases][i%nrPhases] , false);
 	}
+	Vec.syncConcurrent();
+	tInFft.stop();
+	tRec.hold();
 	
 	// vectors to store the result
 	Vec2d.Cplx fullResult    = Vec2d.createCplx( param, 2);
@@ -177,8 +240,6 @@ public class TestPlugin implements PlugIn {
 	ImageDisplay spSt  = new DisplayWrapper(w,h, "Spatial images");
 	ImageDisplay pwSt2 = new DisplayWrapper(2*w,2*h, "Power Spectra" );
 	ImageDisplay spSt2 = new DisplayWrapper(2*w,2*h, "Spatial images");
-
-
 
 	// ---------------------------------------------------------------------
 	// extract the SIM parameters by cross-correlation analysis
@@ -405,7 +466,26 @@ public class TestPlugin implements PlugIn {
 	// ---------------------------------------------------------------------
 	
 	tWien.start();
+
+	// create the OTFs, one per band
+	Vec2d.Cplx[] otfV    = Vec2d.createArrayCplx( param.nrBand(), 
+				param.vectorWidth(), param.vectorHeight() );
+	
+	for (int i=0; i<param.nrBand(); i++) {
+	    otfPr.writeOtfWithAttVector( otfV[i], i, 0,0 );
+	    otfV[i].makeCoherent();
+
+	    Tool.trace(String.format("OTF norm2: %7.4e ",otfV[i].norm2()));
+	}
+
+	// create the Wiener filter
 	WienerFilter wFilter = new WienerFilter( param );
+	Vec2d.Real wienerDenom = wFilter.getDenominator( wienParam );
+	wienerDenom.makeCoherent();
+
+	// create the Apodization filter
+	Vec2d.Cplx apoVector = Vec2d.createCplx(2*w,2*h);
+	otfPr.writeApoVector( apoVector, apoB, apoF);
 	
 	if (visualFeedback>0) {
 	    Vec2d.Real wd = wFilter.getDenominator(wienParam);
@@ -414,15 +494,37 @@ public class TestPlugin implements PlugIn {
 	    Transforms.swapQuadrant( wd );
 	    pwSt2.addImage(wd, "Wiener denominator");
 	}
+	// cache the FFT
+	{
+	   Vec2d.Cplx tmpV  =Vec2d.createCplx(2*w,2*h);
+	   tmpV.fft2d(false);
+	}
 	
+	apoVector.makeCoherent();
+	
+	Vec2d.Cplx [] separate  = Vec2d.createArrayCplx( param.nrBand()*2-1, w, h);
+	Vec2d.Cplx [] shifted	= Vec2d.createArrayCplx( param.nrBand()*2-1, 2*w, 2*h);
+
 	tWien.stop();
-	
 	
 	// ---------------------------------------------------------------------
 	// Run the actual reconstruction 
 	// ---------------------------------------------------------------------
 	
+
+	Tool.Timer tBandSep = Tool.getTimer();
+	Tool.Timer tOtfAppl = Tool.getTimer();
+	Tool.Timer tFqPlace = Tool.getTimer();
+	Tool.Timer tFqShift = Tool.getTimer();
+	Tool.Timer tLinAlg  = Tool.getTimer();
+	Tool.Timer tCpyBack = Tool.getTimer();
+    
+	Tool.trace("---- Starting reconstruction ----");
+
+	Vec.syncConcurrent();
+
 	tRec.start();	
+	
 	// loop all pattern directions
 	for (int angIdx = 0; angIdx < param.nrDir(); angIdx ++ ) 
 	{
@@ -430,39 +532,65 @@ public class TestPlugin implements PlugIn {
 
 	    // ----- Band separation & OTF multiplication (if before shift) -------
 
-	    Vec2d.Cplx [] separate  = Vec2d.createArrayCplx( par.nrComp(), w, h);
-	    
+	    tBandSep.start();
 	    BandSeparation.separateBands( inFFT[angIdx] , separate , 
 		    par.getPhases(), par.nrBand(), par.getModulations());
+	    Vec.syncConcurrent();
+	    tBandSep.hold();
+	    
+	    Tool.trace(String.format(" SEPR (!otf) 0,1,2: norm2 :: %7.4e %7.4e %7.4e",
+		separate[0].norm2(), separate[1].norm2(), separate[3].norm2()));
+		
 
-	    if (otfBeforeShift)
+	    tOtfAppl.start();
+	    //if (otfBeforeShift)
 		for (int i=0; i<(par.nrBand()*2-1) ;i++)  
-		    otfPr.applyOtf( separate[i], (i+1)/2);
+		    separate[i].timesConj( otfV[ (i+1)/2 ]);
+		    //otfPr.applyOtf( separate[i], (i+1)/2);
+	    Vec.syncConcurrent();
+	    tOtfAppl.hold();
+	    
+	    Tool.trace(String.format(" SEPR (*otf) 0,1,2: norm2 :: %7.4e %7.4e %7.4e",
+		separate[0].norm2(), separate[1].norm2(), separate[3].norm2()));
 
 	    // ------- Shifts to correct position ----------
 
-	    Vec2d.Cplx [] shifted		= Vec2d.createArrayCplx(5, 2*w, 2*h);
+	    // first, copy to larger vectors
 
+	    tFqPlace.start();
 	    // band 0 is DC, so does not need shifting, only a bigger vector
 	    SimUtils.placeFreq( separate[0],  shifted[0]);
 	    
 	    // higher bands need shifting
 	    for ( int b=1; b<par.nrBand(); b++) {
-		
 		Tool.trace("REC: Dir "+angIdx+": shift band: "+b+" to: "+par.px(b)+" "+par.py(b));
 		
-		// first, copy to larger vectors
 		int pos = b*2, neg = (b*2)-1;	// pos/neg contr. to band
 		SimUtils.placeFreq( separate[pos] , shifted[pos]);
 		SimUtils.placeFreq( separate[neg] , shifted[neg]);
+	    }
+	    Vec.syncConcurrent();
+	    tFqPlace.hold();
+
+	    Tool.trace(String.format(" SHFT (bef.) 0,1,2: norm2 :: %7.4e %7.4e %7.4e",
+		shifted[0].norm2(), shifted[1].norm2(), shifted[3].norm2()));
 
 		// then, fourier shift
+	    tFqShift.start();	
+	    for ( int b=1; b<par.nrBand(); b++) {
+		int pos = b*2, neg = (b*2)-1;	// pos/neg contr. to band
 		SimUtils.fourierShift( shifted[pos] ,  par.px(b),  par.py(b) );
 		SimUtils.fourierShift( shifted[neg] , -par.px(b), -par.py(b) );
 	    }
+	    Vec.syncConcurrent();
+	    tFqShift.hold();
 	   
+	    Tool.trace(String.format(" SHFT (fftd) 0,1,2: norm2 :: %7.4e %7.4e %7.4e",
+		shifted[0].norm2(), shifted[1].norm2(), shifted[3].norm2()));
 	    // ------ OTF multiplication or masking ------
-	    
+
+	    tOtfAppl.start();
+	    /*
 	    if (!otfBeforeShift) {
 		// multiply with shifted OTF
 		for (int b=0; b<par.nrBand(); b++) {
@@ -471,18 +599,25 @@ public class TestPlugin implements PlugIn {
 		    otfPr.applyOtf( shifted[pos], b,  par.px(b),  par.py(b) );
 		    otfPr.applyOtf( shifted[neg], b, -par.px(b), -par.py(b) );
 		}
-	    } else {
+	    /*
+	     } else { */
 		// or mask for OTF support
+		//TODO: Re-enable masking support
+	    /*
 		for (int i=0; i<(par.nrBand()*2-1) ;i++)  
 		    //wFilter.maskOtf( shifted[i], angIdx, i);
-		    otfPr.maskOtf( shifted[i], angIdx, i);
-	    }
+		    otfPr.maskOtf( shifted[i], angIdx, i); */
+	    tOtfAppl.hold();
 	    
 	    // ------ Sum up result ------
 	    
+	    tLinAlg.start();
 	    for (int i=0;i<par.nrBand()*2-1;i++)  
 		fullResult.add( shifted[i] ); 
+	    Vec.syncConcurrent();
+	    tLinAlg.hold();
 	
+	    Tool.trace(String.format("result norm2: %7.4e", fullResult.norm2()));
 	    
 	    // ------ Output intermediate results ------
 	    
@@ -554,22 +689,28 @@ public class TestPlugin implements PlugIn {
 
 	}   
 	
-	// -- done loop all pattern directions, 'fullResult' now holds the image --
+	Tool.trace("Filtering results");
 	
 	// multiply by wiener denominator
-	Vec2d.Real denom = wFilter.getDenominator( wienParam );
-	fullResult.times(denom);
 	
+	tLinAlg.start();
+	fullResult.times(wienerDenom);
 	if (visualFeedback>0) {
 	    pwSt2.addImage(  SimUtils.pwSpec( fullResult), "full (w/o APO)");
 	    spSt2.addImage(  SimUtils.spatial(fullResult), "full (w/o APO)");
 	}
 
-	// apply apotization filter
-	Vec2d.Cplx apo = Vec2d.createCplx(2*w,2*h);
-	otfPr.writeApoVector( apo, apoB, apoF);
-	fullResult.times(apo);
+	// multiply by apotization vector	
+	fullResult.timesConj(apoVector);
+	Vec.syncConcurrent();
+	tLinAlg.hold();
+
+	Tool.trace("Done, copying results");
+
+	// output full result
+	tCpyBack.start();
 	spSt2.addImage( SimUtils.spatial( fullResult), "full result");
+	tCpyBack.hold();
 	
 	if (visualFeedback>0) {
 	    pwSt2.addImage( SimUtils.pwSpec( fullResult), "full result");
@@ -586,7 +727,10 @@ public class TestPlugin implements PlugIn {
 		
 		final SimParam.Dir par = param.dir(angIdx);
 		
-		Vec2d.Cplx [] separate  = Vec2d.createArrayCplx( par.nrComp(), w, h);
+		//Vec2d.Cplx [] separate  = Vec2d.createArrayCplx( par.nrComp(), w, h);
+		for (int i=0; i<par.nrComp(); i++)
+		    separate[i].zero();
+
 		BandSeparation.separateBands( inFFT[angIdx] , separate , 
 		    par.getPhases(), par.nrBand(), par.getModulations());
 
@@ -624,13 +768,21 @@ public class TestPlugin implements PlugIn {
 	Tool.trace( "\n"+param.prettyPrint(true));
 
 	// output timings
-	Tool.trace(" ---- Timings ---- ");
+	Tool.trace(" ---- Timings setup ---- ");
 	if (findPeak)
 	Tool.trace(" Parameter estimation / fit:  "+tEst);
 	if (refinePhase)
 	Tool.trace(" Phase refine:                "+tPha);
 	Tool.trace(" Wiener filter creation:      "+tWien);
-	Tool.trace(" Reconstruction:              "+tRec);
+	Tool.trace(" ---- Timings reconstruction ---- ");
+	Tool.trace(" Input FFTs, data from CPU:   "+tInFft);
+	Tool.trace(" Band separation:             "+tBandSep);
+	Tool.trace(" OTF multiplication:          "+tOtfAppl);
+	Tool.trace(" Freq vector placement:       "+tFqPlace);
+	Tool.trace(" Freq vector shifts (FFTs):   "+tFqShift);
+	Tool.trace(" Linear algebra:              "+tLinAlg);
+	Tool.trace(" Output FFT, data to CPU:     "+tCpyBack);
+	Tool.trace(" Full Reconstruction:         "+tRec);
 	Tool.trace(" ---");
 	Tool.trace(" All:                         "+tAll);
 
@@ -640,26 +792,6 @@ public class TestPlugin implements PlugIn {
 	spSt.display();
 	spSt2.display();
 
-    }
-
-
-    /** Start from the command line to run the plugin */
-    public static void main( String [] arg ) {
-
-	if (arg.length<1) {
-	    System.out.println("TIFF-file");
-	    return;
-	}
-	
-	boolean set=false;
-  
-	new ij.ImageJ( ij.ImageJ.EMBEDDED );
-	//SimpleMT.useParallel( false );
-	ImagePlus ip = IJ.openImage(arg[0]);
-	//ip.show();
-
-	TestPlugin tp = new TestPlugin();
-	tp.runReconstruction( ip.getStack() );
     }
 
 

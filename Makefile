@@ -24,29 +24,29 @@ RM = rm -vf
 all:	jtrans
 	$(JC) $(JFLAGS) org/fairsim/*/*.java
 
-linalg:
-	$(JC) $(JFLAGS) org/fairsim/linalg/*.java
-utils:
-	$(JC) $(JFLAGS) org/fairsim/utils/*.java
+accel:
+	$(JC) $(JFLAGS) org/fairsim/accel/*.java
 fiji:
 	$(JC) $(JFLAGS) org/fairsim/fiji/*.java
-#tests:
-#	$(JC) $(JFLAGS) org/fairsim/tests/*.java
+linalg:
+	$(JC) $(JFLAGS) org/fairsim/linalg/*.java
+network:
+	$(JC) $(JFLAGS) org/fairsim/network/*.java
 sim_algorithm:
 	$(JC) $(JFLAGS) org/fairsim/sim_algorithm/*.java
 sim_gui:
 	$(JC) $(JFLAGS) org/fairsim/sim_gui/*.java
+tests:
+	$(JC) $(JFLAGS) org/fairsim/tests/*.java
+utils:
+	$(JC) $(JFLAGS) org/fairsim/utils/*.java
+
 
 jtrans:	org/fairsim/extern/jtransforms/FloatFFT_2D.class
 org/fairsim/extern/jtransforms/FloatFFT_2D.class: $(wildcard org/fairsim/extern/jtransforms/*.java)
 	$(JC) $(JFLAGS) org/fairsim/extern/jtransforms/*.java
 
-
-
-
-
 # misc rules
-
 
 git-version :
 	git rev-parse HEAD > org/fairsim/git-version.txt  ; \

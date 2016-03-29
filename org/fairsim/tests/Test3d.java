@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 */
 
-package org.fairsim.fiji;
+package org.fairsim.tests;
 
 import org.fairsim.linalg.*;
 import org.fairsim.fiji.ImageVector;
