@@ -62,7 +62,7 @@ public class ImageReceiver {
      *  @param port The port to bind to, maybe 'null' for default (32320)
      * 
      * */
-    void startReceiving( InetAddress bind, Integer port ) 
+    public void startReceiving( InetAddress bind, Integer port ) 
 	throws IOException {
 	
 	ConnectionHandler ch = new ConnectionHandler(bind, port);
@@ -147,6 +147,24 @@ public class ImageReceiver {
 	}
     
     }
+
+    // ---- Image acess ----
+
+    /** Take the next image, blocking till it is available.
+     *	This amounts to calling 'take' on the underlying 'BlockingQueue' */
+    public ImageWrapper takeImage() {
+	ImageWrapper iw = null;
+	try {
+	    iw = imageQueue.take();
+	} catch (InterruptedException e) {
+	    message( "Taking images from queue interrupted",true,false);
+	    iw = null;
+	}
+	return iw;
+    }
+    
+
+
 
 
     // ---- Notification handling ----
