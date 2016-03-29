@@ -26,6 +26,8 @@ import java.io.OutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
+import org.fairsim.linalg.Vec2d;
+
 /** Class to encapsulate image data for network send */
 public class ImageWrapper {
 
@@ -139,7 +141,61 @@ public class ImageWrapper {
 	}
 	return ret;
     }
-    
+   
+    /** Write the image data into a provided vector */
+    public void writeToVector( Vec2d.Real vec ) {
+
+	if (vec.vectorWidth() != width || vec.vectorHeight() != height )
+	    throw new RuntimeException("vector to image size mismatch");
+
+	float [] dat = vec.vectorData();
+
+	if ( bpp == 2 ) {
+	    ByteBuffer bb = ByteBuffer.wrap( buffer, 128, width*height*2);
+	    bb.order( ByteOrder.LITTLE_ENDIAN );
+	    ShortBuffer sb = bb.asShortBuffer();
+	    for (int y=0; y<height; y++)
+	    for (int x=0; x<width; x++)
+		dat[ y * width + x ] = sb.get(x+width*y); 
+	}
+	if ( bpp == 1 ) {
+	    for (int y=0; y<height; y++)
+	    for (int x=0; x<width; x++)
+		dat[ y * width + x ] = buffer[ y * width + x + 128 ]; 
+	}
+   
+	vec.syncBuffer();
+    }
+
+    /** Write the image data into a provided vector */
+    public void writeToVector( Vec2d.Cplx vec ) {
+
+	if (vec.vectorWidth() != width || vec.vectorHeight() != height )
+	    throw new RuntimeException("vector to image size mismatch");
+
+	float [] dat = vec.vectorData();
+
+	if ( bpp == 2 ) {
+	    ShortBuffer sb = ByteBuffer.wrap( buffer, 128, width*height*2).asShortBuffer();
+	    for (int y=0; y<height; y++)
+	    for (int x=0; x<width; x++) {
+		dat[ (2 * y * width + x) + 0 ] = sb.get(x+y*width); 
+		dat[ (2 * y * width + x) + 1 ] = 0;
+	    }
+	}
+	if ( bpp == 1 ) {
+	    for (int y=0; y<height; y++)
+	    for (int x=0; x<width; x++) {
+		dat[ (2 * y * width + x) + 0 ] = buffer[ y * width + x + 128 ]; 
+		dat[ (2 * y * width + x) + 1 ] = 0; 
+	    }
+	}
+
+   
+	vec.syncBuffer();
+    }
+
+
 
     /** Create a wrapped image. Convenience method. */
     public static ImageWrapper copyImage( short [] pxl, int w, int h,
