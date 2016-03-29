@@ -18,11 +18,21 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 
 package org.fairsim.tests;
 
+
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+
 import org.fairsim.linalg.*;
 import org.fairsim.sim_algorithm.*;
 
 import org.fairsim.network.ImageReceiver;
 import org.fairsim.network.ImageWrapper;
+
+import org.fairsim.sim_gui.PlainImageDisplay;
 
 import org.fairsim.utils.Tool;
 import org.fairsim.utils.Conf;
@@ -34,7 +44,323 @@ import org.fairsim.accel.AccelVectorFactory;
 /** Class to run instant SIM reconstruction with fixed parameters. */
 public class TestInstantRecon  {
 
-   /** Start from the command line to run the plugin */
+    final float offset = 1100;
+
+    // buffer for received images
+    BlockingQueue< Vec2d.Real []> imgsToReconstruct =
+	new ArrayBlockingQueue< Vec2d.Real [] >(10);
+
+    // buffer for reconstructed images
+    BlockingQueue< Vec2d.Real > finalImages =
+	new ArrayBlockingQueue< Vec2d.Real >(10);
+    
+    BlockingQueue< Vec2d.Real > finalImagesWidefield =
+	new ArrayBlockingQueue< Vec2d.Real >(10);
+
+    final SimParam param;
+    final int width, height;
+
+    TestInstantRecon( SimParam p, int w, int h ) {
+	param=p; width=w; height=h;
+    }
+
+    public void startAllThreads() {
+
+
+
+	JFrame frame1 = new JFrame("Widefield (live)");
+	JFrame frame2 = new JFrame("SIM recon (live)");
+        
+
+	ReconstructorThread rt = new ReconstructorThread();
+	rt.start();
+	NetworkedReconstruction nr = new NetworkedReconstruction();
+	nr.start();
+	
+	ImageDisplayThread id1 = new ImageDisplayThread(true);
+	id1.start();
+	
+	ImageDisplayThread id2 = new ImageDisplayThread(false);
+	id2.start();
+	
+	JScrollPane pane1 = new JScrollPane( id1.dspl.getPanel(),
+	    JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+	    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+	JScrollPane pane2 = new JScrollPane( id2.dspl.getPanel(),
+	    JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, 
+	    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+	
+	frame1.setContentPane(pane1);
+	frame2.setContentPane(pane2);
+	//pane1.add( id1.dspl.getPanel());
+	//pane2.add( id2.dspl.getPanel());
+	frame1.pack();
+	frame2.pack();
+	frame1.setVisible(true);
+	frame2.setVisible(true);
+
+
+    }
+
+   
+   
+    /** The actual reconstruction. This pulls
+     * raw images from the 'imgsToReconstruct' queue, reconstructs them,
+     * puts them into 'finalImages' */
+    private class ReconstructorThread extends Thread {
+	public void run() {
+	    Tool.trace("Setting up reconstruction");
+
+	    // parameters
+	    param.setPxlSize( width, 0.08 );
+	    final OtfProvider otfPr  = param.otf(); 
+	    
+	    double apoStr  = 0.99;
+	    double apoFWHM = 1.5;
+	    double wienParam = 0.05;
+    
+	    // Setup OTFs, Wiener filter, APO
+	    Vec2d.Cplx[] otfV    = Vec2d.createArrayCplx( param.nrBand(), 
+				    param.vectorWidth(), param.vectorHeight() );
+	    
+	    for (int i=0; i<param.nrBand(); i++) {
+		otfPr.writeOtfWithAttVector( otfV[i], i, 0,0 );
+		otfV[i].makeCoherent();
+
+		Tool.trace(String.format("OTF norm2: %7.4e ",otfV[i].norm2()));
+	    }
+
+	    WienerFilter wFilter = new WienerFilter( param );
+	    Vec2d.Real wienerDenom = wFilter.getDenominator( wienParam );
+	    wienerDenom.makeCoherent();
+
+	    Vec2d.Cplx apoVector = Vec2d.createCplx(2*width,2*height);
+	    otfPr.writeApoVector( apoVector, apoStr, apoFWHM);
+	    apoVector.makeCoherent();
+
+	    // vectors to store the result
+	    Vec2d.Cplx fullResult   = Vec2d.createCplx( param, 2);
+
+	    Vec2d.Cplx [][] inFFT   = new Vec2d.Cplx[param.nrDir()][];
+	    for (int a=0; a<param.nrDir(); a++)
+		inFFT[a] =  Vec2d.createArrayCplx( param.dir(a).nrPha(), width, height);
+	    Vec2d.Cplx [] separate  = Vec2d.createArrayCplx( param.nrBand()*2-1, width, height);
+	    Vec2d.Cplx [] shifted   = Vec2d.createArrayCplx( param.nrBand()*2-1, 2*width, 2*height);
+
+
+	    // run the reconstruction
+	    while ( true ) {
+
+		// retrieve image, run fft
+		Vec2d.Real [] imgs = null ;
+		try {
+		    imgs = imgsToReconstruct.take();
+		} catch (InterruptedException e) {
+		    Tool.trace("Thread interrupted, frame missed");
+		    continue;
+		}
+		
+		Tool.Timer tAll = Tool.getTimer();
+		int count=0;
+		Vec2d.Real widefield = Vec.getBasicVectorFactory().createReal2D(width,height);
+
+		for (int a=0; a<param.nrDir(); a++)
+		    for (int p=0; p<param.dir(a).nrPha(); p++) {
+			
+		    Vec2d.Real inImg = imgs[count++];
+		    float [] dat = inImg.vectorData();
+		    for (int i=0; i<dat.length; i++)
+			dat[i] -= offset;
+		    //inImg.syncBuffer();
+
+		    SimUtils.fadeBorderCos( inImg , 10);
+		    widefield.add( inImg );
+		    
+		    inFFT[a][p].copy( inImg );
+		    inFFT[a][p].fft2d(false);
+		}
+
+		finalImagesWidefield.offer( widefield);
+
+		// loop pattern directions
+		fullResult.zero();
+		for (int angIdx = 0; angIdx < param.nrDir(); angIdx ++ ) {
+		    final SimParam.Dir par = param.dir(angIdx);
+
+		    // ----- Band separation & OTF multiplication -------
+
+		    BandSeparation.separateBands( inFFT[angIdx] , separate , 
+			    par.getPhases(), par.nrBand(), par.getModulations());
+
+		    for (int i=0; i<(par.nrBand()*2-1) ;i++)  
+			separate[i].timesConj( otfV[ (i+1)/2 ]);
+		    
+
+		    // ------- Shifts to correct position ----------
+
+		    // band 0 is DC, so does not need shifting, only a bigger vector
+		    SimUtils.placeFreq( separate[0],  shifted[0]);
+		    
+		    // higher bands need shifting
+		    for ( int b=1; b<par.nrBand(); b++) {
+			int pos = b*2, neg = (b*2)-1;	// pos/neg contr. to band
+			SimUtils.placeFreq( separate[pos] , shifted[pos]);
+			SimUtils.placeFreq( separate[neg] , shifted[neg]);
+		    }
+
+		    for ( int b=1; b<par.nrBand(); b++) {
+			int pos = b*2, neg = (b*2)-1;	// pos/neg contr. to band
+			SimUtils.fourierShift( shifted[pos] ,  par.px(b),  par.py(b) );
+			SimUtils.fourierShift( shifted[neg] , -par.px(b), -par.py(b) );
+		    }
+		   
+		    
+		    // sum up to full result 
+		    for (int i=0;i<par.nrBand()*2-1;i++)  
+			fullResult.add( shifted[i] ); 
+		
+		} // end direction loop
+
+		// apply wiener filter and APO
+		fullResult.times(wienerDenom);
+		fullResult.timesConj(apoVector);
+		
+		fullResult.fft2d(true);
+
+		Vec2d.Real res = 
+		    Vec.getBasicVectorFactory().createReal2D(2*width,2*height);
+
+		res.copy(fullResult);
+	   
+		finalImages.offer(res);
+		tAll.stop();
+		Tool.trace("Frame reconstructed: "+tAll);
+
+	    }
+
+
+
+	}
+    }
+
+    /** Received images, waits for sync frames, queues them.
+     *  All images received go into the 'imgsToReconstruct' queue. */
+    private class NetworkedReconstruction extends Thread {
+    
+	public void run ( ) {
+
+	    // Setup network link
+	    ImageReceiver ir = new ImageReceiver(50,512,512);
+	    boolean keepRunning = true;
+
+	    ir.addListener( new ImageReceiver.Notify() {
+		public void message( String m , boolean err, boolean fail) {
+		    String e = (err)?( (fail)?("FAIL: "):("err: ") ):("net: ");
+		    Tool.trace( e + m );
+		}
+	    });
+
+	    try {
+		ir.startReceiving(null,null);	
+	    } catch  ( java.io.IOException e ) {
+		Tool.trace("Net setup failed: "+e);
+		return;
+	    }
+
+	    int rawImgCount = param.getImgPerZ();
+
+	    // since all this is on the net: Basic (non-GPU) vectors
+	    final VectorFactory bvf = Vec.getBasicVectorFactory();
+
+
+	    // Big reconstruct loop
+	    int count=0;
+	    Tool.Timer t1 = Tool.getTimer();
+	    while ( keepRunning ) {
+	
+		Vec2d.Real tmpImgReal   = bvf.createReal2D(width,height);
+
+		// detect white
+		while ( true  ) {
+		    ir.takeImage().writeToVector( tmpImgReal );
+		    double val = tmpImgReal.sumElements() / tmpImgReal.vectorSize();
+		    if (val>10000) break;
+		} 
+
+		// copy the images following the sync
+		Vec2d.Real [] imgs = new Vec2d.Real[rawImgCount] ;
+		for (int i=0; i<rawImgCount; i++) {
+		    imgs[i] = bvf.createReal2D(width,height);
+		    ir.takeImage().writeToVector(imgs[i]);
+		}
+
+		// put image into queue
+		imgsToReconstruct.offer( imgs );
+		if (count%10==0) {
+		    t1.stop();
+		    Tool.trace("Frames received, passed to reconstruction: "
+			+count+" "+t1);
+		    t1.start();
+		}
+		count++;
+	    }
+
+	}
+    }
+
+    /** Thread that displays final images */
+    private class ImageDisplayThread extends Thread {
+
+	final PlainImageDisplay dspl ;
+	final int w, h;
+	final boolean widefield;
+    
+	ImageDisplayThread( boolean wf ) {
+	    
+	    widefield = wf;
+	    w =  width*((widefield)?(1):(2));
+	    h = height*((widefield)?(1):(2));
+	    dspl = new PlainImageDisplay(w,h);
+
+	}
+
+	public void run() {
+
+	    while (true) {
+	
+		// get the image
+		Vec2d.Real img = null;
+		try {
+		    if (widefield) 
+			img = finalImagesWidefield.take();
+		    else
+			img = finalImages.take();
+		} catch ( InterruptedException e ) {
+		    Tool.trace("Display thread interrupted, frame lost");
+		    continue;
+		}
+
+		// scale the image
+		float max = Float.MIN_VALUE;
+		float [] dat = img.vectorData();
+		for (int i=0; i<w*h; i++)
+		    max = Math.max(dat[i],max);
+		
+		img.scal( 4096/max );
+
+		// set image
+		dspl.newImage( img );
+
+	    }
+	}
+
+
+    }
+
+
+
+
+    /** Start from the command line to run the plugin */
     public static void main( String [] arg ) {
 
 	// output usage
@@ -47,6 +373,8 @@ public class TestInstantRecon  {
 	boolean set=false;
 	String wd = System.getProperty("user.dir")+"/accel/";
 	Tool.trace("loading library from: "+wd);
+
+	VectorFactory avf = null;
 
 	if (arg[0].equals("CUDA")) {
 	    System.load(wd+"libcudaimpl.so");
@@ -79,403 +407,12 @@ public class TestInstantRecon  {
 	}
 	
 	// start the reconstruction loop
-	networkedReconstruction( sp );
-
-
+	TestInstantRecon tir = new TestInstantRecon(sp,512,512);
+	tir.startAllThreads();
+    
     }
 
 
-    /** Step-by-step reconstruction process. */
-    public static void networkedReconstruction( final SimParam param ) {
-	
-	final int width=512, height=512;
-	param.setPxlSize( width, 0.08 );
-	
-	final OtfProvider otfPr  = param.otf(); 
-	
-	double apoStr  = 0.99;
-	double apoFWHM = 1.5;
-	double wienParam = 0.05;
-
-
-	// Setup network link
-	ImageReceiver ir = new ImageReceiver(50,512,512);
-	boolean keepRunning = true;
-
-	ir.addListener( new ImageReceiver.Notify() {
-	    public void message( String m , boolean err, boolean fail) {
-		String e = (err)?( (fail)?("FAIL: "):("err: ") ):("net: ");
-		Tool.trace( e + m );
-	    }
-	});
-
-	try {
-	    ir.startReceiving(null,null);	
-	} catch  ( java.io.IOException e ) {
-	    Tool.trace("Net setup failed: "+e);
-	    return;
-	}
-
-	// Setup OTFs, Wiener filter, APO
-	Vec2d.Cplx[] otfV    = Vec2d.createArrayCplx( param.nrBand(), 
-				param.vectorWidth(), param.vectorHeight() );
-	
-	for (int i=0; i<param.nrBand(); i++) {
-	    otfPr.writeOtfWithAttVector( otfV[i], i, 0,0 );
-	    otfV[i].makeCoherent();
-
-	    Tool.trace(String.format("OTF norm2: %7.4e ",otfV[i].norm2()));
-	}
-
-	WienerFilter wFilter = new WienerFilter( param );
-	Vec2d.Real wienerDenom = wFilter.getDenominator( wienParam );
-	wienerDenom.makeCoherent();
-
-	Vec2d.Cplx apoVector = Vec2d.createCplx(2*width,2*height);
-	otfPr.writeApoVector( apoVector, apoStr, apoFWHM);
-	apoVector.makeCoherent();
-
-	// vectors to store the result
-	Vec2d.Cplx fullResult   = Vec2d.createCplx( param, 2);
-	Vec2d.Cplx [] separate  = Vec2d.createArrayCplx( param.nrBand()*2-1, width, height);
-	Vec2d.Cplx [] shifted	= Vec2d.createArrayCplx( param.nrBand()*2-1, 2*width, 2*height);
-
-	Vec2d.Real tmpImgReal   = Vec2d.createReal(width,height);
-
-
-	// Big reconstruct loop
-	while ( keepRunning ) {
-    
-	    Tool.Timer t1 = Tool.getTimer();
-	    int count=0;
-
-	    // detect white
-	    for ( boolean foundSync = false; !foundSync;  ) {
-		
-		if (count%100==0) t1.start();
-
-		ir.takeImage().writeToVector( tmpImgReal );
-		//Tool.trace("Img val: "+tmpImgReal.sumElements() / tmpImgReal.vectorSize());
-		
-		if (count%100==99) {
-		    t1.stop();
-		    Tool.trace("100 images took: "+t1);
-		}
-		count++;
-	    } 
-
-
-
-
-
-
-	}
-
-    }
-
-
-	/*
-	// Copy current stack into vectors, apotize borders 
-	Vec2d.Real [] imgs = new Vec2d.Real[ inSt.getSize() ]; 
-	for (int i=0; i<inSt.getSize();i++) { 
-	    imgs[i]  = ImageVector.copy( inSt.getProcessor(i+1) );
-	    SimUtils.fadeBorderCos( imgs[i] , 10);
-	    // for debug, output some information
-	    //Tool.trace( String.format("image %2d norm: %15.2f", i, imgs[i].norm2()));
-	}
-
-	{
-	    Vec2d.Cplx tmpV = Vec2d.createCplx( param );
-	    tmpV.fft2d(false);
-	}
-	
-
-	// compute the input FFT
-	Vec2d.Cplx [][] inFFT = new Vec2d.Cplx[ inSt.getSize()/nrPhases ][nrPhases];
-	for (int i=0; i<inSt.getSize();i++) { 
-		inFFT[i/nrPhases][i%nrPhases] = Vec2d.createCplx( w, h);
-	}
-
-	tRec.start();
-	tInFft.start();
-	for (int i=0; i<inSt.getSize();i++) { 
-		inFFT[i/nrPhases][i%nrPhases].copy( imgs[i] );
-		Transforms.fft2d( inFFT[i/nrPhases][i%nrPhases] , false);
-	}
-	Vec.syncConcurrent();
-	tInFft.stop();
-	tRec.hold();
-	*/
-    
-	/*	
-	// loop all pattern directions
-	for (int angIdx = 0; angIdx < param.nrDir(); angIdx ++ ) 
-	{
-	    final SimParam.Dir par = param.dir(angIdx);
-
-	    // ----- Band separation & OTF multiplication (if before shift) -------
-
-	    tBandSep.start();
-	    BandSeparation.separateBands( inFFT[angIdx] , separate , 
-		    par.getPhases(), par.nrBand(), par.getModulations());
-	    Vec.syncConcurrent();
-	    tBandSep.hold();
-	    
-	    Tool.trace(String.format(" SEPR (!otf) 0,1,2: norm2 :: %7.4e %7.4e %7.4e",
-		separate[0].norm2(), separate[1].norm2(), separate[3].norm2()));
-		
-
-	    tOtfAppl.start();
-	    //if (otfBeforeShift)
-		for (int i=0; i<(par.nrBand()*2-1) ;i++)  
-		    separate[i].timesConj( otfV[ (i+1)/2 ]);
-		    //otfPr.applyOtf( separate[i], (i+1)/2);
-	    Vec.syncConcurrent();
-	    tOtfAppl.hold();
-	    
-	    Tool.trace(String.format(" SEPR (*otf) 0,1,2: norm2 :: %7.4e %7.4e %7.4e",
-		separate[0].norm2(), separate[1].norm2(), separate[3].norm2()));
-
-	    // ------- Shifts to correct position ----------
-
-	    // first, copy to larger vectors
-
-	    tFqPlace.start();
-	    // band 0 is DC, so does not need shifting, only a bigger vector
-	    SimUtils.placeFreq( separate[0],  shifted[0]);
-	    
-	    // higher bands need shifting
-	    for ( int b=1; b<par.nrBand(); b++) {
-		Tool.trace("REC: Dir "+angIdx+": shift band: "+b+" to: "+par.px(b)+" "+par.py(b));
-		
-		int pos = b*2, neg = (b*2)-1;	// pos/neg contr. to band
-		SimUtils.placeFreq( separate[pos] , shifted[pos]);
-		SimUtils.placeFreq( separate[neg] , shifted[neg]);
-	    }
-	    Vec.syncConcurrent();
-	    tFqPlace.hold();
-
-	    Tool.trace(String.format(" SHFT (bef.) 0,1,2: norm2 :: %7.4e %7.4e %7.4e",
-		shifted[0].norm2(), shifted[1].norm2(), shifted[3].norm2()));
-
-		// then, fourier shift
-	    tFqShift.start();	
-	    for ( int b=1; b<par.nrBand(); b++) {
-		int pos = b*2, neg = (b*2)-1;	// pos/neg contr. to band
-		SimUtils.fourierShift( shifted[pos] ,  par.px(b),  par.py(b) );
-		SimUtils.fourierShift( shifted[neg] , -par.px(b), -par.py(b) );
-	    }
-	    Vec.syncConcurrent();
-	    tFqShift.hold();
-	   
-	    Tool.trace(String.format(" SHFT (fftd) 0,1,2: norm2 :: %7.4e %7.4e %7.4e",
-		shifted[0].norm2(), shifted[1].norm2(), shifted[3].norm2()));
-	    // ------ OTF multiplication or masking ------
-
-	    tOtfAppl.start();
-	    /*
-	    if (!otfBeforeShift) {
-		// multiply with shifted OTF
-		for (int b=0; b<par.nrBand(); b++) {
-		    // TODO: This will fail (index -1)
-		    int pos = b*2, neg = (b*2)-1;	// pos/neg contr. to band
-		    otfPr.applyOtf( shifted[pos], b,  par.px(b),  par.py(b) );
-		    otfPr.applyOtf( shifted[neg], b, -par.px(b), -par.py(b) );
-		}
-	    /*
-	     } else { */
-		// or mask for OTF support
-		//TODO: Re-enable masking support
-	    /*
-		for (int i=0; i<(par.nrBand()*2-1) ;i++)  
-		    //wFilter.maskOtf( shifted[i], angIdx, i);
-		    otfPr.maskOtf( shifted[i], angIdx, i); */
-	   
-
-	   /*
-	    // ------ Sum up result ------
-	    
-	    tLinAlg.start();
-	    for (int i=0;i<par.nrBand()*2-1;i++)  
-		fullResult.add( shifted[i] ); 
-	    Vec.syncConcurrent();
-	    tLinAlg.hold();
-	
-	    Tool.trace(String.format("result norm2: %7.4e", fullResult.norm2()));
-	    
-	    // ------ Output intermediate results ------
-	    
-	    if (visualFeedback>0) {
-	
-		// per-direction results
-		Vec2d.Cplx result = Vec2d.createCplx(2*w,2*h);
-		for (int i=0;i<par.nrBand()*2-1;i++)  
-		    result.add( shifted[i] ); 
-
-		// loop bands in this direction
-		for (int i=0;i<par.nrBand();i++) {     
-
-		    // get wiener denominator for (direction, band), add to full denom for this band
-		    Vec2d.Real denom = wFilter.getIntermediateDenominator( angIdx, i, wienParam);
-		
-		    // add up +- shift for this band
-		    Vec2d.Cplx thisband   = shifted[i*2];
-		    if (i!=0)
-			thisband.add( shifted[i*2-1] );
-	
-		    // output the wiener denominator
-		    if (visualFeedback>1) {
-			Vec2d.Real wd = denom.duplicate();
-			wd.reciproc();
-			wd.normalize();
-			Transforms.swapQuadrant( wd );
-			pwSt2.addImage( wd, String.format(
-			    "a%1d: OTF/Wiener band %1d",angIdx,(i/2) ));
-		    }
-		    
-		    // apply filter and output result
-		    thisband.times( denom );
-		    
-		    pwSt2.addImage( SimUtils.pwSpec( thisband ) ,String.format(
-			"a%1d: band %1d",angIdx,(i/2)));
-		    spSt2.addImage( SimUtils.spatial( thisband ) ,String.format(
-			"a%1d: band %1d",angIdx,(i/2)));
-		}
-
-		// per direction wiener denominator	
-		Vec2d.Real fDenom =  wFilter.getIntermediateDenominator( angIdx, wienParam);	
-		result.times( fDenom );
-		    
-		// output the wiener denominator
-		if (visualFeedback>1) {
-		    Vec2d.Real wd = fDenom.duplicate();
-		    wd.reciproc();
-		    wd.normalize();
-		    Transforms.swapQuadrant( wd );
-		    pwSt2.addImage( wd, String.format(
-			"a%1d: OTF/Wiener all bands",angIdx ));
-		}
-		
-		pwSt2.addImage( SimUtils.pwSpec( result ) ,String.format(
-		    "a%1d: all bands",angIdx));
-		spSt2.addImage( SimUtils.spatial( result ) ,String.format(
-		    "a%1d: all bands",angIdx));
-	    
-		// power spectra before shift
-		if (visualFeedback>2) { 
-		    for (int i=0; i<(par.nrBand()*2-1) ;i++)  
-		    pwSt.addImage( SimUtils.pwSpec( separate[i] ), String.format(
-			"a%1d, sep%1d, seperated band", angIdx, i));
-		}
-	   
-	    }
-
-
-	}   
-	
-	Tool.trace("Filtering results");
-	
-	// multiply by wiener denominator
-	
-	tLinAlg.start();
-	fullResult.times(wienerDenom);
-	if (visualFeedback>0) {
-	    pwSt2.addImage(  SimUtils.pwSpec( fullResult), "full (w/o APO)");
-	    spSt2.addImage(  SimUtils.spatial(fullResult), "full (w/o APO)");
-	}
-
-	// multiply by apotization vector	
-	fullResult.timesConj(apoVector);
-	Vec.syncConcurrent();
-	tLinAlg.hold();
-
-	Tool.trace("Done, copying results");
-
-	// output full result
-	tCpyBack.start();
-	spSt2.addImage( SimUtils.spatial( fullResult), "full result");
-	tCpyBack.hold();
-	
-	if (visualFeedback>0) {
-	    pwSt2.addImage( SimUtils.pwSpec( fullResult), "full result");
-	}
-
-	// Add wide-field for comparison
-	if (visualFeedback>=0) {
-	    
-	    // obtain the low freq result
-	    Vec2d.Cplx lowFreqResult = Vec2d.createCplx( param, 2);
-	    
-	    // have to do the separation again, result before had the OTF multiplied
-	    for (int angIdx = 0; angIdx < param.nrDir(); angIdx ++ ) {
-		
-		final SimParam.Dir par = param.dir(angIdx);
-		
-		//Vec2d.Cplx [] separate  = Vec2d.createArrayCplx( par.nrComp(), w, h);
-		for (int i=0; i<par.nrComp(); i++)
-		    separate[i].zero();
-
-		BandSeparation.separateBands( inFFT[angIdx] , separate , 
-		    par.getPhases(), par.nrBand(), par.getModulations());
-
-		Vec2d.Cplx tmp  = Vec2d.createCplx( param, 2 );
-		SimUtils.placeFreq( separate[0],  tmp);
-		lowFreqResult.add( tmp );
-	    }	
-	    
-	    // now, output the widefield
-	    if (visualFeedback>0)
-		pwSt2.addImage( SimUtils.pwSpec(lowFreqResult), "Widefield" );
-	    spSt2.addImage( SimUtils.spatial(lowFreqResult), "Widefield" );
-	
-	    // otf-multiply and wiener-filter the wide-field
-	    otfPr.otfToVector( lowFreqResult, 0, 0, 0, false, false ); 
-
-	    Vec2d.Real lfDenom = wFilter.getWidefieldDenominator( wienParam );
-	    lowFreqResult.times( lfDenom );
-	    
-	    //Vec2d.Cplx apoLowFreq = Vec2d.createCplx(2*w,2*h);
-	    //otfPr.writeApoVector( apoLowFreq, 0.4, 1.2);
-	    //lowFreqResult.times(apoLowFreq);
-	    
-	    if (visualFeedback>0)
-		pwSt2.addImage( SimUtils.pwSpec( lowFreqResult), "filtered Widefield" );
-	    spSt2.addImage( SimUtils.spatial( lowFreqResult), "filtered Widefield" );
-
-	}	
-
-	// stop timers
-	tRec.stop();	
-	tAll.stop();
-
-	// output parameters
-	Tool.trace( "\n"+param.prettyPrint(true));
-
-	// output timings
-	Tool.trace(" ---- Timings setup ---- ");
-	if (findPeak)
-	Tool.trace(" Parameter estimation / fit:  "+tEst);
-	if (refinePhase)
-	Tool.trace(" Phase refine:                "+tPha);
-	Tool.trace(" Wiener filter creation:      "+tWien);
-	Tool.trace(" ---- Timings reconstruction ---- ");
-	Tool.trace(" Input FFTs, data from CPU:   "+tInFft);
-	Tool.trace(" Band separation:             "+tBandSep);
-	Tool.trace(" OTF multiplication:          "+tOtfAppl);
-	Tool.trace(" Freq vector placement:       "+tFqPlace);
-	Tool.trace(" Freq vector shifts (FFTs):   "+tFqShift);
-	Tool.trace(" Linear algebra:              "+tLinAlg);
-	Tool.trace(" Output FFT, data to CPU:     "+tCpyBack);
-	Tool.trace(" Full Reconstruction:         "+tRec);
-	Tool.trace(" ---");
-	Tool.trace(" All:                         "+tAll);
-
-	// DONE, display all results
-	pwSt.display();
-	pwSt2.display();
-	spSt.display();
-	spSt2.display();
-	*/
 
 
 }

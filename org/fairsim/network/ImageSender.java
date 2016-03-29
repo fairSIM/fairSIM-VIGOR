@@ -62,6 +62,14 @@ public class ImageSender {
 	connection.add(s);
     }
 
+    /** Connect to 'host' at 'port', starts a new sender thread */
+    public void connect(String host, Integer port) 
+	throws java.net.UnknownHostException {
+	SendingThread s = new SendingThread( InetAddress.getByName( host ), port);
+	s.start();
+	connection.add(s);
+    }
+
 
 
     /** Non-blocking image send. Returns if the image was sucessfully

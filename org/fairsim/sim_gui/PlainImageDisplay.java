@@ -45,6 +45,8 @@ import java.awt.event.ActionEvent;
 import org.fairsim.network.ImageReceiver;
 import org.fairsim.network.ImageWrapper;
 
+import org.fairsim.linalg.Vec2d;
+
 public class PlainImageDisplay {
 
     private final JPanel mainPanel ;
@@ -162,6 +164,12 @@ public class PlainImageDisplay {
     public void newImage( short [] data, int w, int h) {
 	ic.setImage( data, w, h);	
     }
+    
+    /** Set a new image */
+    public void newImage( Vec2d.Real img ) {
+	ic.setImage( img);	
+    }
+
 
     /** Return the GUI panel for the component */
     public JPanel getPanel() {
@@ -195,12 +203,25 @@ public class PlainImageDisplay {
 	}
         
 	public void setImage( short [] img, int w, int h ) {
-	    if (curWidth>maxWidth || curHeight>maxHeight) 
+	    if (w>maxWidth || h>maxHeight) 
 		throw new RuntimeException("Image bigger than buffer");
 	    curWidth=w; curHeight=h;
 	    System.arraycopy( img, 0, imgBuffer, 0, w*h);
 	    paintImage();
 	}
+	
+	public void setImage( Vec2d.Real img ) {
+	    if (img.vectorWidth()>maxWidth || img.vectorHeight()>maxHeight) 
+		throw new RuntimeException("Image bigger than buffer");
+	    curWidth=img.vectorWidth(); curHeight=img.vectorHeight();
+	    float [] dat = img.vectorData();
+
+	    for (int i=0; i<curWidth*curHeight; i++)
+		imgBuffer[i] = (short)dat[i];
+
+	    paintImage();
+	}
+
 
 	public void paintImage() {
 

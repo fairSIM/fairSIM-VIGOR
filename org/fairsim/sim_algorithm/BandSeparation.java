@@ -147,9 +147,9 @@ public class BandSeparation {
 	MatrixComplex  SpM = createSeparationMatrix( pha, bands, fac );
 
 	// some debug output
-	String lg = "Band sep. with phases";
-	for (double i: phases) lg+=String.format(" %3.2f", i/Math.PI*180);
-	Tool.trace(lg);
+	//String lg = "Band sep. with phases";
+	//for (double i: phases) lg+=String.format(" %3.2f", i/Math.PI*180);
+	//Tool.trace(lg);
 
 	// zero output vector
 	for ( int b=0; b<(bands*2-1); b++)

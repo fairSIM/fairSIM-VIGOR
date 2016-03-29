@@ -88,6 +88,12 @@ public final class Vec {
 	vf.syncConcurrent();
     }
 
+
+    /** Return the basic (non-accelerated) vector factory */
+    public static VectorFactory getBasicVectorFactory() {
+	return BasicVector.getFactory();
+    }
+
     // ================================================================
 
     /** Throw runtime exception if not all vectors are of same size. */
