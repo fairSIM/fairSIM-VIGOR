@@ -147,6 +147,8 @@ public class TestInstantRecon  {
 	    Vec2d.Cplx [] separate  = Vec2d.createArrayCplx( param.nrBand()*2-1, width, height);
 	    Vec2d.Cplx [] shifted   = Vec2d.createArrayCplx( param.nrBand()*2-1, 2*width, 2*height);
 
+	    Tool.Timer tAll = Tool.getTimer();
+	    int reconCount=0;
 
 	    // run the reconstruction
 	    while ( true ) {
@@ -159,8 +161,8 @@ public class TestInstantRecon  {
 		    Tool.trace("Thread interrupted, frame missed");
 		    continue;
 		}
-		
-		Tool.Timer tAll = Tool.getTimer();
+	
+		tAll.start();
 		int count=0;
 		Vec2d.Real widefield = Vec.getBasicVectorFactory().createReal2D(width,height);
 
@@ -233,8 +235,18 @@ public class TestInstantRecon  {
 		res.copy(fullResult);
 	   
 		finalImages.offer(res);
-		tAll.stop();
-		Tool.trace("Frame reconstructed: "+tAll);
+		tAll.hold();
+		
+		// some feedback
+		reconCount++;
+		if (reconCount%10==0) {
+		    Tool.trace(String.format(
+			"reconst:  #%5d %7.2f ms/fr %7.2f ms/raw %7.2f fps(hr) %7.2f fps(raw)", 
+			reconCount, tAll.msElapsed()/10, tAll.msElapsed()/(10*param.getImgPerZ()),
+			1000./(tAll.msElapsed()/10.), 
+			1000./(tAll.msElapsed()/(10.*param.getImgPerZ()))));
+		    tAll.stop();
+		}
 
 	    }
 
@@ -296,10 +308,12 @@ public class TestInstantRecon  {
 
 		// put image into queue
 		imgsToReconstruct.offer( imgs );
-		if (count%10==0) {
+		if (count%(10)==0) {
 		    t1.stop();
-		    Tool.trace("Frames received, passed to reconstruction: "
-			+count+" "+t1);
+		    Tool.trace(String.format(
+			"receive:  #%5d %7.2f ms/fr %7.2f ms/raw %7.2f fps(hr) %7.2f fps(raw)", 
+			count, t1.msElapsed()/10, t1.msElapsed()/10/rawImgCount, 
+			10000./t1.msElapsed(), (10000.*rawImgCount)/t1.msElapsed()));
 		    t1.start();
 		}
 		count++;

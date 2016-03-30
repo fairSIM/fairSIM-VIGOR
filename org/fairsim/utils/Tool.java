@@ -115,6 +115,11 @@ public final class Tool {
 	    outtime  = runtime;
 	    start =stop;
 	}
+	/** get the milliseconds on this timer */
+	public double msElapsed() {
+	    return outtime/1000000.;
+	}
+
 	/** output the amount of milliseconds counted */
 	@Override public String toString(){ 
 	    return String.format("%10.3f ms",(outtime/1000000.));

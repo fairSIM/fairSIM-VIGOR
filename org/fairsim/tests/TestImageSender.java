@@ -87,7 +87,7 @@ public class TestImageSender {
 		for (int i=0; i<width*height;i++)
 		    white[i] = (short)(10000+Math.random()*500);
 		iwrap = ImageWrapper.copyImage(white,width,height,0,1,0,0,count);
-		Tool.trace("White "+count);
+		//Tool.trace("White "+count);
 	    } else {
 		// add image from stack
 		ShortProcessor sp = 
@@ -103,9 +103,10 @@ public class TestImageSender {
 	    count++;
 
 	   
-	    if (count%100==0) {
+	    if (count%25==0) {
 		t1.stop();
-		Tool.trace("Frames send "+count+" "+t1);
+		Tool.trace(String.format("Frames send %6d (%7.2f ms/fr, %7.2f fps)", 
+		    count, t1.msElapsed()/25, (25*1000)/t1.msElapsed()));
 		t1.start();
 	    }
 	   
