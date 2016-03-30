@@ -47,6 +47,8 @@ import org.fairsim.network.ImageWrapper;
 
 import org.fairsim.linalg.Vec2d;
 
+import org.fairsim.utils.Tool;
+
 public class PlainImageDisplay {
 
     private final JPanel mainPanel ;
@@ -64,8 +66,8 @@ public class PlainImageDisplay {
 	mainPanel.add( p1 );
 
 	// sliders and buttons
-	final JSlider sMin = new JSlider(JSlider.HORIZONTAL, 0,  (1<<12)-10,0);
-	final JSlider sMax = new JSlider(JSlider.HORIZONTAL, 10, (1<<12),256);
+	final JSlider sMin = new JSlider(JSlider.HORIZONTAL, 0,  (1<<16)-10,0);
+	final JSlider sMax = new JSlider(JSlider.HORIZONTAL, 10, (1<<16),256);
 	final JButton autoMin = new JButton("auto");
 	final JButton autoMax = new JButton("auto");
 	final JLabel  valMin = new JLabel( String.format("% 5d",sMin.getValue()));
@@ -229,6 +231,7 @@ public class PlainImageDisplay {
 	    for (int x=0; x<curHeight; x++) {
 		// scale
 		int val = imgBuffer[ x + y*curWidth ];
+		if (val < 0) val += 65536;
 		if (val> currentImgMax) currentImgMax = val;
 		if (val< currentImgMin) currentImgMin = val;
 		double out=0;
@@ -295,10 +298,28 @@ public class PlainImageDisplay {
 	
 	// start receiving
 	ir.startReceiving( null, null);
+	int count=0, max=0;
 	while ( true ) {
 	    ImageWrapper iw = ir.takeImage();
+	    short [] pxl = iw.getPixels();
+	    int avr=0;
+
+	    for (short s : pxl )
+		avr += (s>0)?(s):((int)s+65536);	
+
+	    avr /= (iw.width() * iw.height());
+
+	    max = Math.max(avr,max);
+
+	    count++;
+	    if (count%250==0) {
+		Tool.trace("max avr pxl val: "+max);
+           	max=0;
+	    }
+
+
 	    if (iw!=null)
-		pd.newImage( iw.getPixels(), iw.width(), iw.height());
+		pd.newImage( pxl, iw.width(), iw.height());
 	}   
 	
     }
