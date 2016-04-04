@@ -66,8 +66,8 @@ public class PlainImageDisplay {
 	mainPanel.add( p1 );
 
 	// sliders and buttons
-	final JSlider sMin = new JSlider(JSlider.HORIZONTAL, 0,  (1<<16)-10,0);
-	final JSlider sMax = new JSlider(JSlider.HORIZONTAL, 10, (1<<16),256);
+	final JSlider sMin = new JSlider(JSlider.HORIZONTAL, 0, 16*100, 0);
+	final JSlider sMax = new JSlider(JSlider.HORIZONTAL, 200, 16*100, 12*100);
 	final JButton autoMin = new JButton("auto");
 	final JButton autoMax = new JButton("auto");
 	final JLabel  valMin = new JLabel( String.format("% 5d",sMin.getValue()));
@@ -80,10 +80,13 @@ public class PlainImageDisplay {
 
 	sMin.addChangeListener( new ChangeListener() {
 	    public void stateChanged(ChangeEvent e) {
-		int val = sMin.getValue();
-		if (sMax.getValue()-9<val)
-		    sMax.setValue(val+10);
-		valMin.setText(String.format("% 5d",val));
+		double exponent = sMin.getValue()/100.;
+		int val = (int)Math.pow( 2, exponent );
+
+		if (sMax.getValue() -200 < exponent*100 )
+		    sMax.setValue( (int)(exponent*100)+200 );
+		
+		valMin.setText(String.format("2^%4.2f -> % 5d",exponent, val));
 		ic.scalMin = val;
 		ic.paintImage();
 	    }
@@ -91,10 +94,20 @@ public class PlainImageDisplay {
 
 	sMax.addChangeListener( new ChangeListener() {
 	    public void stateChanged(ChangeEvent e) {
-		int val = sMax.getValue();
-		if (sMin.getValue()+9>val)
-		    sMin.setValue(val-10);
-		valMax.setText(String.format("% 5d",val));
+		
+		double exponent = sMax.getValue()/100.;
+		int val = (int)Math.pow( 2, exponent );
+
+		if (sMin.getValue() +200 > exponent*100 )
+		    sMin.setValue( (int)(exponent*100)-200 );
+		
+		valMax.setText(String.format("2^%4.2f -> % 5d",exponent, val));
+		
+		//int val = sMax.getValue();
+		//if (sMin.getValue()+9>val)
+		//    sMin.setValue(val-10);
+		//valMax.setText(String.format("% 5d",val));
+		
 		ic.scalMax = val;
 		ic.paintImage();
 	    }
@@ -102,13 +115,14 @@ public class PlainImageDisplay {
 
 	autoMin.addActionListener( new ActionListener() {
 	    public void actionPerformed( ActionEvent e ) {
-		sMin.setValue( ic.currentImgMin );
+		sMin.setValue( (int)(Math.log( ic.currentImgMin )*100/Math.log(2)) );
 	    }
 	});
 
 	autoMax.addActionListener( new ActionListener() {
 	    public void actionPerformed( ActionEvent e ) {
-		sMax.setValue( ic.currentImgMax );
+		//sMax.setValue( ic.currentImgMax );
+		sMax.setValue( (int)(Math.log( ic.currentImgMax )*100/Math.log(2)) );
 	    }
 	});
 
@@ -116,7 +130,7 @@ public class PlainImageDisplay {
 	    public void stateChanged(ChangeEvent e) {
 		double gamma = sGamma.getValue()/100.;
 		lGamma.setText(String.format("g%4.2f",gamma));
-		ic.gamma = gamma;
+		ic.recalcGammaTable( gamma );
 		ic.paintImage();
 	    }
 	});
@@ -163,7 +177,7 @@ public class PlainImageDisplay {
     }
   
     /** Set a new image */
-    public void newImage( short [] data, int w, int h) {
+    public void newImage( float [] data, int w, int h) {
 	ic.setImage( data, w, h);	
     }
     
@@ -186,25 +200,28 @@ public class PlainImageDisplay {
         //Dimension myDimension = new Dimension(512, 512);
 	final int maxWidth, maxHeight;
     
+	final int gammaLookupTableSize = 1024;
 	
 	int curWidth, curHeight;
 	int scalMax=256, scalMin=0;
 	int currentImgMin = 0, currentImgMax=1;
 	double gamma=1.0;
 
-	final short [] imgBuffer ;
-	final byte []  imgData   ;
-	final byte []  imgDataBuffer ;
+	final float [] imgBuffer ;
+	final byte  [] imgData   ;
+	final byte  [] imgDataBuffer ;
+	final byte  [] gammaLookupTable = new byte[ gammaLookupTableSize ];
 
         public ImageComponent(int w, int h) {
 	    maxWidth=w; maxHeight=h;
 	    bufferedImage = new BufferedImage(maxWidth,maxHeight, BufferedImage.TYPE_BYTE_GRAY);
-	    imgBuffer = new short[w*h];
+	    imgBuffer = new float[w*h];
 	    imgDataBuffer = new byte[w*h];
 	    imgData = ((DataBufferByte) bufferedImage.getRaster().getDataBuffer()).getData();
+	    recalcGammaTable(1);
 	}
         
-	public void setImage( short [] img, int w, int h ) {
+	public void setImage( float [] img, int w, int h ) {
 	    if (w>maxWidth || h>maxHeight) 
 		throw new RuntimeException("Image bigger than buffer");
 	    curWidth=w; curHeight=h;
@@ -231,24 +248,34 @@ public class PlainImageDisplay {
 	    paintImage();
 	}
 
+	public void recalcGammaTable( double gamma ) {
+	    this.gamma = gamma;
+	    for (int i=0; i<gammaLookupTableSize; i++) {
+		gammaLookupTable[i] = (byte)(256*Math.pow( 
+		    1.*i / gammaLookupTableSize, gamma ));
+	    }
+	}
+
 
 	public void paintImage() {
 
 	    for (int y=0; y<curWidth; y++)
 	    for (int x=0; x<curHeight; x++) {
 		// scale
-		int val = imgBuffer[ x + y*curWidth ];
-		if (val < 0) val += 65536;
-		if (val> currentImgMax) currentImgMax = val;
-		if (val< currentImgMin) currentImgMin = val;
-		double out=0;
+		float val = imgBuffer[ x + y*curWidth ];
+		if (val> currentImgMax) currentImgMax = (int)val;
+		if (val< currentImgMin) currentImgMin = (int)val;
+		float out=0;
 		if ( val >= scalMax ) out=1;
 		if ( val <  scalMin ) out=0;
 		if ( val >= scalMin && val < scalMax ) 
-		    out = 1.*(val - scalMin) / (scalMax-scalMin) ;
+		    out = 1.f*(val - scalMin) / (scalMax-scalMin) ;
 		
-		out = Math.pow( out, gamma );
-		imgDataBuffer[x + y*curWidth ] = (byte)(255.999*out); 
+		//out = Math.pow( out, gamma );
+		//imgDataBuffer[x + y*curWidth ] = (byte)(255.999*out); 
+		imgDataBuffer[ x + y*curWidth ] = 
+		    gammaLookupTable[ (int)(out*(gammaLookupTableSize-1)) ];
+
 	    }
 	    System.arraycopy( imgDataBuffer, 0 , imgData, 0, curWidth*curHeight);
 	    this.repaint();
@@ -306,15 +333,18 @@ public class PlainImageDisplay {
 	// start receiving
 	ir.startReceiving( null, null);
 	int count=0; 
-	long max=0;
+	double max=0;
+	
+	Vec2d.Real imgVec = Vec2d.createReal( 512, 512);
+	
 	while ( true ) {
 	    ImageWrapper iw = ir.takeImage();
-	    short [] pxl = iw.getPixels();
-	    long avr=0;
+	   
+	    iw.writeToVector( imgVec );
 
-	    for (short s : pxl )
-		avr += (s>0)?(s):((int)s+65536);	
+	    ir.recycleWrapper( iw );
 
+	    double avr = imgVec.sumElements();
 	    avr /= (iw.width() * iw.height());
 
 	    max = Math.max(avr,max);
@@ -324,10 +354,9 @@ public class PlainImageDisplay {
 		Tool.trace("max avr pxl val: "+max);
            	max=0;
 	    }
-
-
+	
 	    if (iw!=null)
-		pd.newImage( pxl, iw.width(), iw.height());
+		pd.newImage( imgVec );
 	}   
 	
     }

@@ -36,6 +36,7 @@ public class ImageReceiver {
 
     private final int width, height;
     private final BlockingQueue<ImageWrapper> imageQueue; 
+    private final BlockingQueue<ImageWrapper> recycledWrapperQueue; 
     private ConnectionHandler ch = null;
     private List<Notify> listeners = new ArrayList<Notify>(2);
 
@@ -51,6 +52,7 @@ public class ImageReceiver {
     public ImageReceiver(int bufferSize, int maxWidth, int maxHeight) {
 	width=maxWidth; height=maxHeight;
 	imageQueue = new ArrayBlockingQueue<ImageWrapper>(bufferSize);
+	recycledWrapperQueue = new ArrayBlockingQueue<ImageWrapper>(bufferSize);
     }
 
     
@@ -93,7 +95,8 @@ public class ImageReceiver {
 		ImageServer iServ = new ImageServer();
 		try {
 		    iServ.sckt = serv.accept();
-		    iServ.inStr = iServ.sckt.getInputStream();
+		    iServ.inStr = new java.io.BufferedInputStream( 
+			iServ.sckt.getInputStream(), 4096*1024);
 		} catch (Exception e) {
 		    message("Accept error "+e, true, true);
 		    return;
@@ -122,7 +125,10 @@ public class ImageReceiver {
 	    // read from the input stream
 	    while (true) {
 	    
-		ImageWrapper recvImage = new ImageWrapper(width,height);
+
+		// optimization: try if we can reuse an recycled ImageWrapper
+		ImageWrapper recvImage = recycledWrapperQueue.poll();
+		if (recvImage == null) recvImage = new ImageWrapper(width,height);
 		int r0=0, r1=0;
 		
 		try {
@@ -164,6 +170,10 @@ public class ImageReceiver {
     }
     
 
+    /** Queues an ImageWrapper for recycling */
+    public void recycleWrapper( ImageWrapper iw ) {
+	recycledWrapperQueue.offer( iw );
+    }	
 
 
 

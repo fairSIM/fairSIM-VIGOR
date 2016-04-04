@@ -127,7 +127,8 @@ public class ImageWrapper {
 
 
     
-    /** Return A COPY of the input data */
+    /** Return A COPY of the input data. For high(er) performace,
+     *  use writeToVector instead. */
     public short [] getPixels() {
 	short [] ret = new short[ width*height ];
 	
@@ -151,6 +152,7 @@ public class ImageWrapper {
 	float [] dat = vec.vectorData();
 
 	if ( bpp == 2 ) {
+	    
 	    ByteBuffer bb = ByteBuffer.wrap( buffer, 128, width*height*2);
 	    bb.order( ByteOrder.LITTLE_ENDIAN );
 	    ShortBuffer sb = bb.asShortBuffer();
@@ -159,6 +161,13 @@ public class ImageWrapper {
 		float val = sb.get(x+width*y);
 		val = (val>0)?(val):(val+65536);
 		dat[ y * width + x ] = val;
+		//int pos = x + width * y;
+		//byte lb = buffer[ pos*2 + 0 + 128 ];
+		//byte hb = buffer[ pos*2 + 1 + 128 ];
+		//if ( lb < 0 ) lb+= 256;
+		//if ( hb < 0 ) hb+= 256;
+		//dat[pos] = hb*256+lb;
+
 	    }
 	}
 	if ( bpp == 1 ) {
