@@ -44,7 +44,7 @@ import org.fairsim.accel.AccelVectorFactory;
 /** Class to run instant SIM reconstruction with fixed parameters. */
 public class TestInstantRecon  {
 
-    final float offset = 1100;
+    final float offset = 120;
 
     // buffer for received images
     BlockingQueue< Vec2d.Real []> imgsToReconstruct =
@@ -114,7 +114,9 @@ public class TestInstantRecon  {
 	    // parameters
 	    param.setPxlSize( width, 0.08 );
 	    final OtfProvider otfPr  = param.otf(); 
-	    
+	   
+	    otfPr.setAttenuation(0.99, 1.5);
+ 
 	    double apoStr  = 0.99;
 	    double apoFWHM = 1.5;
 	    double wienParam = 0.05;
@@ -303,8 +305,8 @@ public class TestInstantRecon  {
 		ir.takeImage();
 		Tool.trace("Sync image found...");
 
-		// copy the next 10 frames
-		for (int k=0; k<10; k++) {
+		// copy the next 1 frames
+		for (int k=0; k<8; k++) {
 		    // copy the images following the sync
 		    Vec2d.Real [] imgs = new Vec2d.Real[rawImgCount] ;
 		    for (int i=0; i<rawImgCount; i++) {
@@ -355,8 +357,12 @@ public class TestInstantRecon  {
 		try {
 		    if (widefield) 
 			img = finalImagesWidefield.take();
-		    else
+		    else {
+			finalImages.take();	
+			finalImages.take();	
+			finalImages.take();	
 			img = finalImages.take();
+		    }
 		} catch ( InterruptedException e ) {
 		    Tool.trace("Display thread interrupted, frame lost");
 		    continue;

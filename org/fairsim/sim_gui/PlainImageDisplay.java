@@ -305,11 +305,12 @@ public class PlainImageDisplay {
 	
 	// start receiving
 	ir.startReceiving( null, null);
-	int count=0, max=0;
+	int count=0; 
+	long max=0;
 	while ( true ) {
 	    ImageWrapper iw = ir.takeImage();
 	    short [] pxl = iw.getPixels();
-	    int avr=0;
+	    long avr=0;
 
 	    for (short s : pxl )
 		avr += (s>0)?(s):((int)s+65536);	

@@ -155,8 +155,11 @@ public class ImageWrapper {
 	    bb.order( ByteOrder.LITTLE_ENDIAN );
 	    ShortBuffer sb = bb.asShortBuffer();
 	    for (int y=0; y<height; y++)
-	    for (int x=0; x<width; x++)
-		dat[ y * width + x ] = sb.get(x+width*y); 
+	    for (int x=0; x<width; x++) {
+		float val = sb.get(x+width*y);
+		val = (val>0)?(val):(val+65536);
+		dat[ y * width + x ] = val;
+	    }
 	}
 	if ( bpp == 1 ) {
 	    for (int y=0; y<height; y++)
