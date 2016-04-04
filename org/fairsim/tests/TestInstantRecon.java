@@ -299,24 +299,32 @@ public class TestInstantRecon  {
 		    if (val>10000) break;
 		} 
 
-		// copy the images following the sync
-		Vec2d.Real [] imgs = new Vec2d.Real[rawImgCount] ;
-		for (int i=0; i<rawImgCount; i++) {
-		    imgs[i] = bvf.createReal2D(width,height);
-		    ir.takeImage().writeToVector(imgs[i]);
-		}
+		// ignore next frame
+		ir.takeImage();
+		Tool.trace("Sync image found...");
 
-		// put image into queue
-		imgsToReconstruct.offer( imgs );
-		if (count%(10)==0) {
-		    t1.stop();
-		    Tool.trace(String.format(
-			"receive:  #%5d %7.2f ms/fr %7.2f ms/raw %7.2f fps(hr) %7.2f fps(raw)", 
-			count, t1.msElapsed()/10, t1.msElapsed()/10/rawImgCount, 
-			10000./t1.msElapsed(), (10000.*rawImgCount)/t1.msElapsed()));
-		    t1.start();
+		// copy the next 10 frames
+		for (int k=0; k<10; k++) {
+		    // copy the images following the sync
+		    Vec2d.Real [] imgs = new Vec2d.Real[rawImgCount] ;
+		    for (int i=0; i<rawImgCount; i++) {
+			imgs[i] = bvf.createReal2D(width,height);
+			ir.takeImage().writeToVector(imgs[i]);
+		    }
+
+		    // put image into queue
+		    imgsToReconstruct.offer( imgs );
+		    if (count%(10)==0) {
+			t1.stop();
+			Tool.trace(String.format(
+			    "receive:  #%5d %7.2f ms/fr %7.2f ms/raw %7.2f fps(hr) %7.2f fps(raw)", 
+			    count, t1.msElapsed()/10, t1.msElapsed()/10/rawImgCount, 
+			    10000./t1.msElapsed(), (10000.*rawImgCount)/t1.msElapsed()));
+			t1.start();
+		    }
+		    count++;
 		}
-		count++;
+	    
 	    }
 
 	}

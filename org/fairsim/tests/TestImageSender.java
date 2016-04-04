@@ -84,10 +84,16 @@ public class TestImageSender {
 	    if ( doWhiteFrame && (count%(whiteFrame+1))==0 ) {
 		// insert white frame if required
 		short [] white = new short[width*height];
-		for (int i=0; i<width*height;i++)
+		short [] black = new short[width*height];
+		for (int i=0; i<width*height;i++) {
 		    white[i] = (short)(10000+Math.random()*500);
+		    black[i] = (short)(1000+Math.random()*500);
+		}
+		
 		iwrap = ImageWrapper.copyImage(white,width,height,0,1,0,0,count);
-		//Tool.trace("White "+count);
+		isend.queueImage( iwrap );
+		iwrap = ImageWrapper.copyImage(black,width,height,0,1,0,0,count);
+		isend.queueImage( iwrap );
 	    } else {
 		// add image from stack
 		ShortProcessor sp = 
@@ -97,9 +103,10 @@ public class TestImageSender {
 		    (short[])sp.getPixels(), width, height, 0,0,0,0, count);
 	
 		stackPos = (stackPos+1)%stackLen;
+	    
+		isend.queueImage( iwrap );
 	    }
 
-	    isend.queueImage( iwrap );
 	    count++;
 
 	   

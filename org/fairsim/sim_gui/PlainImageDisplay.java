@@ -218,8 +218,15 @@ public class PlainImageDisplay {
 	    curWidth=img.vectorWidth(); curHeight=img.vectorHeight();
 	    float [] dat = img.vectorData();
 
-	    for (int i=0; i<curWidth*curHeight; i++)
-		imgBuffer[i] = (short)dat[i];
+	    for (int i=0; i<curWidth*curHeight; i++) {
+		int val = (int)dat[i];
+		if (val<0) val=0;
+		if (val>65535) val = 65535;
+		if (val>32768) val-= 65536;
+
+		imgBuffer[i] = (short)val;
+
+	    }
 
 	    paintImage();
 	}
