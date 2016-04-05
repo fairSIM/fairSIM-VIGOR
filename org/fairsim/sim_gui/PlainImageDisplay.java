@@ -180,6 +180,9 @@ public class PlainImageDisplay {
     public void newImage( float [] data, int w, int h) {
 	ic.setImage( data, w, h);	
     }
+    public void newImage( short [] data, int w, int h) {
+	ic.setImage( data, w, h);
+    }
     
     /** Set a new image */
     public void newImage( Vec2d.Real img ) {
@@ -230,23 +233,23 @@ public class PlainImageDisplay {
 	}
 	
 	public void setImage( Vec2d.Real img ) {
-	    if (img.vectorWidth()>maxWidth || img.vectorHeight()>maxHeight) 
+	    setImage( img.vectorData(), img.vectorWidth(), img.vectorHeight());
+	}
+		
+	public void setImage( short [] pxl, int width, int height ) {
+	    if (width>maxWidth || height>maxHeight) 
 		throw new RuntimeException("Image bigger than buffer");
-	    curWidth=img.vectorWidth(); curHeight=img.vectorHeight();
-	    float [] dat = img.vectorData();
+	    curWidth=width; curHeight=height;
 
 	    for (int i=0; i<curWidth*curHeight; i++) {
-		int val = (int)dat[i];
-		if (val<0) val=0;
-		if (val>65535) val = 65535;
-		if (val>32768) val-= 65536;
-
-		imgBuffer[i] = (short)val;
-
+		int val = (int)pxl[i];
+		if (val<0) val+=65535;
+		imgBuffer[i] = val;
 	    }
 
 	    paintImage();
 	}
+
 
 	public void recalcGammaTable( double gamma ) {
 	    this.gamma = gamma;
