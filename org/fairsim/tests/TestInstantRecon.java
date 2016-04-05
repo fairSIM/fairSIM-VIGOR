@@ -24,7 +24,10 @@ import java.util.concurrent.BlockingQueue;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JButton;
 import javax.swing.JScrollPane;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 import org.fairsim.linalg.*;
 import org.fairsim.sim_algorithm.*;
@@ -66,13 +69,10 @@ public class TestInstantRecon  {
 
     public void startAllThreads() {
 
-
-
 	JFrame frame1 = new JFrame("Widefield (live)");
 	JFrame frame2 = new JFrame("SIM recon (live)");
-        
 
-	ReconstructorThread rt = new ReconstructorThread();
+	final ReconstructorThread rt = new ReconstructorThread();
 	rt.start();
 	NetworkedReconstruction nr = new NetworkedReconstruction();
 	nr.start();
@@ -89,16 +89,30 @@ public class TestInstantRecon  {
 	JScrollPane pane2 = new JScrollPane( id2.dspl.getPanel(),
 	    JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, 
 	    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-	
+
 	frame1.setContentPane(pane1);
 	frame2.setContentPane(pane2);
-	//pane1.add( id1.dspl.getPanel());
-	//pane2.add( id2.dspl.getPanel());
 	frame1.pack();
 	frame2.pack();
 	frame1.setVisible(true);
 	frame2.setVisible(true);
 
+	
+	JFrame frame3 = new JFrame("Control"); 
+	JPanel controlPanel = new JPanel();
+	
+	JButton fitPeakButton = new JButton("run parameter fit");
+	fitPeakButton.addActionListener( new ActionListener() {
+	    public void actionPerformed( ActionEvent e ) {
+		rt.triggerParamRefit();
+	    };
+	});
+
+	controlPanel.add( fitPeakButton );
+	
+	frame3.add(controlPanel);
+	frame3.pack();
+	frame3.setVisible(true);
 
     }
 
@@ -108,6 +122,10 @@ public class TestInstantRecon  {
      * raw images from the 'imgsToReconstruct' queue, reconstructs them,
      * puts them into 'finalImages' */
     private class ReconstructorThread extends Thread {
+	    
+	boolean runRefit = false;
+	void triggerParamRefit() { runRefit = true; }
+	
 	public void run() {
 	    Tool.trace("Setting up reconstruction");
 
@@ -121,6 +139,7 @@ public class TestInstantRecon  {
 	    double apoFWHM = 1.5;
 	    double wienParam = 0.05;
     
+
 	    // Setup OTFs, Wiener filter, APO
 	    Vec2d.Cplx[] otfV    = Vec2d.createArrayCplx( param.nrBand(), 
 				    param.vectorWidth(), param.vectorHeight() );
@@ -163,7 +182,7 @@ public class TestInstantRecon  {
 		    Tool.trace("Thread interrupted, frame missed");
 		    continue;
 		}
-	
+
 		tAll.start();
 		int count=0;
 		Vec2d.Real widefield = Vec.getBasicVectorFactory().createReal2D(width,height);
@@ -186,6 +205,7 @@ public class TestInstantRecon  {
 
 		finalImagesWidefield.offer( widefield);
 
+
 		// loop pattern directions
 		fullResult.zero();
 		for (int angIdx = 0; angIdx < param.nrDir(); angIdx ++ ) {
@@ -195,7 +215,38 @@ public class TestInstantRecon  {
 
 		    BandSeparation.separateBands( inFFT[angIdx] , separate , 
 			    par.getPhases(), par.nrBand(), par.getModulations());
+		    
+		    // see if we should rerun a parameter fit
+		    if ( runRefit ) {
+			final int lb = 1;
+			final int hb = (par.nrBand()==3)?(3):(1);
+			final int nBand = par.nrBand()-1;
 
+			double [] peak = 
+			    Correlation.fitPeak( separate[0], separate[hb], 0, 1, 
+				otfPr, -par.px(nBand), -par.py(nBand), 
+				0.05, 2.5, null );
+		
+			Cplx.Double p1 = 
+			    Correlation.getPeak( separate[0], separate[lb], 
+				0, 1, otfPr, peak[0]/nBand, peak[1]/nBand,0.05 );
+
+			Cplx.Double p2 = 
+			    Correlation.getPeak( separate[0], separate[lb], 
+				0, 1, otfPr, peak[0], peak[1], 0.05 );
+
+			Tool.trace(
+			    String.format("Peak: (dir %1d): fitted -->"+
+				" x %7.3f y %7.3f p %7.3f (m %7.3f)", 
+				angIdx, peak[0], peak[1], p1.phase(), p1.hypot() ));
+	
+			par.setPxPy( -peak[0], -peak[1] );
+			par.setPhaOff( p1.phase() );
+			par.setModulation( 1, p1.hypot() );
+			par.setModulation( 2, p2.hypot() );
+
+		    }
+	    
 		    for (int i=0; i<(par.nrBand()*2-1) ;i++)  
 			separate[i].timesConj( otfV[ (i+1)/2 ]);
 		    
@@ -241,6 +292,8 @@ public class TestInstantRecon  {
 		
 		// some feedback
 		reconCount++;
+		runRefit = false;
+
 		if (reconCount%10==0) {
 		    Tool.trace(String.format(
 			"reconst:  #%5d %7.2f ms/fr %7.2f ms/raw %7.2f fps(hr) %7.2f fps(raw)", 
@@ -358,9 +411,9 @@ public class TestInstantRecon  {
 		    if (widefield) 
 			img = finalImagesWidefield.take();
 		    else {
-			finalImages.take();	
-			finalImages.take();	
-			finalImages.take();	
+			//finalImages.take();	
+			//finalImages.take();	
+			//finalImages.take();	
 			img = finalImages.take();
 		    }
 		} catch ( InterruptedException e ) {
