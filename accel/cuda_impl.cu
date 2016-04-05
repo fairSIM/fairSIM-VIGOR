@@ -567,7 +567,7 @@ __global__ void kernelCplxFourierShift( int N, cuComplex * out, float kx, float 
 
 // paste freq
 JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx2d_nativePasteFreq
-  (JNIEnv *env, jobject mo , jlong ptrOut, jint wo, jint ho, jlong ptrIn, jint wi, jint hi) {
+  (JNIEnv *env, jobject mo , jlong ptrOut, jint wo, jint ho, jlong ptrIn, jint wi, jint hi, jint xOff, jint yOff) {
 
     
     dim3 blocks(16,16);
@@ -577,11 +577,11 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx2d_nativePasteFreq
     cplxVecHandle * fi = (cplxVecHandle *)ptrIn;
 
     cudaMemset( fo->data, 0, wo*ho*sizeof(cuComplex));
-    kernelCplxPasteFreq<<< numBlocks, blocks >>>( fo->data, wo, ho, fi->data, wi, hi );
+    kernelCplxPasteFreq<<< numBlocks, blocks >>>( fo->data, wo, ho, fi->data, wi, hi, xOff, yOff );
 
 }
 
-__global__ void kernelCplxPasteFreq( cuComplex *out, int wo, int ho, cuComplex *in, int wi, int hi ) {
+__global__ void kernelCplxPasteFreq( cuComplex *out, int wo, int ho, cuComplex *in, int wi, int hi, int xOff, int yOff ) {
 
     int xi = blockIdx.x*blockDim.x + threadIdx.x;
     int yi = blockIdx.y*blockDim.y + threadIdx.y;
@@ -590,6 +590,8 @@ __global__ void kernelCplxPasteFreq( cuComplex *out, int wo, int ho, cuComplex *
     if ( xi<wi && yi < hi ) {
 	int xo = (xi<wi/2)?(xi):(xi+wo/2);
 	int yo = (yi<hi/2)?(yi):(yi+ho/2);
+	xo = ( xo + xOff + wo ) % wo;
+	yo = ( yo + yOff + ho ) % ho;
 	out[ xo + wo*yo ].x  = in[ xi + wi * yi ].x;
 	out[ xo + wo*yo ].y  = in[ xi + wi * yi ].y;
     }

@@ -337,7 +337,12 @@ class AccelVectorCplx2d extends AccelVectorCplx implements Vec2d.Cplx {
     }
 
     @Override
-    public void pasteFreq( Vec2d.Cplx inV) {
+    public void pasteFreq( Vec2d.Cplx inV ) {
+	pasteFreq( inV, 0, 0 );
+    }
+
+    @Override
+    public void pasteFreq( Vec2d.Cplx inV, int xOffset, int yOffset) {
 	    
 	final int wi = inV.vectorWidth();
 	final int hi = inV.vectorHeight();
@@ -356,6 +361,8 @@ class AccelVectorCplx2d extends AccelVectorCplx implements Vec2d.Cplx {
 	    for (int x= 0;x<wi;x++) {
 		int xo = (x<wi/2)?(x):(x+wo/2);
 		int yo = (y<hi/2)?(y):(y+ho/2);
+		xo = (xo+xOffset+wo)%wo;
+		yo = (yo+yOffset+ho)%ho;
 		out[ (xo + (wo*yo))*2+0 ] = in[ (x + wi*y)*2+0];
 		out[ (xo + (wo*yo))*2+1 ] = in[ (x + wi*y)*2+1];
 	    }
@@ -364,7 +371,8 @@ class AccelVectorCplx2d extends AccelVectorCplx implements Vec2d.Cplx {
 	
 	} else {
 	    // the fast way
-	    nativePasteFreq( this.natData, wo, ho, ((AccelVectorCplx2d)inV).natData, wi, hi);
+	    nativePasteFreq( this.natData, wo, ho, ((AccelVectorCplx2d)inV).natData, wi, hi, 
+		xOffset, yOffset);
 	    this.deviceNew = true;
 	}
     }
@@ -412,7 +420,8 @@ class AccelVectorCplx2d extends AccelVectorCplx implements Vec2d.Cplx {
     
     native void nativeFFT( long fftPlan, long data, boolean inverse );
     native void nativeFourierShift( long data, int N, double kx, double ky);
-    native void nativePasteFreq( long data, int wo, int ho, long indata, int wi, int hi);
+    native void nativePasteFreq( long data, int wo, int ho, long indata, int wi, int hi, 
+	int xOff, int yOff);
 
 
 

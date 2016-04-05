@@ -85,8 +85,8 @@ public class SimUtils {
 	    int yInt = (int)Math.floor( -ky );
 	    outV.pasteFreq( inV, xInt, yInt );
 
-	    Tool.trace(String.format(" %7.4f %7.4f %7.4f %7.4f" ,
-		xFrac, yFrac, (double)xInt, (double)yInt));
+	    //Tool.trace(String.format(" %7.4f %7.4f %7.4f %7.4f" ,
+		//xFrac, yFrac, (double)xInt, (double)yInt));
 	}
     }
 

@@ -54,7 +54,7 @@ __global__ void kernelCplxNorm2(cuComplex *g_idata, float *g_odata, unsigned int
 __global__ void kernelCplxReduce(cuComplex *g_idata, cuComplex *g_odata, unsigned int n, const bool sqr);
 
 __global__ void kernelCplxFourierShift( int N, cuComplex * out, float kx, float ky );
-__global__ void kernelCplxPasteFreq( cuComplex *out, int wo, int ho, cuComplex *in, int wi, int hi );
+__global__ void kernelCplxPasteFreq( cuComplex *out, int wo, int ho, cuComplex *in, int wi, int hi, int  xOff, int yOff );
 
 
 

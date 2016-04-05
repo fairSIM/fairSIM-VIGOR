@@ -206,7 +206,7 @@ JNIEXPORT jdouble JNICALL Java_org_fairsim_accel_AccelVectorCplx_nativeREDUCE
 
 // paste freq
 JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx2d_nativePasteFreq
-  (JNIEnv *env, jobject mo , jlong ptrOut, jint wo, jint ho, jlong ptrIn, jint wi, jint hi) {
+  (JNIEnv *env, jobject mo , jlong ptrOut, jint wo, jint ho, jlong ptrIn, jint wi, jint hi, jint xOff, jint yOff) {
 
     float complex *out  = (float complex *)ptrOut;
     float complex *in  = (float complex *)ptrIn;
@@ -222,6 +222,8 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx2d_nativePasteFreq
 	if ( xi<wi && yi < hi ) {
 	    int xo = (xi<wi/2)?(xi):(xi+wo/2);
 	    int yo = (yi<hi/2)?(yi):(yi+ho/2);
+	    xo  = (xo + xOff + wo ) % wo;
+	    yo  = (yo + yOff + ho ) % ho;
 	    out[ xo + wo*yo ]  = in[ xi + wi * yi ];
 	}
 

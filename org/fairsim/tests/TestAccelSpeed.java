@@ -70,6 +70,7 @@ public class TestAccelSpeed implements PlugIn {
     boolean refinePhase = false;    // run auto-correlation phase estimation (Wicker et. al)
 	
     final int visualFeedback = -1;   // amount of intermediate results to create (-1,0,1,2,3)
+    final boolean doFastShift=true;  // use the fast fourier shift implementation
 
     final double apoB=.9, apoF=2; // Bend and mag. factor of APO
 
@@ -514,7 +515,6 @@ public class TestAccelSpeed implements PlugIn {
 
 	Tool.Timer tBandSep = Tool.getTimer();
 	Tool.Timer tOtfAppl = Tool.getTimer();
-	Tool.Timer tFqPlace = Tool.getTimer();
 	Tool.Timer tFqShift = Tool.getTimer();
 	Tool.Timer tLinAlg  = Tool.getTimer();
 	Tool.Timer tCpyBack = Tool.getTimer();
@@ -555,32 +555,20 @@ public class TestAccelSpeed implements PlugIn {
 
 	    // ------- Shifts to correct position ----------
 
-	    // first, copy to larger vectors
 
-	    tFqPlace.start();
 	    // band 0 is DC, so does not need shifting, only a bigger vector
-	    SimUtils.placeFreq( separate[0],  shifted[0]);
+	    tFqShift.start();	
+	    shifted[0].pasteFreq( separate[0] );
 	    
 	    // higher bands need shifting
 	    for ( int b=1; b<par.nrBand(); b++) {
 		Tool.trace("REC: Dir "+angIdx+": shift band: "+b+" to: "+par.px(b)+" "+par.py(b));
 		
 		int pos = b*2, neg = (b*2)-1;	// pos/neg contr. to band
-		SimUtils.placeFreq( separate[pos] , shifted[pos]);
-		SimUtils.placeFreq( separate[neg] , shifted[neg]);
-	    }
-	    Vec.syncConcurrent();
-	    tFqPlace.hold();
-
-	    Tool.trace(String.format(" SHFT (bef.) 0,1,2: norm2 :: %7.4e %7.4e %7.4e",
-		shifted[0].norm2(), shifted[1].norm2(), shifted[3].norm2()));
-
-		// then, fourier shift
-	    tFqShift.start();	
-	    for ( int b=1; b<par.nrBand(); b++) {
-		int pos = b*2, neg = (b*2)-1;	// pos/neg contr. to band
-		SimUtils.fourierShift( shifted[pos] ,  par.px(b),  par.py(b) );
-		SimUtils.fourierShift( shifted[neg] , -par.px(b), -par.py(b) );
+		SimUtils.pasteAndFourierShift( 
+		    separate[pos], shifted[pos] ,  par.px(b),  par.py(b), doFastShift );
+		SimUtils.pasteAndFourierShift( 
+		    separate[neg], shifted[neg] , -par.px(b), -par.py(b), doFastShift );
 	    }
 	    Vec.syncConcurrent();
 	    tFqShift.hold();
@@ -778,7 +766,6 @@ public class TestAccelSpeed implements PlugIn {
 	Tool.trace(" Input FFTs, data from CPU:   "+tInFft);
 	Tool.trace(" Band separation:             "+tBandSep);
 	Tool.trace(" OTF multiplication:          "+tOtfAppl);
-	Tool.trace(" Freq vector placement:       "+tFqPlace);
 	Tool.trace(" Freq vector shifts (FFTs):   "+tFqShift);
 	Tool.trace(" Linear algebra:              "+tLinAlg);
 	Tool.trace(" Output FFT, data to CPU:     "+tCpyBack);

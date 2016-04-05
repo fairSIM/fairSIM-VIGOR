@@ -208,14 +208,14 @@ public class TestInstantRecon  {
 		    // higher bands need shifting
 		    for ( int b=1; b<par.nrBand(); b++) {
 			int pos = b*2, neg = (b*2)-1;	// pos/neg contr. to band
-			SimUtils.placeFreq( separate[pos] , shifted[pos]);
-			SimUtils.placeFreq( separate[neg] , shifted[neg]);
-		    }
-
-		    for ( int b=1; b<par.nrBand(); b++) {
-			int pos = b*2, neg = (b*2)-1;	// pos/neg contr. to band
-			SimUtils.fourierShift( shifted[pos] ,  par.px(b),  par.py(b) );
-			SimUtils.fourierShift( shifted[neg] , -par.px(b), -par.py(b) );
+			//SimUtils.placeFreq( separate[pos] , shifted[pos]);
+			//SimUtils.placeFreq( separate[neg] , shifted[neg]);
+			//SimUtils.fourierShift( shifted[pos] ,  par.px(b),  par.py(b) );
+			//SimUtils.fourierShift( shifted[neg] , -par.px(b), -par.py(b) );
+			SimUtils.pasteAndFourierShift( 
+			    separate[pos], shifted[pos] ,  par.px(b),  par.py(b), true );
+			SimUtils.pasteAndFourierShift( 
+			    separate[neg], shifted[neg] , -par.px(b), -par.py(b), true );
 		    }
 		   
 		    
