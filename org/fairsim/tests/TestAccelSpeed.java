@@ -199,6 +199,9 @@ public class TestAccelSpeed implements PlugIn {
 	Tool.Timer tPha  = Tool.getTimer();	// phase-by-autocorrelation
 	Tool.Timer tWien = Tool.getTimer();	// Wiener filter setup
 	Tool.Timer tRec  = Tool.getTimer();	// Reconstruction
+	
+	Tool.Timer tCpyIn   = Tool.getTimer();	// Input to GPU
+	Tool.Timer tCpyOut  = Tool.getTimer();	// Output to CPU
 
 	tAll.start();
 
@@ -216,21 +219,30 @@ public class TestAccelSpeed implements PlugIn {
 	    tmpV.fft2d(false);
 	}
 	
-
-	// compute the input FFT
 	Vec2d.Cplx [][] inFFT = new Vec2d.Cplx[ inSt.getSize()/nrPhases ][nrPhases];
 	for (int i=0; i<inSt.getSize();i++) { 
 		inFFT[i/nrPhases][i%nrPhases] = Vec2d.createCplx( w, h);
 	}
 
 	tRec.start();
-	tInFft.start();
+
+	// copy data to GPU	
+	tCpyIn.start();
 	for (int i=0; i<inSt.getSize();i++) { 
 		inFFT[i/nrPhases][i%nrPhases].copy( imgs[i] );
-		Transforms.fft2d( inFFT[i/nrPhases][i%nrPhases] , false);
+	}
+	Vec.syncConcurrent();
+	tCpyIn.stop();
+	
+	// compute the input FFT
+	tInFft.start();
+	for (int i=0; i<inSt.getSize();i++) { 
+		//inFFT[i/nrPhases][i%nrPhases].copy( imgs[i] );
+		inFFT[i/nrPhases][i%nrPhases].fft2d(false);
 	}
 	Vec.syncConcurrent();
 	tInFft.stop();
+
 	tRec.hold();
 	
 	// vectors to store the result
@@ -517,7 +529,7 @@ public class TestAccelSpeed implements PlugIn {
 	Tool.Timer tOtfAppl = Tool.getTimer();
 	Tool.Timer tFqShift = Tool.getTimer();
 	Tool.Timer tLinAlg  = Tool.getTimer();
-	Tool.Timer tCpyBack = Tool.getTimer();
+	Tool.Timer tOutFft  = Tool.getTimer();
     
 	Tool.trace("---- Starting reconstruction ----");
 
@@ -696,9 +708,21 @@ public class TestAccelSpeed implements PlugIn {
 	Tool.trace("Done, copying results");
 
 	// output full result
-	tCpyBack.start();
-	spSt2.addImage( SimUtils.spatial( fullResult), "full result");
-	tCpyBack.hold();
+	tOutFft.start();
+	fullResult.fft2d(true);
+	Vec.syncConcurrent();
+	tOutFft.stop();
+	
+	tCpyOut.start();
+	Vec2d.Real pw = Vec.getBasicVectorFactory().createReal2D( 
+		fullResult.vectorWidth(), fullResult.vectorHeight() );
+	pw.copy( fullResult );
+	Vec.syncConcurrent();
+	tCpyOut.stop();
+	
+	spSt2.addImage( pw , "full result");
+
+
 	
 	if (visualFeedback>0) {
 	    pwSt2.addImage( SimUtils.pwSpec( fullResult), "full result");
@@ -763,14 +787,17 @@ public class TestAccelSpeed implements PlugIn {
 	Tool.trace(" Phase refine:                "+tPha);
 	Tool.trace(" Wiener filter creation:      "+tWien);
 	Tool.trace(" ---- Timings reconstruction ---- ");
-	Tool.trace(" Input FFTs, data from CPU:   "+tInFft);
+	Tool.trace(" Data from CPU to GPU:        "+tCpyIn);
+	Tool.trace(" Input FFTs:                  "+tInFft);
 	Tool.trace(" Band separation:             "+tBandSep);
 	Tool.trace(" OTF multiplication:          "+tOtfAppl);
 	Tool.trace(" Freq vector shifts (FFTs):   "+tFqShift);
 	Tool.trace(" Linear algebra:              "+tLinAlg);
-	Tool.trace(" Output FFT, data to CPU:     "+tCpyBack);
-	Tool.trace(" Full Reconstruction:         "+tRec);
+	Tool.trace(" Output FFT:                  "+tOutFft);
+	Tool.trace(" Data to CPU:                 "+tCpyOut);
 	Tool.trace(" ---");
+	Tool.trace(" Full Reconstruction:         "+tRec);
+	Tool.trace(" -----");
 	Tool.trace(" All:                         "+tAll);
 
 	// DONE, display all results
