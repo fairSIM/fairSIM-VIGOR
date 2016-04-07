@@ -211,11 +211,12 @@ public class TestAccelSpeed implements PlugIn {
 	// get the images (from FIJI stack)
 	short [][] imgs = new short[ inSt.getSize() ][width*height]; 
 	for (int i=0; i<inSt.getSize();i++) {
+	    /*
 	    ImageProcessor ip = inSt.getProcessor(i+1);
 	    for (int y=0; y<height; y++)
 		for (int x=0; x<width; x++)
-		    imgs[i][y*width+x] = (short)ip.getf(x,y);
-	    //imgs[i]  =  (short [])inSt.getProcessor(i+1).convertToShortProcessor(false).getPixels();
+		    imgs[i][y*width+x] = (short)ip.getf(x,y); */
+	    imgs[i]  =  (short [])inSt.getProcessor(i+1).convertToShortProcessor(false).getPixels();
 	}
 
 	// jvm warmup, fft plan generation
@@ -231,14 +232,21 @@ public class TestAccelSpeed implements PlugIn {
 		inFFT[i/nrPhases][i%nrPhases] = Vec2d.createCplx( w, h);
 	}
 
+	// setup vector to fade borders
+	
+	Vec2d.Real fadeVec = Vec2d.createReal(width,height);
+	fadeVec.zero();
+	fadeVec.addConst(1);
+	SimUtils.fadeBorderCos( fadeVec , 10);
+
+
 	// --- Start the reconstruction timing ---
 	tRec.start();
 
 	// copy data to GPU	
 	tCpyIn.start();
 	for (int i=0; i<inSt.getSize();i++) { 
-		inFFT[i/nrPhases][i%nrPhases].copy( imgs[i] );
-		//SimUtils.fadeBorderCos( imgs[i] , 10);
+		inFFT[i/nrPhases][i%nrPhases].setFrom16bitPixels( imgs[i] );
 	}
 	Vec.syncConcurrent();
 	tCpyIn.stop();
@@ -248,6 +256,7 @@ public class TestAccelSpeed implements PlugIn {
 	for (int i=0; i<inSt.getSize();i++) { 
 		//inFFT[i/nrPhases][i%nrPhases].copy( imgs[i] );
 		inFFT[i/nrPhases][i%nrPhases].fft2d(false);
+		inFFT[i/nrPhases][i%nrPhases].times( fadeVec );
 	}
 	Vec.syncConcurrent();
 	tInFft.stop();

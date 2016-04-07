@@ -265,7 +265,7 @@ class AccelVectorReal2d extends AccelVectorReal implements Vec2d.Real {
 
 
     @Override
-    public void copy( short [] in ) {
+    public void setFrom16bitPixels( short [] in ) {
 	long ptrbuf = 0;
 	try {
 	    ptrbuf = AccelVectorFactory.nativeBuffers.take();

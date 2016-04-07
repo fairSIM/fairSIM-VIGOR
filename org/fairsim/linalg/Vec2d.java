@@ -143,8 +143,12 @@ public final class Vec2d {
 	/** get slice nr n */
 	public void slice( Vec3d.Real in, int n );
 	
-	/** copy content to vector */
-	public void copy( short [] in );
+	/** Copy an input image into this vector.
+	 *  The input image is assumed as 16bit unsigned(!) short values,
+	 *  arranged short[ x + width * y ].
+	 *  @param in The array to copy
+	 * */
+	public void setFrom16bitPixels( short [] in );
     
     }
     
@@ -206,8 +210,13 @@ public final class Vec2d {
 	/** get slice nr n */
 	public void slice( Vec3d.Cplx in, int n );
 
-	/** copy content to vector */
-	public void copy( short [] in );
+	/** Copy an input image into this vector.
+	 *  The input image is assumed as 16bit unsigned(!) short values,
+	 *  arranged short[ x + width * y ]. The imaginary components
+	 *  of the vector will be set to zero.
+	 *  @param in The array to copy
+	 * */
+	public void setFrom16bitPixels( short [] in );
     
     }
    

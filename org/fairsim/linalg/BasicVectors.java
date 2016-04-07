@@ -194,13 +194,13 @@ class BasicVector implements VectorFactory {
 	}
 	
 	@Override
-	public void copy( short [] in ){
+	public void setFrom16bitPixels( short [] in ){
 	    if ( width*height != in.length )
 		throw new RuntimeException("Short array to vector size mismatch");
 	    final float [] out = this.vectorData();
 	    for (int y=0; y<height; y++) 
 	    for (int x=0; x<width; x++) 
-		out[x+y*width] = in[x+y*width];
+		out[x+y*width] = in[x+y*width]&0xFFFF;
 	}
 
 
@@ -285,13 +285,13 @@ class BasicVector implements VectorFactory {
 	}
 
 	@Override
-	public void copy( short [] in ){
+	public void setFrom16bitPixels( short [] in ){
 	    if ( width*height != in.length )
 		throw new RuntimeException("Short array to vector size mismatch");
 	    final float [] out = this.vectorData();
 	    for (int y=0; y<height; y++) 
 	    for (int x=0; x<width; x++) { 
-		out[2*(x+y*width)+0] = in[x+y*width];
+		out[2*(x+y*width)+0] = (in[x+y*width]&0xFFFF);
 		out[2*(x+y*width)+1] = 0;
 	    }
 	}

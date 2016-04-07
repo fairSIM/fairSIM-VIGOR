@@ -155,7 +155,16 @@ public abstract class AbstractVectorReal implements  Vec.Real {
 	}
 	this.syncBuffer();
     }
-    
+   
+    @Override
+    public void addConst(float a) {
+	this.readyBuffer();
+	for (int i=0; i<elemCount; i++)
+	    data[i]+=a;
+	this.syncBuffer();
+    }
+
+
     /** Computes this += a * x */
     @Override
     public void axpy( float a , Vec.Real x ) {

@@ -380,7 +380,7 @@ class AccelVectorCplx2d extends AccelVectorCplx implements Vec2d.Cplx {
     }
 
     @Override
-    public void copy( short [] in ) {
+    public void setFrom16bitPixels( short [] in ) {
 	long ptrbuf = 0;
 	try {
 	    ptrbuf = AccelVectorFactory.nativeBuffers.take();
