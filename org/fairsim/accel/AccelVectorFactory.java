@@ -23,14 +23,28 @@ import org.fairsim.linalg.Vec2d;
 import org.fairsim.linalg.Vec3d;
 import org.fairsim.linalg.VectorFactory;
 
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ArrayBlockingQueue;
+
 public class AccelVectorFactory implements VectorFactory {
+
+    static final int nativeBufferSize  = 1024*1024*8;
+    static final int nativeBufferCount = 32;
+
+    static final BlockingQueue<Long> nativeBuffers = 
+	new ArrayBlockingQueue<Long>(nativeBufferCount);
+
+    static {
+	for (int i=0; i<nativeBufferCount; i++)
+	    nativeBuffers.offer( nativeAllocMemory(nativeBufferSize));
+    }
+
 
     private AccelVectorFactory() {};
 
     static public VectorFactory getFactory() {
 	return new AccelVectorFactory();
     }
-
 
     public Vec.Real createReal( int n) {
 	return new AccelVectorReal( n);
@@ -62,4 +76,5 @@ public class AccelVectorFactory implements VectorFactory {
     }
 
     native static void nativeSync();
+    native static long nativeAllocMemory(int size);
 }

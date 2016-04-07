@@ -205,31 +205,40 @@ public class TestAccelSpeed implements PlugIn {
 
 	tAll.start();
 
-	// Copy current stack into vectors, apotize borders 
-	Vec2d.Real [] imgs = new Vec2d.Real[ inSt.getSize() ]; 
-	for (int i=0; i<inSt.getSize();i++) { 
-	    imgs[i]  = ImageVector.copy( inSt.getProcessor(i+1) );
-	    SimUtils.fadeBorderCos( imgs[i] , 10);
-	    // for debug, output some information
-	    //Tool.trace( String.format("image %2d norm: %15.2f", i, imgs[i].norm2()));
+	final int width  = inSt.getWidth();
+	final int height = inSt.getHeight();
+
+	// get the images (from FIJI stack)
+	short [][] imgs = new short[ inSt.getSize() ][width*height]; 
+	for (int i=0; i<inSt.getSize();i++) {
+	    ImageProcessor ip = inSt.getProcessor(i+1);
+	    for (int y=0; y<height; y++)
+		for (int x=0; x<width; x++)
+		    imgs[i][y*width+x] = (short)ip.getf(x,y);
+	    //imgs[i]  =  (short [])inSt.getProcessor(i+1).convertToShortProcessor(false).getPixels();
 	}
 
-	{
+	// jvm warmup, fft plan generation
+	for (int i=0; i<10; i++) {
 	    Vec2d.Cplx tmpV = Vec2d.createCplx( param );
 	    tmpV.fft2d(false);
+	    tmpV.fft2d(true);
 	}
-	
+
+	// create input vectors
 	Vec2d.Cplx [][] inFFT = new Vec2d.Cplx[ inSt.getSize()/nrPhases ][nrPhases];
 	for (int i=0; i<inSt.getSize();i++) { 
 		inFFT[i/nrPhases][i%nrPhases] = Vec2d.createCplx( w, h);
 	}
 
+	// --- Start the reconstruction timing ---
 	tRec.start();
 
 	// copy data to GPU	
 	tCpyIn.start();
 	for (int i=0; i<inSt.getSize();i++) { 
 		inFFT[i/nrPhases][i%nrPhases].copy( imgs[i] );
+		//SimUtils.fadeBorderCos( imgs[i] , 10);
 	}
 	Vec.syncConcurrent();
 	tCpyIn.stop();

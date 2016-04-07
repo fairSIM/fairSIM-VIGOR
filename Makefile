@@ -24,7 +24,7 @@ RM = rm -vf
 all:	jtrans
 	$(JC) $(JFLAGS) org/fairsim/*/*.java
 
-accel:
+accelarator:
 	$(JC) $(JFLAGS) org/fairsim/accel/*.java
 fiji:
 	$(JC) $(JFLAGS) org/fairsim/fiji/*.java

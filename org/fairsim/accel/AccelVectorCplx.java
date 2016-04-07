@@ -161,6 +161,8 @@ class AccelVectorCplx extends AbstractVectorCplx {
 	deviceNew = true;
     }
 
+    
+
 
     @Override
     public void axpy( float a, Vec.Cplx x ) {
@@ -377,6 +379,22 @@ class AccelVectorCplx2d extends AccelVectorCplx implements Vec2d.Cplx {
 	}
     }
 
+    @Override
+    public void copy( short [] in ) {
+	long ptrbuf = 0;
+	try {
+	    ptrbuf = AccelVectorFactory.nativeBuffers.take();
+	} catch (Exception e) {
+	    throw new RuntimeException(e);
+	}
+	
+	if (elemCount > AccelVectorFactory.nativeBufferSize/8)
+	    throw new RuntimeException("Size exceeds buffer");
+	
+	nativeCOPYSHORT( this.natData, ptrbuf, in, elemCount );
+	deviceNew = true;
+	AccelVectorFactory.nativeBuffers.offer( ptrbuf );
+    }
 
     @Override
     public void fft2d(boolean inverse) {
@@ -414,6 +432,7 @@ class AccelVectorCplx2d extends AccelVectorCplx implements Vec2d.Cplx {
 
     // ------ Native methods ------
 
+    native void nativeCOPYSHORT( long ptrOut, long buffer, short [] in, int elem);
 
     native void nativeSet( long data, int x, int y, int width, float re, float im);
     native float [] nativeGet( long data, int x, int y, int width);

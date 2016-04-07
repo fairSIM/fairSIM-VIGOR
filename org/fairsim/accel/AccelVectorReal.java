@@ -264,11 +264,29 @@ class AccelVectorReal2d extends AccelVectorReal implements Vec2d.Real {
     }
 
 
+    @Override
+    public void copy( short [] in ) {
+	long ptrbuf = 0;
+	try {
+	    ptrbuf = AccelVectorFactory.nativeBuffers.take();
+	} catch (Exception e) {
+	    throw new RuntimeException(e);
+	}
+	
+	if (elemCount > AccelVectorFactory.nativeBufferSize/4)
+	    throw new RuntimeException("Size exceeds buffer");
+	
+	nativeCOPYSHORT( this.natData, ptrbuf, in, elemCount );
+	deviceNew = true;
+	AccelVectorFactory.nativeBuffers.offer( ptrbuf );
+    }
+
 
 
 
     // ------ Native methods ------
 
+    native void nativeCOPYSHORT( long ptrOut, long buffer, short [] in, int elem);
 
     native void  nativeSet( long data, int x, int y, int width, float in);
     native float nativeGet( long data, int x, int y, int width);

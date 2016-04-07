@@ -39,8 +39,18 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorFactory_nativeSync
     cudaDeviceSynchronize();
 }
 
+JNIEXPORT jlong JNICALL Java_org_fairsim_accel_AccelVectorFactory_nativeAllocMemory
+  (JNIEnv *env, jclass, jint size) {
+    
+    void * buf;
+    cudaMalloc( &buf, size );
+    return (jlong)buf;
+
+};
+
+
 const int  nrReduceThreads = 128;    // <-- 2^n, 1024 max.
-const int  nrCuThreads = 128;
+const int  nrCuThreads = 256;
 
 // allocate the vector
 JNIEXPORT jlong JNICALL Java_org_fairsim_accel_AccelVectorReal_alloc
@@ -325,6 +335,30 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_nativeCOPYCPLX
 }
 
 
+JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx2d_nativeCOPYSHORT
+  (JNIEnv *env, jobject, jlong vt, jlong buf, jshortArray javaArr, jint len) {
+    
+    // get the java-side buffer
+    jshort * java  = (jshort *)(env)->GetPrimitiveArrayCritical(javaArr, 0);
+    if ( java == NULL ) {
+	jclass exClass = (env)->FindClass( "java/lang/OutOfMemoryError" );
+	env->ThrowNew( exClass, "JNI Buffer copy OOM");
+    }	    
+  
+    // get the GPU-sided vector
+    cplxVecHandle * ft = (cplxVecHandle *)vt;
+
+    // copy data to GPU buffer
+    cudaMemcpy( (void*)buf, java, len*sizeof(short), cudaMemcpyHostToDevice );
+
+    // de-reference java-side array
+    env->ReleasePrimitiveArrayCritical(javaArr, java, 0);
+    
+    // convert short -> float on the GPU
+    kernelCplxCopyShort<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads >>>(len, ft->data, (short*)buf);
+};
+
+
 // add vectors
 JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_nativeAdd
   (JNIEnv * env, jobject mo, jlong vt, jlong v1, jint len) {
@@ -405,6 +439,14 @@ JNIEXPORT jdouble JNICALL Java_org_fairsim_accel_AccelVectorCplx_nativeREDUCE
 
 
 __global__ void kernelCplxCopyReal( int len, cuComplex * out, float * in ) {
+  int i = blockIdx.x*blockDim.x + threadIdx.x;
+  if (i < len) {
+    out[i].x = in[i];
+    out[i].y = 0;
+    }
+}
+
+__global__ void kernelCplxCopyShort( int len, cuComplex * out, short * in ) {
   int i = blockIdx.x*blockDim.x + threadIdx.x;
   if (i < len) {
     out[i].x = in[i];

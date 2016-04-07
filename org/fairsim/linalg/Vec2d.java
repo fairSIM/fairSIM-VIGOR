@@ -142,6 +142,9 @@ public final class Vec2d {
 	
 	/** get slice nr n */
 	public void slice( Vec3d.Real in, int n );
+	
+	/** copy content to vector */
+	public void copy( short [] in );
     
     }
     
@@ -202,6 +205,9 @@ public final class Vec2d {
     
 	/** get slice nr n */
 	public void slice( Vec3d.Cplx in, int n );
+
+	/** copy content to vector */
+	public void copy( short [] in );
     
     }
    
