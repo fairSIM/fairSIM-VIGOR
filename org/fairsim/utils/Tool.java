@@ -33,6 +33,7 @@ public final class Tool {
     /** Simple logger */
     public interface Logger {
 	public void writeTrace(String message); 
+	public void writeError(String message, boolean fatal);
 	public void writeShortMessage(String message);
     }
 
@@ -43,6 +44,12 @@ public final class Tool {
 	    public void writeTrace(String message) {
 		System.out.println( "[fairSIM] "+message);
 		System.out.flush();
+	    }
+	    
+	    public void writeError(String message, boolean fatal) {
+		String prefix = (fatal)?("[fsFATAL]"):("[fsERROR]");
+		System.err.println( prefix+" "+message);
+		System.err.flush();
 	    }
     
 	    public void writeShortMessage(String message) {
@@ -72,7 +79,14 @@ public final class Tool {
 	if (currentLogger!=null)
 	    currentLogger.writeShortMessage( message);
     }
-    
+   
+    /** Write an error message */
+    static public final void error(String message, boolean fatal ) {
+	if (currentLogger!=null)
+	    currentLogger.writeError( message, fatal );
+    }
+
+
     /** Implement and pass Tool.Logger to redirect log output,
      *  or set null to disable output completely */
     public static void setLogger( Tool.Logger t ) {
