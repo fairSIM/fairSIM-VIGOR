@@ -31,6 +31,8 @@ public class ImageDiskWriter {
 
     final File saveFolder;
     final BlockingQueue<ImageWrapper> saveQueue ;
+    final int saveQueueMax ;
+    
     ImageSaveThread fileRunner = null;
 
     int fullBufferCount = 0;
@@ -41,6 +43,7 @@ public class ImageDiskWriter {
 	if (!saveFolder.exists() || !saveFolder.isDirectory())
 	    throw new RuntimeException("save folder path is not a folder");
 	saveQueue = new ArrayBlockingQueue<ImageWrapper>( bufferSize);
+	saveQueueMax = bufferSize;
     }
 
     /** get the amount of free space */
@@ -97,7 +100,18 @@ public class ImageDiskWriter {
 	fileRunner = null;
     }
 
+    /** Get how much the buffer is filled, in percent */
+    public int bufferState() {
+	return (100*saveQueue.size()) / saveQueueMax ;
+    }
 
+    /** Get and reset the number of dropped frames since last call */
+    public int nrDroppedFrames() {
+	int ret = fullBufferCount;
+	fullBufferCount =0;
+	return ret;
+    }
+    
 
 
     /** Thread streaming data to disk */
@@ -130,7 +144,8 @@ public class ImageDiskWriter {
 		// write the full buffer to disk
 		try {
 		if (imgToSave!=null)
-		    outfile.write( imgToSave.refBuffer(), 0, imgToSave.bytesToSend()); 
+		    outfile.write( imgToSave.refBuffer(), 0, imgToSave.bytesToSend());
+		    outfile.flush();
 		} catch ( java.io.IOException e ) {
 		    throw new RuntimeException(e);
 		}

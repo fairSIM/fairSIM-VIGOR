@@ -1,7 +1,7 @@
 <fairsim>
 <vigor-settings>
 <NetworkBuffer type="int">100</NetworkBuffer>
-<DiskBuffer type="int">100</DiskBuffer>
-<DiskFolder type="string">/vol/VIGOR-stream</DiskFolder>
+<DiskBuffer type="int">500</DiskBuffer>
+<DiskFolder type="string">/vol-ssd/VIGOR-stream</DiskFolder>
 </vigor-settings>
 </fairsim>

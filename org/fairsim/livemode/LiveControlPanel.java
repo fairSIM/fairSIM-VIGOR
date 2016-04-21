@@ -186,11 +186,23 @@ public class LiveControlPanel {
     class DynamicDisplayUpdate extends Thread {
     
 	public void run() {
-	    // update save buffer state
-	    fileBufferBar.setString( String.format("%7.0f MB / %7.0f sec left",
-		liveStreamWriter.getSpace()/1024/1024.,
-		liveStreamWriter.getTimeLeft(512, 1, 100) ));
+	    while (true) {
+		// update save buffer state
+		fileBufferBar.setString( String.format("%7.0f MB / %7.0f sec left",
+		    liveStreamWriter.getSpace()/1024/1024.,
+		    liveStreamWriter.getTimeLeft(512, 1, 100) ));
+		fileBufferBar.setValue( liveStreamWriter.bufferState());
+	
+		int dropped = liveStreamWriter.nrDroppedFrames();
+		if ( dropped > 0 )
+		    Tool.error("#"+dropped+" not saved", false);
 
+		try {
+		    Thread.sleep(1000);
+		} catch (InterruptedException e) {
+		    return;
+		}	
+	    }
 	}
 
     }
