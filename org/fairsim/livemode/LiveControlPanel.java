@@ -27,10 +27,12 @@ import javax.swing.JProgressBar;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.text.DefaultCaret;
+import javax.swing.JScrollPane;
 
 import java.awt.Color;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.GridLayout;
 
 import org.fairsim.utils.Conf;
 import org.fairsim.transport.ImageReceiver;
@@ -58,21 +60,6 @@ public class LiveControlPanel {
 	// get parameters
 	final int imgSize = cfg.getInt("NetworkBuffer").val();
 
-
-	// initialize network receiver
-	imageReceiver    = new ImageReceiver(50,512,512);
-	imageReceiver.addListener( new ImageReceiver.Notify() {
-	    public void message( String m , boolean err, boolean fail) {
-	        String e = (err)?( (fail)?("FAIL: "):("err: ") ):("net: ");
-		statusField.append(e);
-	    }
-	});
-
-	// initialize disk writer
-	String saveFolder = cfg.getStr( "DiskFolder" ).val();
-	int bufferSize = cfg.getInt("DiskBuffer").val();
-	liveStreamWriter = new ImageDiskWriter( saveFolder, bufferSize );
-
 	//  ------- 
 	//  initialize the GUI
 	//  ------- 
@@ -85,6 +72,8 @@ public class LiveControlPanel {
 	JPanel recorderPanel = new JPanel();
 	recorderPanel.setBorder(BorderFactory.createTitledBorder(
 	    "raw Stream recording") );
+	recorderPanel.setLayout( new GridLayout( 3, 1,2,2 ));
+	
 	final JTextField filePrefix = new JTextField("VIGOR", 30);
 
 	final JButton recordButton = new JButton("record");
@@ -112,10 +101,9 @@ public class LiveControlPanel {
 	fileBufferBar.setStringPainted(true);
 
 	recorderPanel.add( recordButton );
+	recorderPanel.add(filePrefix);
 	recorderPanel.add(fileBufferBar);
 	mainPanel.add(recorderPanel);
-
-
 
 	JButton fitPeakButton = new JButton("run parameter fit");
 	fitPeakButton.addActionListener( new ActionListener() {
@@ -129,12 +117,12 @@ public class LiveControlPanel {
 	JPanel statusPanel = new JPanel();
 	statusPanel.setBorder(BorderFactory.createTitledBorder(
 	    "status messages") );
-	statusField = new JTextArea(20,30);
+	statusField = new JTextArea(20,40);
 	statusField.setEditable(false);
 	DefaultCaret cr = (DefaultCaret)statusField.getCaret();
 	cr.setUpdatePolicy( DefaultCaret.ALWAYS_UPDATE );
-	
-	statusPanel.add(statusField);
+	JScrollPane statusScroller = new JScrollPane( statusField );
+	statusPanel.add( statusScroller );
 	mainPanel.add(statusPanel);
 	
 	statusMessage = new JTextField(30);
@@ -145,10 +133,13 @@ public class LiveControlPanel {
 	// redirect log output
 	Tool.setLogger( new Tool.Logger() {
 	    public void writeTrace( String e ) {
-		statusField.append(e);
+		statusField.append(e+"\n");
 	    }
 	    public void writeShortMessage( String e) {
 		statusMessage.setText(e);
+	    }
+	    public void writeError( String e, boolean fatal) {
+		statusField.append( (fatal)?("FATAL err: "):("ERR :: ")+e+"\n");
 	    }
 	});
     
@@ -157,8 +148,23 @@ public class LiveControlPanel {
 	mainFrame.pack();
 	mainFrame.setVisible(true);
 	
-	// start a thread updating the display
+	
+	//  ------- 
+	//  initialize the components
+	//  ------- 
+	int netBufferSize   = cfg.getInt("NetworkBuffer").val();
+	imageReceiver	    = new ImageReceiver(netBufferSize,512,512);
+	
+	String saveFolder   = cfg.getStr( "DiskFolder" ).val();
+	int diskBufferSize  = cfg.getInt("DiskBuffer").val();
+	liveStreamWriter = new ImageDiskWriter( saveFolder, diskBufferSize );
+	imageReceiver.setDiskWriter( liveStreamWriter );
 
+	// start the components
+	imageReceiver.startReceiving( null, null );	
+
+	DynamicDisplayUpdate updateThread = new DynamicDisplayUpdate();
+	updateThread.start();
 
     }
 
@@ -181,8 +187,9 @@ public class LiveControlPanel {
     
 	public void run() {
 	    // update save buffer state
-
-
+	    fileBufferBar.setString( String.format("%7.0f MB / %7.0f sec left",
+		liveStreamWriter.getSpace()/1024/1024.,
+		liveStreamWriter.getTimeLeft(512, 1, 100) ));
 
 	}
 

@@ -32,13 +32,16 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import org.fairsim.utils.Tool;
+
 public class ImageReceiver {
 
     private final int width, height;
     private final BlockingQueue<ImageWrapper> imageQueue; 
-    private final BlockingQueue<ImageWrapper> recycledWrapperQueue; 
+    //private final BlockingQueue<ImageWrapper> recycledWrapperQueue; 
     private ConnectionHandler ch = null;
-    private List<Notify> listeners = new ArrayList<Notify>(2);
+
+    private ImageDiskWriter imageWriter = null;
 
     /** Instance to receive images over the network.
      *  The ImageReceiver forks a server thread (see {@link #startReceiving}),
@@ -52,7 +55,7 @@ public class ImageReceiver {
     public ImageReceiver(int bufferSize, int maxWidth, int maxHeight) {
 	width=maxWidth; height=maxHeight;
 	imageQueue = new ArrayBlockingQueue<ImageWrapper>(bufferSize);
-	recycledWrapperQueue = new ArrayBlockingQueue<ImageWrapper>(bufferSize);
+	//recycledWrapperQueue = new ArrayBlockingQueue<ImageWrapper>(bufferSize);
     }
 
     
@@ -88,7 +91,7 @@ public class ImageReceiver {
 	
 	public void run () {
    
-	    message("Awaiting connections: "+bindAddr+" prt "+bindPort,false,false);
+	    Tool.trace(" -net- Awaiting connections: "+bindAddr+":"+bindPort);
 
 	    // accept connections
 	    while (true) {
@@ -98,7 +101,7 @@ public class ImageReceiver {
 		    iServ.inStr = new java.io.BufferedInputStream( 
 			iServ.sckt.getInputStream(), 4096*1024);
 		} catch (Exception e) {
-		    message("Accept error "+e, true, true);
+		    Tool.error("Accept error "+e, true);
 		    return;
 		}
 		// fork a thread to handle that connection 
@@ -119,7 +122,7 @@ public class ImageReceiver {
 	/** Run the server thread */
 	public void run () {
 
-	    message("forked receiving thread",false,false);
+	    Tool.trace(" -net- new connection, forked receiving thread");
 	    long count=0;
     
 	    // read from the input stream
@@ -127,8 +130,10 @@ public class ImageReceiver {
 	    
 
 		// optimization: try if we can reuse an recycled ImageWrapper
-		ImageWrapper recvImage = recycledWrapperQueue.poll();
-		if (recvImage == null) recvImage = new ImageWrapper(width,height);
+		//ImageWrapper recvImage = recycledWrapperQueue.poll();
+		//if (recvImage == null) recvImage = new ImageWrapper(width,height);
+		
+		ImageWrapper recvImage = new ImageWrapper(width,height);
 		int r0=0, r1=0;
 		
 		try {
@@ -136,17 +141,20 @@ public class ImageReceiver {
 		    if (r0>0)
 			r1 = recvImage.readData( inStr );	
 		} catch ( Exception e ) {
-		    message("failed to receive image: "+e,true,false);
+		    Tool.error("failed to receive image: "+e,false);
 		    return;
 		}
 		if (r0<0 || r1<0) {
 		    //reopen port
-		    message(String.format(
-			"conn dropped (after %d img)",count),false,false);
+		    Tool.trace(String.format(
+			"- net- conn dropped (after %d img)",count));
 		    break;
 		}
 		// put the image into the queue
 		imageQueue.offer( recvImage );
+		if ( imageWriter != null)
+		    imageWriter.saveImage( recvImage );
+		
 		count++;
 	    }
 
@@ -163,66 +171,31 @@ public class ImageReceiver {
 	try {
 	    iw = imageQueue.take();
 	} catch (InterruptedException e) {
-	    message( "Taking images from queue interrupted",true,false);
+	    Tool.error( "Taking images from queue interrupted",false);
 	    iw = null;
 	}
 	return iw;
     }
     
 
-    /** Queues an ImageWrapper for recycling */
+    /* Queues an ImageWrapper for recycling 
     public void recycleWrapper( ImageWrapper iw ) {
 	recycledWrapperQueue.offer( iw );
-    }	
+    } */
 
-
-
-    // ---- Notification handling ----
-
-    private void message( String m, boolean err, boolean fail) {
-	for ( Notify i: listeners)
-	    i.message( m, err, fail );
+    /** Incoming images will be passed to the 
+     * provided writer for disk storage. Set to 'null'
+     * to deactivate */
+    public void setDiskWriter( ImageDiskWriter iw ) {
+	imageWriter = iw;
     }
 
-    /** Add a notification listener */
-    public void addListener( Notify l ) {
-	listeners.add(l);
-    }
-    /** Remove a notification listener */
-    public void removeListener( Notify l) {
-	listeners.remove(l);
-    }
-    /** Server notifications */
-    public interface Notify {
-	/** Gets called when the ImageReeicer reports an event.
-	 *  Please note: Currently, notifications are send from within the
-	 *  server threads as blocking, so code should NOT spend too
-	 *  much time to react to them.
-	 *  @param message A clear-text message what happened
-	 *  @param isError If the message is to be considered an error
-	 *  @param isFatal If an error occurred that stopped the server
-	 * */
-	public void message( String message, boolean isError, boolean isFatal);
-    }
-
-
+    
     /** For testing ... */
     public static void main(String [] arg) 
 	throws java.net.UnknownHostException, java.io.IOException {
 
 	ImageReceiver nl = new ImageReceiver(16,512,512);
-
-	
-	nl.addListener( new ImageReceiver.Notify() {
-	    public void message( String m, boolean err, boolean fail) {
-		if (err) {
-		    System.err.println(((fail)?("FAIL:"):("err: "))+m);
-		} else {
-		    System.out.println("srv: "+m);
-		}
-	    }
-	});
-	
 	nl.startReceiving( null, null);
     }
 

@@ -320,13 +320,6 @@ public class TestInstantRecon  {
 	    ImageReceiver ir = new ImageReceiver(50,512,512);
 	    boolean keepRunning = true;
 
-	    ir.addListener( new ImageReceiver.Notify() {
-		public void message( String m , boolean err, boolean fail) {
-		    String e = (err)?( (fail)?("FAIL: "):("err: ") ):("net: ");
-		    Tool.trace( e + m );
-		}
-	    });
-
 	    try {
 		ir.startReceiving(null,null);	
 	    } catch  ( java.io.IOException e ) {

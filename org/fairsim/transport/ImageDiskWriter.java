@@ -80,7 +80,7 @@ public class ImageDiskWriter {
 	String nowAsISO = df.format(new java.util.Date());
 	File outfile = new File( saveFolder , prefix+"_"+nowAsISO+".livesim");
 
-	fileRunner = new ImageSaveThread( outfile );
+	fileRunner = new ImageSaveThread( outfile, prefix+"_"+nowAsISO );
 	fileRunner.start();
     }
 
@@ -104,16 +104,20 @@ public class ImageDiskWriter {
     class ImageSaveThread extends Thread {
     
 	final FileOutputStream outfile ;
+	final String filename;
 	boolean stopSoon = false;
 
-	ImageSaveThread(File out) throws java.io.IOException {
-	    outfile = new FileOutputStream(out);
+	ImageSaveThread(File out, String name) throws java.io.IOException {
+	    outfile  = new FileOutputStream(out);
+	    filename = name;
 	}
 
 
 	public void run() {
 	    
+	    Tool.trace("-disk- Writing to "+ filename);
 	    while (!stopSoon) {
+
 
 		// retrieve the next image to save
 		ImageWrapper imgToSave = null;
@@ -137,6 +141,7 @@ public class ImageDiskWriter {
 	    } catch (java.io.IOException e) {
 		throw new RuntimeException(e);
 	    }
+	    Tool.trace("-disk- Stopped writing to "+filename);
 	}
 
     }
