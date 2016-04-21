@@ -25,6 +25,10 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 #include "org_fairsim_accel_AccelVectorFactory.h"
 #include "stdC.h"
 
+JNIEXPORT jlong JNICALL Java_org_fairsim_accel_AccelVectorFactory_nativeAllocMemory
+  (JNIEnv *env, jclass obj, jint len) {
+    return (jlong)malloc( len );
+}
 
 JNIEXPORT jlong JNICALL Java_org_fairsim_accel_FFTProvider_nativeCreatePlan2d
   (JNIEnv *env, jclass mo, jint w, jint h) {

@@ -20,6 +20,7 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 #include <stdio.h>
 #include <string.h>
 #include <complex.h>
+#include <stdint.h>
 
 #include <cufft.h>
 #include <cuComplex.h>
@@ -349,13 +350,13 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx2d_nativeCOPYSHORT
     cplxVecHandle * ft = (cplxVecHandle *)vt;
 
     // copy data to GPU buffer
-    cudaMemcpy( (void*)buf, java, len*sizeof(short), cudaMemcpyHostToDevice );
+    cudaMemcpy( (void*)buf, java, len*sizeof(uint16_t), cudaMemcpyHostToDevice );
 
     // de-reference java-side array
     env->ReleasePrimitiveArrayCritical(javaArr, java, 0);
     
     // convert short -> float on the GPU
-    kernelCplxCopyShort<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads >>>(len, ft->data, (short*)buf);
+    kernelCplxCopyShort<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads >>>( len, ft->data, (uint16_t*)buf );
 };
 
 
@@ -446,7 +447,7 @@ __global__ void kernelCplxCopyReal( int len, cuComplex * out, float * in ) {
     }
 }
 
-__global__ void kernelCplxCopyShort( int len, cuComplex * out, short * in ) {
+__global__ void kernelCplxCopyShort( int len, cuComplex * out, uint16_t * in ) {
   int i = blockIdx.x*blockDim.x + threadIdx.x;
   if (i < len) {
     out[i].x = in[i];

@@ -216,6 +216,9 @@ public final class Vec {
 	/** Add all input vectors to this vector */
 	public void add( Real ... in );
 
+	/** Add a constant value to all components */
+	public void addConst( float a );
+
 	/** Computes this += a * x */
 	public void axpy( float a , Vec.Real x );
 

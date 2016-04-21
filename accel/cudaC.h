@@ -45,7 +45,7 @@ __global__ void kernelTimes( int len, float * out, float * in );
 __global__ void kernelRealReduce(float *g_idata, float *g_odata, unsigned int n, const bool sqr);
 
 __global__ void kernelCplxCopyReal( int len, cuComplex *out, float *in);
-__global__ void kernelCplxCopyShort( int len, cuComplex * out, short * in );
+__global__ void kernelCplxCopyShort( int len, cuComplex * out, uint16_t * in );
 __global__ void kernelCplxAdd( int len, cuComplex * out, cuComplex * in ); 
 __global__ void kernelCplxAxpy( int len, cuComplex * out, cuComplex * in, cuComplex a );
 __global__ void kernelCplxTimesCplx( int len, cuComplex * out, cuComplex * in, bool conj );

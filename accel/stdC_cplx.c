@@ -21,6 +21,7 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 #include <string.h>
 #include <math.h>
 #include <complex.h>
+#include <stdint.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -100,6 +101,29 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_nativeCOPYCPLX
     memcpy( ft, f1, len*sizeof(float complex));
 
 }
+
+JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx2d_nativeCOPYSHORT
+  (JNIEnv *env, jobject obj, jlong vt, jlong buf, jshortArray javaArr, jint len) {
+    
+    // get the java-side buffer
+    jshort * java  = (*env)->GetPrimitiveArrayCritical(env, javaArr, 0);
+    if ( java == NULL ) {
+	jclass exClass = (*env)->FindClass( env, "java/lang/OutOfMemoryError" );
+	(*env)->ThrowNew( env, exClass, "JNI Buffer copy OOM");
+    }	    
+  
+    // get the buffers
+    float complex * ft = (float complex *)vt;
+    uint16_t * f1 = (uint16_t *)java;
+
+#pragma omp parallel for    
+    for (int i=0; i<len; i++)
+	ft[i] = f1[i];
+
+    // de-reference java-side array
+    (*env)->ReleasePrimitiveArrayCritical(env, javaArr, java, 0);
+    
+};
 
 
 // add vectors
