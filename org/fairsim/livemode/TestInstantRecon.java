@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 */
 
-package org.fairsim.tests;
+package org.fairsim.livemode;
 
 
 import java.util.concurrent.ArrayBlockingQueue;
@@ -32,8 +32,8 @@ import java.awt.event.ActionEvent;
 import org.fairsim.linalg.*;
 import org.fairsim.sim_algorithm.*;
 
-import org.fairsim.network.ImageReceiver;
-import org.fairsim.network.ImageWrapper;
+import org.fairsim.transport.ImageReceiver;
+import org.fairsim.transport.ImageWrapper;
 
 import org.fairsim.sim_gui.PlainImageDisplay;
 

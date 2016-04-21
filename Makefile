@@ -30,8 +30,10 @@ fiji:
 	$(JC) $(JFLAGS) org/fairsim/fiji/*.java
 linalg:
 	$(JC) $(JFLAGS) org/fairsim/linalg/*.java
-network:
-	$(JC) $(JFLAGS) org/fairsim/network/*.java
+livemode:
+	$(JC) $(JFLAGS) org/fairsim/livemode/*.java
+transport:
+	$(JC) $(JFLAGS) org/fairsim/transport/*.java
 sim_algorithm:
 	$(JC) $(JFLAGS) org/fairsim/sim_algorithm/*.java
 sim_gui:

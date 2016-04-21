@@ -1,0 +1,7 @@
+<fairsim>
+<vigor-settings>
+<NetworkBuffer type="int">100</NetworkBuffer>
+<DiskBuffer type="int">100</DiskBuffer>
+<DiskFolder type="string">/vol/VIGOR-stream</DiskFolder>
+</vigor-settings>
+</fairsim>

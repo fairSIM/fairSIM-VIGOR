@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 */
 
-package org.fairsim.network;
+package org.fairsim.transport;
 
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
@@ -83,6 +83,11 @@ public class ImageWrapper {
 	return buffer;
     }
 
+    /** Obtain a reference to the internal buffer (w/o new header, for streaming to disk) */
+    public byte [] refBuffer() {
+	return buffer;
+    }	
+    
     /** Query how many bytes of the buffer to send */
     public int bytesToSend() {
 	return width*height*bpp+128;

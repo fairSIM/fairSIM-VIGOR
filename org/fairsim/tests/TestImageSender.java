@@ -23,8 +23,8 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ShortProcessor;
 
-import org.fairsim.network.ImageSender;
-import org.fairsim.network.ImageWrapper;
+import org.fairsim.transport.ImageSender;
+import org.fairsim.transport.ImageWrapper;
 
 import org.fairsim.utils.Tool;
 

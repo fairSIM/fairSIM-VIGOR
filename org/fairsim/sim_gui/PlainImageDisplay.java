@@ -42,8 +42,8 @@ import javax.swing.event.ChangeEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 
-import org.fairsim.network.ImageReceiver;
-import org.fairsim.network.ImageWrapper;
+import org.fairsim.transport.ImageReceiver;
+import org.fairsim.transport.ImageWrapper;
 
 import org.fairsim.linalg.Vec2d;
 

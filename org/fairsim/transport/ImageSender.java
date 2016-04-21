@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 */
 
-package org.fairsim.network;
+package org.fairsim.transport;
 
 import java.io.InputStream;
 import java.io.OutputStream;
