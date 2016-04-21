@@ -310,16 +310,41 @@ public class PlainImageDisplay {
     /** Main method for easy testing */
     public static void main( String [] arg ) throws java.io.IOException {
 	
-	
+	final int width=1024, height=1024;
+
 	// create an ImageDisplay sized 512x512
-	PlainImageDisplay pd = new PlainImageDisplay(512,512);
+	PlainImageDisplay pd = new PlainImageDisplay(width,height);
 
 	// create a frame and add the display
 	JFrame mainFrame = new JFrame("Plain Image Receiver");
 	mainFrame.add( pd.getPanel() ); 
 	mainFrame.pack();
 	mainFrame.setVisible(true);
-    
+
+	short [][] pxl = new short[1000][width*height];
+
+	Tool.Timer t1 = Tool.getTimer();
+
+	for (int i=0;i<100;i++) {
+	    for (int y=0;y<height;y++)
+	    for (int x=0;x<width;x++) {
+		pxl[i][x+y*width]=(short)(Math.random()*250);
+	    }
+	}
+
+	while (true) {
+	   
+	    t1.start();
+	    for (int i=0;i<100;i++) {
+		pd.newImage(pxl[(int)(Math.random()*99)],width,height);
+	    }
+	    t1.stop();
+	    System.out.println( "fps: "+((1000*100)/t1.msElapsed()) );
+	}
+
+	
+
+	/*
 	// create a network receiver
 	ImageReceiver ir = new ImageReceiver(64,512,512);
 	
@@ -361,7 +386,10 @@ public class PlainImageDisplay {
 	    if (iw!=null)
 		pd.newImage( imgVec );
 	}   
-	
+	*/
+
+
+
     }
 
 
