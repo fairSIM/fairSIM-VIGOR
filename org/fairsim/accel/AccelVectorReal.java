@@ -266,7 +266,7 @@ class AccelVectorReal2d extends AccelVectorReal implements Vec2d.Real {
 
     @Override
     public void setFrom16bitPixels( short [] in ) {
-	long ptrbuf = 0;
+	AccelVectorFactory.NativeShortBuffer ptrbuf = null;
 	try {
 	    ptrbuf = AccelVectorFactory.nativeBuffers.take();
 	} catch (Exception e) {
@@ -276,7 +276,7 @@ class AccelVectorReal2d extends AccelVectorReal implements Vec2d.Real {
 	if (elemCount > AccelVectorFactory.nativeBufferSize/4)
 	    throw new RuntimeException("Size exceeds buffer");
 	
-	nativeCOPYSHORT( this.natData, ptrbuf, in, elemCount );
+	nativeCOPYSHORT( this.natData, ptrbuf.host, ptrbuf.device, in, elemCount );
 	deviceNew = true;
 	AccelVectorFactory.nativeBuffers.offer( ptrbuf );
     }
@@ -286,7 +286,7 @@ class AccelVectorReal2d extends AccelVectorReal implements Vec2d.Real {
 
     // ------ Native methods ------
 
-    native void nativeCOPYSHORT( long ptrOut, long buffer, short [] in, int elem);
+    native void nativeCOPYSHORT( long ptrOut, long bufferHost, long bufferDevice, short [] in, int elem);
 
     native void  nativeSet( long data, int x, int y, int width, float in);
     native float nativeGet( long data, int x, int y, int width);

@@ -28,13 +28,16 @@ typedef struct {
     float * data;
     float * deviceReduceBuffer;
     float * hostReduceBuffer;
+    cudaStream_t vecStream;
 } realVecHandle;
 
 typedef struct {
     int len;
     cuComplex * data;
+    cuComplex * dataHost;
     void * deviceReduceBuffer;
     void * hostReduceBuffer;
+    cudaStream_t vecStream;
 } cplxVecHandle;
 
 
@@ -43,6 +46,7 @@ __global__ void kernelAdd( int len, float * out, float * in );
 __global__ void kernelAxpy( int len, float * out, float * in, float a );
 __global__ void kernelTimes( int len, float * out, float * in );
 __global__ void kernelRealReduce(float *g_idata, float *g_odata, unsigned int n, const bool sqr);
+__global__ void kernelRealCopyShort( int len, float * out, uint16_t * in );
 
 __global__ void kernelCplxCopyReal( int len, cuComplex *out, float *in);
 __global__ void kernelCplxCopyShort( int len, cuComplex * out, uint16_t * in );

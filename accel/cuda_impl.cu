@@ -42,11 +42,17 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorFactory_nativeSync
 
 JNIEXPORT jlong JNICALL Java_org_fairsim_accel_AccelVectorFactory_nativeAllocMemory
   (JNIEnv *env, jclass, jint size) {
-    
     void * buf;
     cudaMalloc( &buf, size );
     return (jlong)buf;
+};
 
+
+JNIEXPORT jlong JNICALL Java_org_fairsim_accel_AccelVectorFactory_nativeAllocMemoryHost
+  (JNIEnv *env, jclass, jint size) {
+    void * buf;
+    cudaMallocHost( &buf, size );
+    return (jlong)buf;
 };
 
 
@@ -66,10 +72,9 @@ JNIEXPORT jlong JNICALL Java_org_fairsim_accel_AccelVectorReal_alloc
     cudaMemset( (float *)vec->data, 0,	len*sizeof(float));
 
     cudaMalloc(  (void**)&vec->deviceReduceBuffer, sizeof(float)*maxReduceBlocks);
-  
-    //vec->hostReduceBuffer = (float*)malloc( sizeof(float) * maxReduceBlocks ); 
     cudaMallocHost((void**)&vec->hostReduceBuffer,  sizeof(float) * maxReduceBlocks ); 
         
+    cudaStreamCreate( &vec->vecStream );
  
     return (jlong)vec;
 }
@@ -83,7 +88,7 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal_dealloc
     cudaFree( vec->data );
     cudaFree( vec->deviceReduceBuffer );
     cudaFreeHost( vec->hostReduceBuffer );
-    //free( vec->hostReduceBuffer );
+    cudaStreamDestroy( vec->vecStream );
     free( vec );
 }
 
@@ -106,12 +111,9 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal_copyBuffer
     // memcpy
     if ( toJava ) {
 	cudaMemcpy( java, native->data, size*sizeof(float), cudaMemcpyDeviceToHost );
-	//printf(" to  CPU: %ld\n", (long)native);
     } else {
 	cudaMemcpy( native->data, java, size*sizeof(float), cudaMemcpyHostToDevice );
-	//printf("from CPU: %ld\n", (long)native);
     }   
-    //fflush(stdout);    
      
     // de-reference java-side array
     env->ReleasePrimitiveArrayCritical( javaArr, java, 0);
@@ -155,6 +157,33 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal_nativeTIMES
 
 }
 
+// copy short
+JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal2d_nativeCOPYSHORT
+  (JNIEnv *env, jobject, jlong vt, jlong bufHost, jlong buf, jshortArray javaArr, jint len) {
+    
+    // get the GPU-sided vector
+    realVecHandle * ft = (realVecHandle *)vt;
+   
+    /* 
+    // get the java-side buffer
+    jshort * java  = (jshort *)(env)->GetPrimitiveArrayCritical(javaArr, 0);
+    if ( java == NULL ) {
+	jclass exClass = (env)->FindClass( "java/lang/OutOfMemoryError" );
+	env->ThrowNew( exClass, "JNI Buffer copy OOM");
+    }	    
+ 
+    // copy to pinned host memory
+    cudaMemcpy( (void*)bufHost, java, len*sizeof(uint16_t), cudaMemcpyHostToHost );
+    
+    // de-reference java-side array
+    env->ReleasePrimitiveArrayCritical(javaArr, java, 0);
+*/
+    // copy pinned host to device
+    cudaMemcpyAsync( (void*)buf, (void*)bufHost, len*sizeof(uint16_t), cudaMemcpyHostToDevice, ft->vecStream );
+
+    // convert short -> float on the GPU
+    kernelRealCopyShort<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads, 0, ft->vecStream >>>( len, ft->data, (uint16_t*)buf );
+};
 
 
 
@@ -187,6 +216,12 @@ JNIEXPORT jdouble JNICALL Java_org_fairsim_accel_AccelVectorReal_nativeREDUCE
 }
 
 
+__global__ void kernelRealCopyShort( int len, float * out, uint16_t * in ) {
+  int i = blockIdx.x*blockDim.x + threadIdx.x;
+  if (i < len) {
+    out[i] = in[i];
+  }
+}
 
 
 __global__ void kernelAdd( int len, float * out, float * in ) {
@@ -261,11 +296,16 @@ JNIEXPORT jlong JNICALL Java_org_fairsim_accel_AccelVectorCplx_alloc
 
     cudaMalloc( (void**)&vec->data,	len*sizeof(cuComplex));
     cudaMemset( (cuComplex *)vec->data, 0,	len*sizeof(cuComplex));
+    
+    //cudaMallocHost((void**)&vec->dataHost,      len*sizeof(cuComplex)); 
+    //cudaMemset( (cuComplex *)vec->dataHost, 0,  len*sizeof(cuComplex));
 
     cudaMalloc(  (void**)&vec->deviceReduceBuffer, sizeof(cuComplex)*maxReduceBlocks);
   
     //vec->hostReduceBuffer = (float*)malloc( sizeof(float) * maxReduceBlocks ); 
     cudaMallocHost((void**)&vec->hostReduceBuffer,  sizeof(cuComplex) * maxReduceBlocks ); 
+
+    cudaStreamCreate( &vec->vecStream );
  
     return (jlong)vec;
 
@@ -279,9 +319,13 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_dealloc
     cplxVecHandle * vec = (cplxVecHandle *)addr;
 
     cudaFree( vec->data );
+    //cudaFreeHost( vec->dataHost );
+
     cudaFree( vec->deviceReduceBuffer );
     cudaFreeHost( vec->hostReduceBuffer );
-    //free( vec->hostReduceBuffer );
+    
+    cudaStreamDestroy( vec->vecStream );
+    
     free( vec );
 }
 
@@ -337,26 +381,29 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_nativeCOPYCPLX
 
 
 JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx2d_nativeCOPYSHORT
-  (JNIEnv *env, jobject, jlong vt, jlong buf, jshortArray javaArr, jint len) {
+  (JNIEnv *env, jobject, jlong vt, jlong bufHost, jlong buf, jshortArray javaArr, jint len) {
     
+    // get the GPU-sided vector
+    cplxVecHandle * ft = (cplxVecHandle *)vt;
+/*    
     // get the java-side buffer
     jshort * java  = (jshort *)(env)->GetPrimitiveArrayCritical(javaArr, 0);
     if ( java == NULL ) {
 	jclass exClass = (env)->FindClass( "java/lang/OutOfMemoryError" );
 	env->ThrowNew( exClass, "JNI Buffer copy OOM");
     }	    
-  
-    // get the GPU-sided vector
-    cplxVecHandle * ft = (cplxVecHandle *)vt;
-
-    // copy data to GPU buffer
-    cudaMemcpy( (void*)buf, java, len*sizeof(uint16_t), cudaMemcpyHostToDevice );
-
+ 
+    // copy to pinned host memory
+    cudaMemcpy( (void*)bufHost, java, len*sizeof(uint16_t), cudaMemcpyHostToHost );
+    
     // de-reference java-side array
     env->ReleasePrimitiveArrayCritical(javaArr, java, 0);
-    
+*/
+    // copy pinned host to device
+    cudaMemcpyAsync( (void*)buf, (void*)bufHost, len*sizeof(uint16_t), cudaMemcpyHostToDevice, ft->vecStream );
+
     // convert short -> float on the GPU
-    kernelCplxCopyShort<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads >>>( len, ft->data, (uint16_t*)buf );
+    kernelCplxCopyShort<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads, 0, ft->vecStream >>>( len, ft->data, (uint16_t*)buf );
 };
 
 

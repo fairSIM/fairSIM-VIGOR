@@ -31,12 +31,17 @@ public class AccelVectorFactory implements VectorFactory {
     static final int nativeBufferSize  = 1024*1024*8;
     static final int nativeBufferCount = 32;
 
-    static final BlockingQueue<Long> nativeBuffers = 
-	new ArrayBlockingQueue<Long>(nativeBufferCount);
-
+    static final BlockingQueue<NativeShortBuffer> nativeBuffers = 
+	new ArrayBlockingQueue<NativeShortBuffer>(nativeBufferCount);
+    
     static {
 	for (int i=0; i<nativeBufferCount; i++)
-	    nativeBuffers.offer( nativeAllocMemory(nativeBufferSize));
+	    nativeBuffers.offer( new NativeShortBuffer()); 
+    }
+    
+    static class NativeShortBuffer {
+	long device = nativeAllocMemory(nativeBufferSize);
+	long host   = nativeAllocMemoryHost(nativeBufferSize);
     }
 
 
@@ -77,4 +82,5 @@ public class AccelVectorFactory implements VectorFactory {
 
     native static void nativeSync();
     native static long nativeAllocMemory(int size);
+    native static long nativeAllocMemoryHost(int size);
 }

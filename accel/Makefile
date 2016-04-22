@@ -34,7 +34,7 @@ libstdcimpl.so: headers
 
 libcudaimpl.so: headers
 	nvcc -O3 -I/usr/lib/jvm/java-6-openjdk-amd64/include -arch compute_20 \
-	--compiler-options '-fPIC' -shared -o libcudaimpl.so -lcufft \
+	--compiler-options '-fPIC -Wall' -shared -o libcudaimpl.so -lcufft \
 	cuda_impl.cu
 	
 clean:

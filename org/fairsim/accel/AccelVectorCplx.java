@@ -23,6 +23,7 @@ import org.fairsim.linalg.Vec;
 import org.fairsim.linalg.Vec2d;
 import org.fairsim.linalg.Vec3d;
 import org.fairsim.linalg.Cplx;
+import org.fairsim.utils.Tool;
 
 import java.nio.ByteBuffer;
 
@@ -381,7 +382,10 @@ class AccelVectorCplx2d extends AccelVectorCplx implements Vec2d.Cplx {
 
     @Override
     public void setFrom16bitPixels( short [] in ) {
-	long ptrbuf = 0;
+	
+	AccelVectorFactory.NativeShortBuffer ptrbuf = null;
+	//Tool.trace("copy from 16 bit buffer");
+
 	try {
 	    ptrbuf = AccelVectorFactory.nativeBuffers.take();
 	} catch (Exception e) {
@@ -391,7 +395,7 @@ class AccelVectorCplx2d extends AccelVectorCplx implements Vec2d.Cplx {
 	if (elemCount > AccelVectorFactory.nativeBufferSize/8)
 	    throw new RuntimeException("Size exceeds buffer");
 	
-	nativeCOPYSHORT( this.natData, ptrbuf, in, elemCount );
+	nativeCOPYSHORT( this.natData, ptrbuf.host, ptrbuf.device, in, elemCount );
 	deviceNew = true;
 	AccelVectorFactory.nativeBuffers.offer( ptrbuf );
     }
@@ -432,7 +436,7 @@ class AccelVectorCplx2d extends AccelVectorCplx implements Vec2d.Cplx {
 
     // ------ Native methods ------
 
-    native void nativeCOPYSHORT( long ptrOut, long buffer, short [] in, int elem);
+    native void nativeCOPYSHORT( long ptrOut, long hostBuffer, long deviceBuffer, short [] in, int elem);
 
     native void nativeSet( long data, int x, int y, int width, float re, float im);
     native float [] nativeGet( long data, int x, int y, int width);
