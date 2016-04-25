@@ -23,48 +23,89 @@ import org.fairsim.linalg.Vec2d;
 import org.fairsim.linalg.Vec3d;
 import org.fairsim.linalg.VectorFactory;
 
+import org.fairsim.utils.Tool;
+
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ArrayBlockingQueue;
 
 public class AccelVectorFactory implements VectorFactory {
 
+
+    // native-memory buffer for efficient copying
     static final int nativeBufferSize  = 1024*1024*8;
     static final int nativeBufferCount = 32;
 
-    static final BlockingQueue<NativeShortBuffer> nativeBuffers = 
-	new ArrayBlockingQueue<NativeShortBuffer>(nativeBufferCount);
+    // TODO: Other thread-save collections?
+    final BlockingQueue<Long> nativeDeviceBuffers = 
+	new ArrayBlockingQueue<Long>(nativeBufferCount*2);
     
-    static {
+    final BlockingQueue<Long> nativeHostBuffers = 
+	new ArrayBlockingQueue<Long>(nativeBufferCount*2);
+
+    {
 	for (int i=0; i<nativeBufferCount; i++)
-	    nativeBuffers.offer( new NativeShortBuffer()); 
+	    nativeDeviceBuffers.offer( nativeAllocMemory( nativeBufferSize)); 
+	for (int i=0; i<nativeBufferCount; i++)
+	    nativeHostBuffers.offer( nativeAllocMemoryHost( nativeBufferSize)); 
     }
     
-    static class NativeShortBuffer {
-	long device = nativeAllocMemory(nativeBufferSize);
-	long host   = nativeAllocMemoryHost(nativeBufferSize);
+
+    /** Obtain a buffer in pinned native host memory (please return it!) */
+    long getNativeHostBuffer() {
+	long ret;
+	try {
+	    ret   = nativeHostBuffers.take();
+	} catch (Exception e) {
+	    throw new RuntimeException(e);
+	}
+	Tool.trace("handed out host buffer: " + ret);
+	return ret;
+    }
+    
+    /** Obtain a buffer in native device memory (please return it!) */
+    long getNativeDeviceBuffer() {
+	long ret;
+	try {
+	    ret   = nativeDeviceBuffers.take();
+	} catch (Exception e) {
+	    throw new RuntimeException(e);
+	}
+	return ret;
+    }
+    
+    /** Return a native host-side buffer after use */
+    void returnNativeHostBuffer( long buf ) {
+	System.out.println("just got back host buffer: " + buf);
+	nativeHostBuffers.offer( buf );
+    }
+    
+    /** Return a native device-side buffer after use */
+    void returnNativeDeviceBuffer( long buf ) {
+	System.out.println("just got back DEVICE buffer: " + buf);
+	nativeDeviceBuffers.offer( buf );
     }
 
 
     private AccelVectorFactory() {};
 
-    static public VectorFactory getFactory() {
+    static public AccelVectorFactory getFactory() {
 	return new AccelVectorFactory();
     }
 
-    public Vec.Real createReal( int n) {
-	return new AccelVectorReal( n);
+    public AccelVectorReal createReal( int n) {
+	return new AccelVectorReal( this, n);
     }
 
-    public Vec.Cplx createCplx( int n) {
-	return new AccelVectorCplx( n);
+    public AccelVectorCplx createCplx( int n) {
+	return new AccelVectorCplx( this, n);
     }
 
-    public Vec2d.Real createReal2D(int w, int h) {
-	return new AccelVectorReal2d( w, h);
+    public AccelVectorReal2d createReal2D(int w, int h) {
+	return new AccelVectorReal2d( this, w, h);
     }
     
-    public Vec2d.Cplx createCplx2D(int w, int h) {
-	return new AccelVectorCplx2d( w, h);
+    public AccelVectorCplx2d createCplx2D(int w, int h) {
+	return new AccelVectorCplx2d( this, w, h);
     }
     
     public Vec3d.Real createReal3D(int w, int h, int d) {
@@ -81,6 +122,6 @@ public class AccelVectorFactory implements VectorFactory {
     }
 
     native static void nativeSync();
-    native static long nativeAllocMemory(int size);
-    native static long nativeAllocMemoryHost(int size);
+    native long nativeAllocMemory(int size);
+    native long nativeAllocMemoryHost(int size);
 }

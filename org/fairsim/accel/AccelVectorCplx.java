@@ -35,10 +35,13 @@ class AccelVectorCplx extends AbstractVectorCplx {
     final long natData;
     boolean deviceNew = false, hostNew = false;
 
+    /** store the factory (and realm) */
+    final protected AccelVectorFactory ourFactory;
 
     /** creates a new vector, allocates memory */
-    AccelVectorCplx(int n ){
+    AccelVectorCplx(AccelVectorFactory vf, int n ){
 	super(n);
+	ourFactory = vf;
 	natData = alloc( n );
 	if (natData == 0) {
 	    throw new java.lang.OutOfMemoryError("No memory for"+
@@ -54,13 +57,13 @@ class AccelVectorCplx extends AbstractVectorCplx {
 
     @Override
     public AccelVectorReal createAsReal(int n) {
-	return new AccelVectorReal(n);
+	return ourFactory.createReal(n);
     }
 
 
     @Override
     public AccelVectorCplx duplicate() {
-	AccelVectorCplx ret  = new AccelVectorCplx(elemCount);
+	AccelVectorCplx ret  = ourFactory.createCplx(elemCount);
 	ret.copy( this );
 	return ret;
     }
@@ -289,8 +292,8 @@ class AccelVectorCplx2d extends AccelVectorCplx implements Vec2d.Cplx {
 
     final int width, height;
 
-    AccelVectorCplx2d(int w, int h) {
-	super(w*h);
+    AccelVectorCplx2d(AccelVectorFactory vf, int w, int h) {
+	super(vf, w*h);
 	width=w; height=h;
     }
 
@@ -308,7 +311,7 @@ class AccelVectorCplx2d extends AccelVectorCplx implements Vec2d.Cplx {
 
     @Override
     public AccelVectorCplx2d duplicate() {
-	AccelVectorCplx2d ret = new AccelVectorCplx2d(width, height);
+	AccelVectorCplx2d ret = ourFactory.createCplx2D(width, height);
 	ret.copy( this );
 	return ret;
     }
@@ -383,21 +386,18 @@ class AccelVectorCplx2d extends AccelVectorCplx implements Vec2d.Cplx {
     @Override
     public void setFrom16bitPixels( short [] in ) {
 	
-	AccelVectorFactory.NativeShortBuffer ptrbuf = null;
-	//Tool.trace("copy from 16 bit buffer");
-
-	try {
-	    ptrbuf = AccelVectorFactory.nativeBuffers.take();
-	} catch (Exception e) {
-	    throw new RuntimeException(e);
-	}
-	
 	if (elemCount > AccelVectorFactory.nativeBufferSize/8)
 	    throw new RuntimeException("Size exceeds buffer");
-	
-	nativeCOPYSHORT( this.natData, ptrbuf.host, ptrbuf.device, in, elemCount );
+
+	long ptrbufHost = ourFactory.getNativeHostBuffer();
+	long ptrbufDevice = ourFactory.getNativeDeviceBuffer();
+
+
+	nativeCOPYSHORT( this.natData, ptrbufHost, ptrbufDevice, in, elemCount );
 	deviceNew = true;
-	AccelVectorFactory.nativeBuffers.offer( ptrbuf );
+	
+	ourFactory.nativeHostBuffers.offer( ptrbufHost );
+	ourFactory.nativeDeviceBuffers.offer( ptrbufDevice );
     }
 
     @Override

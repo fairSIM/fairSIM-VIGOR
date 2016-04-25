@@ -33,10 +33,15 @@ class AccelVectorReal extends AbstractVectorReal {
     final long natData;
     boolean deviceNew = false, hostNew = false;
 
+    public int ourCopyMode = 0;
+
+    final protected AccelVectorFactory ourFactory;
+
     /** creates a new vector, allocates memory */
-    AccelVectorReal(int n ){
+    AccelVectorReal(AccelVectorFactory vf, int n ){
 	super(n);
-	natData = alloc( n );
+	ourFactory = vf;
+	natData = alloc( vf, n );
 	if (natData == 0) {
 	    throw new java.lang.OutOfMemoryError("No memory for"+
 		"allocating native vector");
@@ -51,21 +56,34 @@ class AccelVectorReal extends AbstractVectorReal {
 
     @Override
     public AccelVectorReal duplicate() {
-	AccelVectorReal ret  = new AccelVectorReal(elemCount);
+	AccelVectorReal ret  = ourFactory.createReal(elemCount);
 	ret.copy( this );
 	return ret;
     }
 
     @Override
     public void readyBuffer() {
-	if (deviceNew)
-	    copyBuffer( natData, this.data, true, elemCount );	
+	if (deviceNew) {
+	    long buffer = 0;
+	    if (ourCopyMode == 2) {
+		buffer = ourFactory.getNativeDeviceBuffer();
+		if (buffer==0)
+		    throw new RuntimeException("null pointer (caught in JAVA)");
+	    }
+	    copyBuffer( natData, this.data, buffer, true, ourCopyMode );
+	}
 	deviceNew = false;
     };
     
     @Override
     public void syncBuffer() {
-	copyBuffer( natData, this.data, false, elemCount );	
+	long buffer = 0;
+	if (ourCopyMode == 2) {
+	    buffer = ourFactory.getNativeDeviceBuffer();
+	    if (buffer==0)
+		throw new RuntimeException("null pointer (caught in JAVA)");
+	}
+	copyBuffer( natData, this.data, buffer,  false, ourCopyMode );	
 	hostNew = false;
     };
 
@@ -73,7 +91,12 @@ class AccelVectorReal extends AbstractVectorReal {
 	if ( hostNew )
 	    syncBuffer();
     }
-   
+
+    void freeHostCopyBuffer(int i) {
+	System.out.println("Buffer freed: " +i);
+    }
+
+
     @Override
     public void makeCoherent() {
 	if ( hostNew && deviceNew ) 
@@ -181,13 +204,13 @@ class AccelVectorReal extends AbstractVectorReal {
     // ------ native methods ------
 
     /** Allocate vector in native code */
-    native long alloc(int n);
+    native long alloc(AccelVectorFactory vf, int n);
     
     /** Disallocate vector */
     native void dealloc(long adrr);
 
     /** sync to / from java code */
-    native void copyBuffer( long addr, float [] jvec, boolean toJava, int elem );
+    native void copyBuffer( long addr, float [] jvec, long buffer, boolean toJava, int copyMode );
     
     /** add vectors */
     native void nativeAdd( long addrThis, long addrOther, int len );
@@ -209,8 +232,8 @@ class AccelVectorReal2d extends AccelVectorReal implements Vec2d.Real {
 
     final int width, height;
 
-    AccelVectorReal2d(int w, int h) {
-	super(w*h);
+    AccelVectorReal2d(AccelVectorFactory vf, int w, int h) {
+	super(vf, w*h);
 	width=w; height=h;
     }
 
@@ -228,7 +251,7 @@ class AccelVectorReal2d extends AccelVectorReal implements Vec2d.Real {
 
     @Override
     public AccelVectorReal2d duplicate() {
-	AccelVectorReal2d ret = new AccelVectorReal2d(width, height);
+	AccelVectorReal2d ret = ourFactory.createReal2D(width, height);
 	ret.copy( this );
 	return ret;
     }
@@ -266,19 +289,15 @@ class AccelVectorReal2d extends AccelVectorReal implements Vec2d.Real {
 
     @Override
     public void setFrom16bitPixels( short [] in ) {
-	AccelVectorFactory.NativeShortBuffer ptrbuf = null;
-	try {
-	    ptrbuf = AccelVectorFactory.nativeBuffers.take();
-	} catch (Exception e) {
-	    throw new RuntimeException(e);
-	}
 	
 	if (elemCount > AccelVectorFactory.nativeBufferSize/4)
 	    throw new RuntimeException("Size exceeds buffer");
 	
-	nativeCOPYSHORT( this.natData, ptrbuf.host, ptrbuf.device, in, elemCount );
+	long ptrbufHost	= ourFactory.getNativeHostBuffer(); 
+	long ptrbufDevice=ourFactory.getNativeDeviceBuffer();
+
+	nativeCOPYSHORT( this.natData, ptrbufHost, ptrbufDevice, in, elemCount );
 	deviceNew = true;
-	AccelVectorFactory.nativeBuffers.offer( ptrbuf );
     }
 
 

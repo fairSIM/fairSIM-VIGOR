@@ -33,40 +33,45 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 #include "org_fairsim_accel_FFTProvider.h"
 #include "cudaC.h"
 
-// =================== REAL VECTORS ===============================
+const int  nrReduceThreads = 128;    // <-- 2^n, 1024 max.
+const int  nrCuThreads = 256;
 
+// =================== MANAGEMENT ===============================
+
+// device-wide sync, for timing purposes
 JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorFactory_nativeSync
   (JNIEnv *env, jclass) {
     cudaDeviceSynchronize();
 }
 
+// allocate size bytes of native device-side memory
 JNIEXPORT jlong JNICALL Java_org_fairsim_accel_AccelVectorFactory_nativeAllocMemory
-  (JNIEnv *env, jclass, jint size) {
+  (JNIEnv *env, jobject, jint size) {
     void * buf;
     cudaMalloc( &buf, size );
     return (jlong)buf;
 };
 
-
+// allocate size bytes of native, pinned host-side memory
 JNIEXPORT jlong JNICALL Java_org_fairsim_accel_AccelVectorFactory_nativeAllocMemoryHost
-  (JNIEnv *env, jclass, jint size) {
+  (JNIEnv *env, jobject, jint size) {
     void * buf;
     cudaMallocHost( &buf, size );
     return (jlong)buf;
 };
 
 
-const int  nrReduceThreads = 128;    // <-- 2^n, 1024 max.
-const int  nrCuThreads = 256;
+// =================== REAL VECTORS ===============================
 
 // allocate the vector
 JNIEXPORT jlong JNICALL Java_org_fairsim_accel_AccelVectorReal_alloc
-  (JNIEnv * env, jobject mo, jint len) {
+  (JNIEnv * env, jobject mo, jobject factory, jint len) {
 
     const int maxReduceBlocks = (len+nrReduceThreads-1)/nrReduceThreads;
 
     realVecHandle * vec = (realVecHandle *)calloc(1, sizeof(realVecHandle));
-    vec->len = len;
+    vec->len  = len;
+    vec->size = len*sizeof(float);
 
     cudaMalloc( (void**)&vec->data,	len*sizeof(float));
     cudaMemset( (float *)vec->data, 0,	len*sizeof(float));
@@ -75,6 +80,16 @@ JNIEXPORT jlong JNICALL Java_org_fairsim_accel_AccelVectorReal_alloc
     cudaMallocHost((void**)&vec->hostReduceBuffer,  sizeof(float) * maxReduceBlocks ); 
         
     cudaStreamCreate( &vec->vecStream );
+
+    // store link to the vector factory
+    env->GetJavaVM( &vec->jvm);
+    jclass avfCl  = env->GetObjectClass( factory );
+    
+    vec->factoryClass = (jclass)env->NewGlobalRef( avfCl );
+    vec->factoryInstance    =   env->NewGlobalRef( factory ); 
+    
+    vec->retBufHost = env->GetMethodID( vec->factoryClass, "returnNativeHostBuffer", "(J)V");
+    vec->retBufDev  = env->GetMethodID( vec->factoryClass, "returnNativeDeviceBuffer", "(J)V");
  
     return (jlong)vec;
 }
@@ -89,14 +104,25 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal_dealloc
     cudaFree( vec->deviceReduceBuffer );
     cudaFreeHost( vec->hostReduceBuffer );
     cudaStreamDestroy( vec->vecStream );
+    
+    env->DeleteGlobalRef( vec->factoryClass );
+    env->DeleteGlobalRef( vec->factoryInstance );
+
     free( vec );
 }
 
-
-// copy our content to java
+/** Copy content JAVA <-> GPU memory. This can be done in 3 versions:
+ *  0) standard cudaMemcpy (syncronous)
+ *  1) cudaMemcpyAsync, with HostRegistered memory 
+ *  2) cudaMemcpyAsync, with copy to pinned buffers
+ *  -> see Memory-ReadMe, on pro/cons
+ * */
 JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal_copyBuffer
   (JNIEnv *env, jobject mo, jlong addr, jfloatArray javaArr, 
-    jboolean toJava, jint size) {
+    jlong buffer, jboolean toJava, jint copyMode) {
+
+    // get the vector to act on
+    realVecHandle * native = (realVecHandle *)addr;
 
     // get the java-side buffer
     jfloat * java  = (jfloat *)env->GetPrimitiveArrayCritical( javaArr, 0);
@@ -104,20 +130,84 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal_copyBuffer
 	jclass exClass = env->FindClass( "java/lang/OutOfMemoryError" );
 	env->ThrowNew( exClass, "JNI Buffer copy OOM");
     }	    
-  
-    // get our buffer
-    realVecHandle * native = (realVecHandle *)addr;
 
-    // memcpy
-    if ( toJava ) {
-	cudaMemcpy( java, native->data, size*sizeof(float), cudaMemcpyDeviceToHost );
-    } else {
-	cudaMemcpy( native->data, java, size*sizeof(float), cudaMemcpyHostToDevice );
-    }   
+    // sync copy, blocks both this thread and full GPU
+    if ( copyMode == 0 ) {
+	if (!toJava) {
+	    cudaRE( cudaMemcpy( native->data, java, native->size, cudaMemcpyHostToDevice) );
+	} else {
+	    cudaRE( cudaMemcpy( java, native->data, native->size, cudaMemcpyDeviceToHost) );
+	}
+	env->ReleasePrimitiveArrayCritical( javaArr, java, native->size );  // unlock java memory
+    }
+    
+    // Async copy by pinning the java-provided memory (doesn't block GPU, but this thread)
+    if ( copyMode == 1 ) {
+	
+	cudaRE( cudaHostRegister( java, native->size, 0));	// register, start copy
+	if ( !toJava ) {
+	    cudaRE( cudaMemcpyAsync( native->data, java, native->size, 
+		cudaMemcpyHostToDevice, native->vecStream) );
+	} else {
+	    cudaRE( cudaMemcpyAsync( java, native->data, native->size, 
+		cudaMemcpyDeviceToHost, native->vecStream) );
+	}
+	cudaRE( cudaStreamSynchronize( native->vecStream ) );	// wait for copy to complete
+	cudaRE( cudaHostUnregister( java ) );			// unregister the memory
+	env->ReleasePrimitiveArrayCritical( javaArr, java, native->size );  // unlock java memory
+    }
+
+    // Async copy by copying to buffer first (blocks neither this thread nor GPU)
+    if ( copyMode == 2 ) {
+
+	if ( buffer == 0 ) {
+	    fprintf(stderr, "Null pointer (in copy mode 2)!\n");
+	    return;
+	}   
      
-    // de-reference java-side array
-    env->ReleasePrimitiveArrayCritical( javaArr, java, 0);
+	native->tmpHostBuffer = (void*)buffer;
 
+	//memcpy( native->tmpHostBuffer, java, native->size );	    // copy to tmp. host-side buffer
+	env->ReleasePrimitiveArrayCritical( javaArr, java, native->size );  // unlock java memory
+	
+	// start async transfer to device
+	cudaMemcpyAsync( native->data, native->tmpHostBuffer, native->size,
+	    cudaMemcpyHostToDevice, native->vecStream);
+
+	// add callback to give back the buffer after transfer
+	cudaRE( cudaStreamAddCallback( native->vecStream, &returnBufferToJava, (void*)native, 0)); 
+    
+    }
+
+        
+
+}
+
+// executed by the async copy operation, returns the host-side pinned buffer
+// back to Java for reuse
+void returnBufferToJava( cudaStream_t stream, cudaError_t status, void* ptr ) {
+
+    // retrieve vector    
+    realVecHandle * vec = (realVecHandle*)ptr;
+
+    printf("ping");
+
+    // retrieve env
+    JNIEnv * env; int detachLater=0;
+    int getEnvStat = vec->jvm->GetEnv( (void**)&env, JNI_VERSION_1_6);	
+    if ( getEnvStat == JNI_EDETACHED) {
+	if (vec->jvm->AttachCurrentThread((void **) &env, NULL) != 0) {
+	    fprintf(stderr,"Failed to attached JVM");
+	}
+	detachLater=1;    
+    }       
+
+    // call callback
+    env->CallVoidMethod( vec->factoryInstance, vec->retBufHost, vec->tmpHostBuffer);
+
+    if (detachLater)
+	vec->jvm->DetachCurrentThread(); 
+    printf("pong %ld \n", vec->tmpHostBuffer);
 }
 
 
@@ -164,7 +254,6 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal2d_nativeCOPYSHORT
     // get the GPU-sided vector
     realVecHandle * ft = (realVecHandle *)vt;
    
-    /* 
     // get the java-side buffer
     jshort * java  = (jshort *)(env)->GetPrimitiveArrayCritical(javaArr, 0);
     if ( java == NULL ) {
@@ -177,7 +266,7 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal2d_nativeCOPYSHORT
     
     // de-reference java-side array
     env->ReleasePrimitiveArrayCritical(javaArr, java, 0);
-*/
+    
     // copy pinned host to device
     cudaMemcpyAsync( (void*)buf, (void*)bufHost, len*sizeof(uint16_t), cudaMemcpyHostToDevice, ft->vecStream );
 
@@ -293,22 +382,17 @@ JNIEXPORT jlong JNICALL Java_org_fairsim_accel_AccelVectorCplx_alloc
 
     cplxVecHandle * vec = (cplxVecHandle *)calloc(1, sizeof(cplxVecHandle));
     vec->len = len;
+    vec->size = len*sizeof(cuComplex);
 
     cudaMalloc( (void**)&vec->data,	len*sizeof(cuComplex));
     cudaMemset( (cuComplex *)vec->data, 0,	len*sizeof(cuComplex));
-    
-    //cudaMallocHost((void**)&vec->dataHost,      len*sizeof(cuComplex)); 
-    //cudaMemset( (cuComplex *)vec->dataHost, 0,  len*sizeof(cuComplex));
 
-    cudaMalloc(  (void**)&vec->deviceReduceBuffer, sizeof(cuComplex)*maxReduceBlocks);
-  
-    //vec->hostReduceBuffer = (float*)malloc( sizeof(float) * maxReduceBlocks ); 
-    cudaMallocHost((void**)&vec->hostReduceBuffer,  sizeof(cuComplex) * maxReduceBlocks ); 
+    cudaMalloc(  (void**)&vec->deviceReduceBuffer,  sizeof(cuComplex)*maxReduceBlocks );
+    cudaMallocHost((void**)&vec->hostReduceBuffer,  sizeof(cuComplex)*maxReduceBlocks ); 
 
     cudaStreamCreate( &vec->vecStream );
  
     return (jlong)vec;
-
 
 }
 
@@ -319,7 +403,6 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_dealloc
     cplxVecHandle * vec = (cplxVecHandle *)addr;
 
     cudaFree( vec->data );
-    //cudaFreeHost( vec->dataHost );
 
     cudaFree( vec->deviceReduceBuffer );
     cudaFreeHost( vec->hostReduceBuffer );
@@ -332,8 +415,7 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_dealloc
 
 // copy our content to java
 JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_copyBuffer
-  (JNIEnv *env, jobject mo, jlong addr, jfloatArray javaArr, 
-    jboolean toJava, jint size) {
+  (JNIEnv *env, jobject mo, jlong addr, jfloatArray javaArr, jboolean toJava, jint size) {
 
     // get the java-side buffer
     jfloat * java  = (jfloat *)(env)->GetPrimitiveArrayCritical(javaArr, 0);
@@ -385,7 +467,7 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx2d_nativeCOPYSHORT
     
     // get the GPU-sided vector
     cplxVecHandle * ft = (cplxVecHandle *)vt;
-/*    
+    
     // get the java-side buffer
     jshort * java  = (jshort *)(env)->GetPrimitiveArrayCritical(javaArr, 0);
     if ( java == NULL ) {
@@ -398,7 +480,7 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx2d_nativeCOPYSHORT
     
     // de-reference java-side array
     env->ReleasePrimitiveArrayCritical(javaArr, java, 0);
-*/
+    
     // copy pinned host to device
     cudaMemcpyAsync( (void*)buf, (void*)bufHost, len*sizeof(uint16_t), cudaMemcpyHostToDevice, ft->vecStream );
 

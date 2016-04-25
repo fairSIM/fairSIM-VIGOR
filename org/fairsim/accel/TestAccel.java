@@ -30,6 +30,8 @@ public class TestAccel {
     Vec.Real [] vjr, vcr;
     Vec.Cplx [] vjc, vcc;
 
+    final AccelVectorFactory avf = AccelVectorFactory.getFactory();
+    
     final int loopCount    = 100;
     final int loopCountFFT = loopCount/2;
 
@@ -40,10 +42,6 @@ public class TestAccel {
 
     public static void main( String [] arg ){
    
-	//System.loadLibrary("fftw3");
-	//System.loadLibrary("fftw3f");
-   
-	TestAccel tt = new TestAccel();
 	
 	if (arg.length<1 || ( !arg[0].equals("CPU") && !arg[0].equals("CUDA"))) {
 	    System.out.println("Usage: CPU CUDA");
@@ -53,17 +51,23 @@ public class TestAccel {
 	String wd = System.getProperty("user.dir")+"/accel/";
 	System.out.println("loading library from: "+wd);
 
+	String vers=".";
+
 	if (arg[0].equals("CPU")) {
 	    System.load(wd+"libstdcimpl.so");
-	    tt.natVer="nCPU";
+	    vers="nCPU";
 	} 
 	if (arg[0].equals("CUDA")) {
 	    System.load(wd+"libcudaimpl.so");
-	    tt.natVer="CUDA";
+	    vers="CUDA";
 	}
 
-
+	TestAccel tt = new TestAccel();
+    
+	tt.natVer = vers;
 	tt.initArrays();
+
+	tt.testCopyModes();
 
 	tt.testAddTimes();
 	tt.testFft();
@@ -71,6 +75,81 @@ public class TestAccel {
 
 	System.exit(0);	
     }
+
+    // test copy modes
+    public void testCopyModes() {
+
+	AccelVectorFactory  avf = AccelVectorFactory.getFactory();
+
+	AccelVectorReal [] va = new AccelVectorReal[10];
+	AccelVectorReal [] vb = new AccelVectorReal[10];
+
+	for (int i=0; i<10; i++) {
+	    va[i] = avf.createReal(512*512);
+	    vb[i] = avf.createReal(512*512);
+	}
+
+	Tool.Timer t0 = Tool.getTimer();
+	Tool.Timer t1 = Tool.getTimer();
+	Tool.Timer t2 = Tool.getTimer();
+    
+	// standard copy
+	t0.start();
+	for (int i=0; i<10; i++) {
+	    va[i].syncBuffer();
+	    vb[i].syncBuffer();
+	    va[i].add(vb[i]);
+	    va[i].readyBuffer();
+	}
+	AccelVectorFactory.nativeSync();
+	t0.stop();
+
+
+	// pinned host memory
+	for (int i=0; i<10; i++) {
+	    va[i].ourCopyMode = 1;
+	    vb[i].ourCopyMode = 1;
+	}
+	
+	t1.start();
+	for (int i=0; i<10; i++) {
+	    va[i].syncBuffer();
+	    vb[i].syncBuffer();
+	    va[i].add(vb[i]);
+	    va[i].readyBuffer();
+	}
+	AccelVectorFactory.nativeSync();
+	t1.stop();
+
+	
+	// buffered + pinned host memory
+	for (int i=0; i<10; i++) {
+	    va[i].ourCopyMode = 2;
+	    vb[i].ourCopyMode = 2;
+	}
+	
+	t2.start();
+	for (int i=0; i<10; i++) {
+	    va[i].syncBuffer();
+	    vb[i].syncBuffer();
+	    va[i].add(vb[i]);
+	    va[i].readyBuffer();
+	}
+	AccelVectorFactory.nativeSync();
+	t2.stop();
+
+	//if (true) return;
+
+	Tool.trace(" Copy modes: " +t0+t1+t2);
+	
+
+
+
+
+    }
+
+
+
 
 
     // test / time fft
@@ -81,7 +160,7 @@ public class TestAccel {
 
 	Vec2d.Cplx fjv, fcv;
 	fjv = Vec2d.createCplx(512,512);
-	fcv = new AccelVectorCplx2d(512,512);
+	fcv = avf.createCplx2D(512,512);
 	fjv.copy( vjc[0] );	
 	fcv.copy( vjc[0] );	
 	
@@ -128,7 +207,7 @@ public class TestAccel {
 
 	Vec2d.Cplx fjv, fcv;
 	fjv = Vec2d.createCplx(512,512);
-	fcv = new AccelVectorCplx2d(512,512);
+	fcv = avf.createCplx2D(512,512);
 	//fjv.copy( vjc[0] );	
 	//fcv.copy( vjc[0] );	
 
@@ -335,12 +414,12 @@ public class TestAccel {
 	vjr = Vec.createArrayReal(10,vecSize);
 	vcr = new Vec.Real[10];
 	for (int i=0; i<10; i++)
-	    vcr[i] = new AccelVectorReal(vecSize);
+	    vcr[i] = avf.createReal(vecSize);
 
 	vjc = Vec.createArrayCplx(10,vecSize);
 	vcc = new Vec.Cplx[10];
 	for (int i=0; i<10; i++)
-	    vcc[i] = new AccelVectorCplx(vecSize);
+	    vcc[i] = avf.createCplx(vecSize);
 
 
 	// fill with random data

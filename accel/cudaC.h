@@ -16,31 +16,66 @@ You should have received a copy of the GNU General Public License
 along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 */
 
+// inspiered here:
+// http://stackoverflow.com/questions/14038589/what-is-the-canonical-way-to-check-for-errors-using-the-cuda-runtime-api
+#define cudaRE(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess) 
+   {
+      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) exit(code);
+   }
+}
 
-
+// cuFFT plan handling
 typedef struct {
     cufftHandle cuPlan;
     int size;
 } fftPlan;
 
+// structure for real-valued vectors
 typedef struct {
-    int len;
-    float * data;
-    float * deviceReduceBuffer;
-    float * hostReduceBuffer;
-    cudaStream_t vecStream;
+    int len;			    // number of elements in vector
+    size_t size;		    // number of bytes in vector
+    float * data;		    // pointer to data on device
+    
+    float * deviceReduceBuffer;	    // buffer for reduce operations (on device)
+    float * hostReduceBuffer;	    // buffer for reduce operations (on host)
+    cudaStream_t vecStream;	    // CUDA stream of operations on this vector
+    
+    // java management
+    JavaVM *jvm;		    // pointer to the JavaVM in use
+    jclass  factoryClass;	    // vector factory (on java side)
+    jobject factoryInstance;	    // vector factory (on java side)
+    jmethodID retBufHost;	    // buffer return function (in java)
+    jmethodID retBufDev;	    // buffer return function (in java)
+    void * tmpDevBuffer;
+    void * tmpHostBuffer;
 } realVecHandle;
 
+// stucture for complex-valued vectors
 typedef struct {
-    int len;
-    cuComplex * data;
-    cuComplex * dataHost;
-    void * deviceReduceBuffer;
-    void * hostReduceBuffer;
-    cudaStream_t vecStream;
+    int len;			    // number of elements in vector
+    size_t size;		    // number of bytes in vector
+    cuComplex * data;		    // pointer to data on device
+    
+    void * deviceReduceBuffer;	    // buffer for reduce operations (on device)
+    void * hostReduceBuffer;	    // buffer for reduce operations (on host)
+    cudaStream_t vecStream;	    // CUDA stream of operations on this vector
+
+    // java management
+    JavaVM *jvm;		    // pointer to the JavaVM in use
+    jclass  factoryClass;	    // vector factory (on java side)
+    jobject factoryInstance;	    // vector factory (on java side)
+    jmethodID retBufHost;	    // buffer return function (in java)
+    jmethodID retBufDev;	    // buffer return function (in java)
+    void * tmpDevBuffer;
+    void * tmpHostBuffer;
 } cplxVecHandle;
 
 
+void returnBufferToJava( cudaStream_t stream, cudaError_t status, void* ptr );
 
 __global__ void kernelAdd( int len, float * out, float * in ); 
 __global__ void kernelAxpy( int len, float * out, float * in, float a );
