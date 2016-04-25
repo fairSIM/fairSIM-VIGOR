@@ -63,6 +63,29 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
     return JNI_VERSION_1_6;
 }
 
+// executed by the async copy operation, returns the host-side pinned buffer
+// back to Java for reuse
+void returnBufferToJava( cudaStream_t stream, cudaError_t status, void* ptr ) {
+
+    // retrieve vector    
+    realVecHandle * vec = (realVecHandle*)ptr;
+
+    // retrieve env
+    JNIEnv * env; int detachLater=0;
+    int getEnvStat = cachedJVM->GetEnv( (void**)&env, JNI_VERSION_1_6);	
+    if ( getEnvStat == JNI_EDETACHED) {
+	if (cachedJVM->AttachCurrentThread((void **) &env, NULL) != 0) {
+	    fprintf(stderr,"Failed to attached JVM");
+	}
+	detachLater=1;    
+    }       
+
+    // call callback
+    env->CallVoidMethod( vec->factoryInstance, vec->retBufHost, vec->tmpHostBuffer);
+
+    if (detachLater)
+	cachedJVM->DetachCurrentThread(); 
+}
 
 
 

@@ -37,7 +37,7 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 
 // allocate the vector
 JNIEXPORT jlong JNICALL Java_org_fairsim_accel_AccelVectorCplx_alloc
-  (JNIEnv * env, jobject mo, jint len) {
+  (JNIEnv * env, jobject mo, jobject factory, jint len) {
 
     const int maxReduceBlocks = (len+nrReduceThreads-1)/nrReduceThreads;
 
@@ -52,6 +52,15 @@ JNIEXPORT jlong JNICALL Java_org_fairsim_accel_AccelVectorCplx_alloc
     cudaMallocHost((void**)&vec->hostReduceBuffer,  sizeof(cuComplex)*maxReduceBlocks ); 
 
     cudaStreamCreate( &vec->vecStream );
+    
+    // store link to the vector factory
+    jclass avfCl  = env->GetObjectClass( factory );
+    
+    vec->factoryClass = (jclass)env->NewGlobalRef( avfCl );
+    vec->factoryInstance    =   env->NewGlobalRef( factory ); 
+    
+    vec->retBufHost = env->GetMethodID( vec->factoryClass, "returnNativeHostBuffer", "(J)V");
+    vec->retBufDev  = env->GetMethodID( vec->factoryClass, "returnNativeDeviceBuffer", "(J)V");
  
     return (jlong)vec;
 
@@ -64,65 +73,114 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_dealloc
     cplxVecHandle * vec = (cplxVecHandle *)addr;
 
     cudaFree( vec->data );
-
     cudaFree( vec->deviceReduceBuffer );
     cudaFreeHost( vec->hostReduceBuffer );
-    
     cudaStreamDestroy( vec->vecStream );
+    
+    env->DeleteGlobalRef( vec->factoryClass );
+    env->DeleteGlobalRef( vec->factoryInstance );
     
     free( vec );
 }
 
 
-// copy our content to java
+/** Copy content JAVA <-> GPU memory. This can be done in 3 versions:
+ *  0) standard cudaMemcpy (syncronous)
+ *  1) cudaMemcpyAsync, with HostRegistered memory 
+ *  2) cudaMemcpyAsync, with copy to pinned buffers
+ *  -> see Memory-ReadMe, on pro/cons
+ * */
 JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_copyBuffer
-  (JNIEnv *env, jobject mo, jlong addr, jfloatArray javaArr, jboolean toJava, jint size) {
+  (JNIEnv *env, jobject mo, jlong addr, jfloatArray javaArr, jlong buffer, jboolean toJava, jint copyMode) {
 
-    // get the java-side buffer
-    jfloat * java  = (jfloat *)(env)->GetPrimitiveArrayCritical(javaArr, 0);
-    if ( java == NULL ) {
-	jclass exClass = (env)->FindClass( "java/lang/OutOfMemoryError" );
-	env->ThrowNew( exClass, "JNI Buffer copy OOM");
-    }	    
-  
-    // get our buffer
+    // get the vector to act on
     cplxVecHandle * native = (cplxVecHandle *)addr;
 
-    // memcpy
-    if ( toJava ) {
-	cudaMemcpy( java, native->data, size*sizeof(cuComplex), cudaMemcpyDeviceToHost );
-	//printf(" to  CPU: %ld\n", (long)native);
-    } else {
-	cudaMemcpy( native->data, java, size*sizeof(cuComplex), cudaMemcpyHostToDevice );
-	//printf("from CPU: %ld\n", (long)native);
-    }   
-    //fflush(stdout);    
- 
-    // de-reference java-side array
-    env->ReleasePrimitiveArrayCritical(javaArr, java, 0);
+    // get the java-side buffer
+    jfloat * java  = (jfloat *)env->GetPrimitiveArrayCritical( javaArr, 0);
+    if ( java == NULL ) {
+	jclass exClass = env->FindClass( "java/lang/OutOfMemoryError" );
+	env->ThrowNew( exClass, "JNI Buffer copy OOM");
+    }	    
+
+    // sync copy, blocks both this thread and full GPU
+    if ( copyMode == 0 ) {
+	if (!toJava) {
+	    cudaRE( cudaMemcpy( native->data, java, native->size, cudaMemcpyHostToDevice) );
+	} else {
+	    cudaRE( cudaMemcpy( java, native->data, native->size, cudaMemcpyDeviceToHost) );
+	}
+	env->ReleasePrimitiveArrayCritical( javaArr, java, native->size );  // unlock java memory
+    }
+    
+    // Async copy by pinning the java-provided memory (doesn't block GPU, but this thread)
+    if ( copyMode == 1 ) {
+	
+	cudaRE( cudaHostRegister( java, native->size, 0));	// register, start copy
+	if ( !toJava ) {
+	    cudaRE( cudaMemcpyAsync( native->data, java, native->size, 
+		cudaMemcpyHostToDevice, native->vecStream) );
+	} else {
+	    cudaRE( cudaMemcpyAsync( java, native->data, native->size, 
+		cudaMemcpyDeviceToHost, native->vecStream) );
+	}
+	cudaRE( cudaStreamSynchronize( native->vecStream ) );	// wait for copy to complete
+	cudaRE( cudaHostUnregister( java ) );			// unregister the memory
+	env->ReleasePrimitiveArrayCritical( javaArr, java, native->size );  // unlock java memory
+    }
+
+    // Async copy by copying to buffer first (blocks neither this thread nor GPU)
+    if ( copyMode == 2 ) {
+
+	if ( buffer == 0 ) {
+	    fprintf(stderr, "Null pointer (in copy mode 2)!\n");
+	    return;
+	}   
+     
+	native->tmpHostBuffer = (void*)buffer;
+
+	//memcpy( native->tmpHostBuffer, java, native->size );	    // copy to tmp. host-side buffer
+	env->ReleasePrimitiveArrayCritical( javaArr, java, native->size );  // unlock java memory
+	
+	// start async transfer to device
+	cudaMemcpyAsync( native->data, native->tmpHostBuffer, native->size,
+	    cudaMemcpyHostToDevice, native->vecStream);
+
+	// add callback to give back the buffer after transfer
+	cudaRE( cudaStreamAddCallback( native->vecStream, &returnBufferToJava, (void*)native, 0)); 
+    
+    }
 
 }
 
 // ---- LinAlg functions ----
 
-// copy vectors
+// COPY from real-valued vector (async)
 JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_nativeCOPYREAL
   (JNIEnv *env, jobject mo , jlong vt, jlong v1, jint len) {
     cplxVecHandle * ft = (cplxVecHandle *)vt;
     realVecHandle * f1 = (realVecHandle *)v1;
 
-    kernelCplxCopyReal<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads >>>(len, ft->data, f1->data);
+    cudaStreamSynchronize( f1->vecStream );
+
+    kernelCplxCopyReal<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads, 
+	0, ft->vecStream >>>(len, ft->data, f1->data);
 }
 
+// COPY from coplex-valued vector (async)
 JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_nativeCOPYCPLX
   (JNIEnv *env, jobject mo , jlong vt, jlong v1, jint len) {
     
     cplxVecHandle * ft = (cplxVecHandle *)vt;
     cplxVecHandle * f1 = (cplxVecHandle *)v1;
-    cudaMemcpy( ft->data, f1->data, len*sizeof(cuComplex), cudaMemcpyDeviceToDevice);
+    
+    cudaStreamSynchronize( f1->vecStream );
+    
+    cudaMemcpyAsync( ft->data, f1->data, ft->size, cudaMemcpyDeviceToDevice, ft->vecStream);
 }
 
 
+// TODO: to new structure
 JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx2d_nativeCOPYSHORT
   (JNIEnv *env, jobject, jlong vt, jlong bufHost, jlong buf, jshortArray javaArr, jint len) {
     
@@ -150,19 +208,21 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx2d_nativeCOPYSHORT
 };
 
 
-// add vectors
+// Add vectors (async)
 JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_nativeAdd
   (JNIEnv * env, jobject mo, jlong vt, jlong v1, jint len) {
 
     cplxVecHandle * ft = (cplxVecHandle *)vt;
     cplxVecHandle * f1 = (cplxVecHandle *)v1;
     
-    kernelCplxAdd<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads >>>( len, ft->data, f1->data );
-    //cudaDeviceSynchronize();
+    cudaStreamSynchronize( f1->vecStream );
+
+    kernelCplxAdd<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads, 
+	0, ft->vecStream >>>( len, ft->data, f1->data );
 
 }
 
-// axpy
+// axpy (async)
 JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_nativeAXPY
   (JNIEnv *env, jobject mo, jfloat re, jfloat im, jlong vt, jlong v1, jint len) {
     
@@ -170,9 +230,10 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_nativeAXPY
     cplxVecHandle * ft = (cplxVecHandle *)vt;
     cplxVecHandle * f1 = (cplxVecHandle *)v1;
     
+    cudaStreamSynchronize( f1->vecStream );
 
-    kernelCplxAxpy<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads >>>( len, ft->data, f1->data, fac );
-    //cudaDeviceSynchronize();
+    kernelCplxAxpy<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads,
+	0, ft->vecStream >>>( len, ft->data, f1->data, fac );
 }
 
 // times
@@ -181,9 +242,11 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_nativeTIMES
 
     cplxVecHandle * ft = (cplxVecHandle *)vt;
     cplxVecHandle * f1 = (cplxVecHandle *)v1;
+    
+    cudaStreamSynchronize( f1->vecStream );
 
-    kernelCplxTimesCplx<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads >>>( len, ft->data, f1->data, conj );
-    //cudaDeviceSynchronize();
+    kernelCplxTimesCplx<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads,
+	0, ft->vecStream >>>( len, ft->data, f1->data, conj );
 }
 
 JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_nativeTIMESREAL
@@ -339,16 +402,17 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx2d_nativeFFT
     cplxVecHandle * ft = (cplxVecHandle *)dataPtr;
     cuComplex * dat = ft->data;
 
+    cufftSetStream( pl->cuPlan, ft->vecStream );
+
     if ( !inverse )
 	cufftExecC2C(pl->cuPlan, dat, dat, CUFFT_FORWARD);
     if ( inverse ) {
 	cufftExecC2C(pl->cuPlan, dat, dat, CUFFT_INVERSE);
-	
 	cuComplex scal = make_cuComplex( 1./pl->size, 0); 
-	kernelCplxScal<<< (pl->size+nrCuThreads-1)/nrCuThreads, nrCuThreads >>>( pl->size, dat, scal );
+	kernelCplxScal<<< (pl->size+nrCuThreads-1)/nrCuThreads, nrCuThreads, 
+	    0, ft->vecStream >>>( pl->size, dat, scal );
 	
     }
-    //cudaDeviceSynchronize();
 
 }
 

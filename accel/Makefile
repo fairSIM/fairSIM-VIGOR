@@ -1,4 +1,4 @@
-.PHONY: clean headers
+.PHONY: clean headerfiles
  
 cpu: libstdcimpl.so
 cuda: libcudaimpl.so
@@ -30,7 +30,7 @@ org_fairsim_accel_AccelVectorFactory.h: ../org/fairsim/accel/AccelVectorFactory.
 	javah -cp ../ org.fairsim.accel.AccelVectorFactory
 	touch $@
 
-
+headerfiles: $(headers)
 
     
 %.o: %.cu cuda_common.h $(headers)
@@ -38,7 +38,7 @@ org_fairsim_accel_AccelVectorFactory.h: ../org/fairsim/accel/AccelVectorFactory.
 	--compiler-options '-fPIC -Wall' -c -o $@ $< 
 
 
-libstdcimpl.so: headers 
+libstdcimpl.so: $(headers)
 	gcc -O3 -march=native -I/usr/lib/jvm/java-6-openjdk-amd64/include \
 	-fopenmp -std=c99 -o $@ -shared -fPIC -Wall \
 	stdC_real.c stdC_cplx.c stdC_fft.c -lc -lfftw3f

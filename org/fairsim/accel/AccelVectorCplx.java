@@ -38,11 +38,13 @@ class AccelVectorCplx extends AbstractVectorCplx {
     /** store the factory (and realm) */
     final protected AccelVectorFactory ourFactory;
 
+    protected int ourCopyMode = 2 ;
+
     /** creates a new vector, allocates memory */
     AccelVectorCplx(AccelVectorFactory vf, int n ){
 	super(n);
 	ourFactory = vf;
-	natData = alloc( n );
+	natData = alloc( vf, n );
 	if (natData == 0) {
 	    throw new java.lang.OutOfMemoryError("No memory for"+
 		"allocating native vector");
@@ -70,14 +72,27 @@ class AccelVectorCplx extends AbstractVectorCplx {
 
     @Override
     public void readyBuffer() {
-	if (deviceNew)
-	    copyBuffer( natData, this.data, true, elemCount );	
+	if (deviceNew) {
+	    long buffer = 0;
+	    if (ourCopyMode == 2) {
+		buffer = ourFactory.getNativeHostBuffer();
+		if (buffer==0)
+		    throw new RuntimeException("null pointer (caught in JAVA)");
+	    }
+	    copyBuffer( natData, this.data, buffer, true, ourCopyMode );
+	}
 	deviceNew = false;
     };
     
     @Override
     public void syncBuffer() {
-	copyBuffer( natData, this.data, false, elemCount );	
+	long buffer=0;
+	if (ourCopyMode == 2) {
+	    buffer = ourFactory.getNativeHostBuffer();
+	    if (buffer==0)
+		throw new RuntimeException("null pointer (caught in JAVA)");
+	}
+	copyBuffer( natData, this.data, buffer,  false, ourCopyMode );	
 	hostNew = false;
     };
 
@@ -259,13 +274,13 @@ class AccelVectorCplx extends AbstractVectorCplx {
     // ------ native methods ------
 
     /** Allocate vector in native code */
-    native long alloc(int n);
+    native long alloc(AccelVectorFactory vf, int n);
     
     /** Disallocate vector */
     native void dealloc(long adrr);
 
     /** sync to / from java code */
-    native void copyBuffer( long addr, float [] jvec, boolean toJava, int elem );
+    native void copyBuffer( long addr, float [] jvec, long buffer, boolean toJava, int elem );
     
     /** add vectors */
     native void nativeAdd( long addrThis, long addrOther, int len );
