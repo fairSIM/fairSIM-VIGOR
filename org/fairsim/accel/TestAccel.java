@@ -92,58 +92,65 @@ public class TestAccel {
 	Tool.Timer t0 = Tool.getTimer();
 	Tool.Timer t1 = Tool.getTimer();
 	Tool.Timer t2 = Tool.getTimer();
+   
+	    for (int loop=0; loop<2; loop++) {
+	    // standard copy
+	    t0.start();
+	    for (int i=0; i<10; i++) {
+		va[i].syncBuffer();
+		vb[i].syncBuffer();
+		va[i].add(vb[i]);
+		va[i].readyBuffer();
+	    }
+	    AccelVectorFactory.nativeSync();
+	    t0.stop();
+
+
+	    // pinned host memory
+	    for (int i=0; i<10; i++) {
+		va[i].ourCopyMode = 1;
+		vb[i].ourCopyMode = 1;
+	    }
+	    
+	    t1.start();
+	    for (int i=0; i<10; i++) {
+		va[i].syncBuffer();
+		vb[i].syncBuffer();
+		va[i].add(vb[i]);
+		va[i].readyBuffer();
+	    }
+	    AccelVectorFactory.nativeSync();
+	    t1.stop();
+
+
+	    
+	    // buffered + pinned host memory
+	    for (int i=0; i<10; i++) {
+		va[i].ourCopyMode = 2;
+		vb[i].ourCopyMode = 2;
+	    }
+	    
+	    t2.start();
+	    for (int i=0; i<10; i++) {
+		va[i].syncBuffer();
+		vb[i].syncBuffer();
+		va[i].add(vb[i]);
+		va[i].readyBuffer();
+	    }
+	    AccelVectorFactory.nativeSync();
+	    t2.stop();
+
+	    //if (true) return;
+
+	    Tool.trace(" Copy modes: " +t0+t1+t2);
     
-	// standard copy
-	t0.start();
-	for (int i=0; i<10; i++) {
-	    va[i].syncBuffer();
-	    vb[i].syncBuffer();
-	    va[i].add(vb[i]);
-	    va[i].readyBuffer();
-	}
-	AccelVectorFactory.nativeSync();
-	t0.stop();
-
-
-	// pinned host memory
-	for (int i=0; i<10; i++) {
-	    va[i].ourCopyMode = 1;
-	    vb[i].ourCopyMode = 1;
-	}
+	    int bytes = 512*512*4*30;
 	
-	t1.start();
-	for (int i=0; i<10; i++) {
-	    va[i].syncBuffer();
-	    vb[i].syncBuffer();
-	    va[i].add(vb[i]);
-	    va[i].readyBuffer();
+	    Tool.trace("CPY    standard "+t0+" "+(bytes/t0.msElapsed()/1024./1.024));
+	    Tool.trace("CPY host-pinned "+t1+" "+(bytes/t1.msElapsed()/1024./1.024));
+	    Tool.trace("CPY buffered    "+t2+" "+(bytes/t2.msElapsed()/1024./1.024));
 	}
-	AccelVectorFactory.nativeSync();
-	t1.stop();
-
-	
-	// buffered + pinned host memory
-	for (int i=0; i<10; i++) {
-	    va[i].ourCopyMode = 2;
-	    vb[i].ourCopyMode = 2;
-	}
-	
-	t2.start();
-	for (int i=0; i<10; i++) {
-	    va[i].syncBuffer();
-	    vb[i].syncBuffer();
-	    va[i].add(vb[i]);
-	    va[i].readyBuffer();
-	}
-	AccelVectorFactory.nativeSync();
-	t2.stop();
-
-	//if (true) return;
-
-	Tool.trace(" Copy modes: " +t0+t1+t2);
-	
-
-
+	Tool.trace(" ----- ");
 
 
     }

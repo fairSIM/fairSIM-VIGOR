@@ -58,7 +58,7 @@ public class AccelVectorFactory implements VectorFactory {
 	} catch (Exception e) {
 	    throw new RuntimeException(e);
 	}
-	Tool.trace("handed out host buffer: " + ret);
+	//Tool.trace("handed out host buffer: " + ret);
 	return ret;
     }
     
@@ -75,13 +75,13 @@ public class AccelVectorFactory implements VectorFactory {
     
     /** Return a native host-side buffer after use */
     void returnNativeHostBuffer( long buf ) {
-	System.out.println("just got back host buffer: " + buf);
+	//System.out.println("just got back host buffer: " + buf);
 	nativeHostBuffers.offer( buf );
     }
     
     /** Return a native device-side buffer after use */
     void returnNativeDeviceBuffer( long buf ) {
-	System.out.println("just got back DEVICE buffer: " + buf);
+	//System.out.println("just got back DEVICE buffer: " + buf);
 	nativeDeviceBuffers.offer( buf );
     }
 
