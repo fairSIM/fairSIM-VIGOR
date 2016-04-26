@@ -173,14 +173,17 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal_copyBuffer
 
 // ---- Linear algebra ----
 
-// add vectors
+// add vectors (async)
 JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal_nativeAdd
   (JNIEnv * env, jobject mo, jlong vt, jlong v1, jint len) {
 
     realVecHandle * ft = (realVecHandle *)vt;
     realVecHandle * f1 = (realVecHandle *)v1;
     
-    kernelAdd<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads >>>( len, ft->data, f1->data );
+    syncStreams( ft->vecStream, f1->vecStream );
+    kernelAdd<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads, 
+	0, ft->vecStream >>>( len, ft->data, f1->data );
+    syncStreams( f1->vecStream, ft->vecStream );
 }
 
 // axpy
@@ -190,7 +193,10 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal_nativeAXPY
     realVecHandle * ft = (realVecHandle *)vt;
     realVecHandle * f1 = (realVecHandle *)v1;
     
-    kernelAxpy<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads >>>( len, ft->data, f1->data, scal );
+    syncStreams( ft->vecStream, f1->vecStream );
+    kernelAxpy<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads,
+	0, ft->vecStream >>>( len, ft->data, f1->data, scal );
+    syncStreams( f1->vecStream, ft->vecStream );
 }
 
 
@@ -201,17 +207,24 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal_nativeTIMES
     realVecHandle * ft = (realVecHandle *)vt;
     realVecHandle * f1 = (realVecHandle *)v1;
     
-    kernelTimes<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads >>>( len, ft->data, f1->data );
+    syncStreams( ft->vecStream, f1->vecStream );
+    kernelTimes<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads,
+	0, ft->vecStream >>>( len, ft->data, f1->data );
+    syncStreams( f1->vecStream, ft->vecStream );
 
 }
 
 // copy short
 JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal2d_nativeCOPYSHORT
-  (JNIEnv *env, jobject, jlong vt, jlong bufHost, jlong buf, jshortArray javaArr, jint len) {
+  (JNIEnv *env, jobject, jlong vt, jlong bufHost, jlong bufDevice, 
+    jshortArray javaArr, jint len) {
     
     // get the GPU-sided vector
     realVecHandle * ft = (realVecHandle *)vt;
-   
+ 
+    ft->tmpHostBuffer = (void*)bufHost;
+    ft->tmpDevBuffer  = (void*)bufDevice;
+
     // get the java-side buffer
     jshort * java  = (jshort *)(env)->GetPrimitiveArrayCritical(javaArr, 0);
     if ( java == NULL ) {
@@ -220,16 +233,24 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal2d_nativeCOPYSHORT
     }	    
  
     // copy to pinned host memory
-    cudaMemcpy( (void*)bufHost, java, len*sizeof(uint16_t), cudaMemcpyHostToHost );
+    memcpy( (void*)ft->tmpHostBuffer, java, len*sizeof(uint16_t) );
     
     // de-reference java-side array
     env->ReleasePrimitiveArrayCritical(javaArr, java, 0);
     
     // copy pinned host to device
-    cudaMemcpyAsync( (void*)buf, (void*)bufHost, len*sizeof(uint16_t), cudaMemcpyHostToDevice, ft->vecStream );
+    cudaRE( cudaMemcpyAsync( (void*)ft->tmpDevBuffer, (void*)ft->tmpHostBuffer, 
+	len*sizeof(uint16_t), cudaMemcpyHostToDevice, ft->vecStream ));
+    
+    // return the host buffer (via callback in stream)
+    cudaRE( cudaStreamAddCallback( ft->vecStream, &returnRealBufferToJava, (void*)ft, 0)); 
 
     // convert short -> float on the GPU
-    kernelRealCopyShort<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads, 0, ft->vecStream >>>( len, ft->data, (uint16_t*)buf );
+    kernelRealCopyShort<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads, 0, ft->vecStream >>>( len, ft->data, (uint16_t*)ft->tmpDevBuffer );
+
+    // return the device buffer (via callback in stream)
+    cudaRE( cudaStreamAddCallback( ft->vecStream, &returnRealDeviceBufferToJava, (void*)ft, 0)); 
+
 };
 
 
@@ -248,9 +269,10 @@ JNIEXPORT jdouble JNICALL Java_org_fairsim_accel_AccelVectorReal_nativeREDUCE
 	( ft->data, ft->deviceReduceBuffer, len, true );
     //kernelRealReduce<<< blocksize, nrThreads >>>( ft, reduceBuffer, len, true );
  
-    cudaMemcpy( ft->hostReduceBuffer, ft->deviceReduceBuffer, 
-	blocksize*sizeof(float), cudaMemcpyDeviceToHost );
+    cudaMemcpyAsync( ft->hostReduceBuffer, ft->deviceReduceBuffer, 
+	blocksize*sizeof(float), cudaMemcpyDeviceToHost, ft->vecStream );
     
+    cudaStreamSynchronize( ft->vecStream );    
     
     double res= 0;
 

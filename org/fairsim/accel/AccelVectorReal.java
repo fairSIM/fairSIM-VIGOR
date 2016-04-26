@@ -33,7 +33,7 @@ class AccelVectorReal extends AbstractVectorReal {
     final long natData;
     boolean deviceNew = false, hostNew = false;
 
-    public int ourCopyMode = 0;
+    public int ourCopyMode = 2;
 
     final protected AccelVectorFactory ourFactory;
 

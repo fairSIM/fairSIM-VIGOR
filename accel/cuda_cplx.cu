@@ -232,15 +232,17 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx2d_nativeCOPYSHORT
     env->ReleasePrimitiveArrayCritical(javaArr, java, 0);
 
     // copy pinned host to device
-    cudaRE( cudaMemcpyAsync( ft->tmpDevBuffer, ft->tmpHostBuffer, len*sizeof(uint16_t), 
-	cudaMemcpyHostToDevice, ft->vecStream ) );
+    cudaRE( cudaMemcpyAsync( ft->tmpDevBuffer, ft->tmpHostBuffer, 
+	len*sizeof(uint16_t), cudaMemcpyHostToDevice, ft->vecStream ) );
 
+    // return the host buffer (via callback in stream)
+    cudaRE( cudaStreamAddCallback( ft->vecStream, &returnCplxBufferToJava, (void*)ft, 0)); 
+    
     // convert short -> float on the GPU
     kernelCplxCopyShort<<<(len+nrCuThreads-1)/nrCuThreads, nrCuThreads,	
 	0, ft->vecStream>>>( len, ft->data, (uint16_t*)ft->tmpDevBuffer ) ;
 
-    // add callbacks to return both buffers to the JAVA pool
-    cudaRE( cudaStreamAddCallback( ft->vecStream, &returnCplxBufferToJava, (void*)ft, 0)); 
+    // return the device buffer (via callback in stream)
     cudaRE( cudaStreamAddCallback( ft->vecStream, &returnCplxDeviceBufferToJava, (void*)ft, 0)); 
 };
 
@@ -490,8 +492,7 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx2d_nativeFourierShi
 
     cplxVecHandle * ft = (cplxVecHandle *)ptr;
     
-    kernelCplxFourierShift <<< numBlocks, blocks >>> ( N , ft->data, kx, ky );
-    //cudaDeviceSynchronize();
+    kernelCplxFourierShift <<< numBlocks, blocks,0, ft->vecStream >>> ( N , ft->data, kx, ky );
 
 }
 
@@ -523,8 +524,12 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx2d_nativePasteFreq
     cplxVecHandle * fo = (cplxVecHandle *)ptrOut;
     cplxVecHandle * fi = (cplxVecHandle *)ptrIn;
 
-    cudaMemset( fo->data, 0, wo*ho*sizeof(cuComplex));
-    kernelCplxPasteFreq<<< numBlocks, blocks >>>( fo->data, wo, ho, fi->data, wi, hi, xOff, yOff );
+    syncStreams( fo->vecStream, fi->vecStream );
+
+    cudaMemsetAsync( fo->data, 0, wo*ho*sizeof(cuComplex), fo->vecStream);
+    kernelCplxPasteFreq<<< numBlocks, blocks, 0, fo->vecStream >>>( fo->data, wo, ho, fi->data, wi, hi, xOff, yOff );
+
+    syncStreams( fi->vecStream, fo->vecStream);
 
 }
 

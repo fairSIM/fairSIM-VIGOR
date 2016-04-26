@@ -11,7 +11,7 @@ JAR = jar
 # Options for the java compiler
 EXTDIR="./external"
 
-JFLAGS = -g -g:vars -Xlint:unchecked -Xlint:deprecation -extdirs ${EXTDIR} -d ./
+JFLAGS = -g  -Xlint:unchecked -Xlint:deprecation -extdirs ${EXTDIR} -d ./
 #JFLAGS = -g -Xlint:unchecked -extdirs ${EXTDIR} -d ./
 JFLAGS+= -target 1.6 -source 1.6
 
