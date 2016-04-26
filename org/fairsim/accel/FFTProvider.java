@@ -21,10 +21,15 @@ package org.fairsim.accel;
 import java.util.Map;
 import java.util.TreeMap;
 
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ArrayBlockingQueue;
+
 /**
  * Provides FFTs for vector elements.
  */
 public abstract class FFTProvider {
+
+    final static int nrPlans=4;
 
     /** key to store instances */
     private static class FFTkey implements  Comparable<FFTkey> { 
@@ -45,12 +50,12 @@ public abstract class FFTProvider {
     }
     
     /** FFT instances */
-    static private Map<FFTkey, Long> instances; 
+    static private Map<FFTkey, BlockingQueue<Long>> instances; 
     
     /** static initialization of the instances list. */
     static {
 	if (instances==null) {
-	    instances = new TreeMap<FFTkey, Long>();
+	    instances = new TreeMap<FFTkey, BlockingQueue<Long>>();
 	}
     }
 
@@ -58,15 +63,45 @@ public abstract class FFTProvider {
     static long getOrCreateInstance(int x, int y) {
 	FFTkey k = new FFTkey( x,y);
 	
-	Long ffti = instances.get(k);
-	if (ffti!=null) return ffti;
+	// retrive the queue
+	BlockingQueue<Long> ffti = instances.get(k);
+	if (ffti==null) {
+	    ffti = createPlans2d( k.x, k.y );
+	    instances.put( k , ffti );
+	}
 	
-	ffti = nativeCreatePlan2d( k.x, k.y );
-	
-	instances.put( k , ffti );
-	return ffti;
+	// get some pointer
+	long ptr =0;
+	try {
+	    ptr = ffti.take();
+	} catch (Exception e) {
+	    throw new RuntimeException(e);
+	}
+	return ptr;
     }
 
+    /** return an fft instance after it has been used */
+    static void returnInstance( int x, int y, long ptr ) {
+	FFTkey k = new FFTkey( x,y);
+	BlockingQueue<Long> ffti = instances.get(k);
+
+	if ( ffti==null) throw new 
+	    RuntimeException("No plans in this size have yet been created");
+
+	ffti.offer( ptr );
+	
+    }
+
+
+    /** create a pool of fft plans, each with its own stream */
+    static BlockingQueue<Long> createPlans2d( int w, int h ) {
+	BlockingQueue<Long> bq = new ArrayBlockingQueue<Long>(nrPlans+2);
+	for (int i=0; i<nrPlans; i++)
+	    bq.offer( nativeCreatePlan2d(w,h));
+	return bq;
+    }
+
+    /** the native function creating fft plans */
     native static long nativeCreatePlan2d( int w, int h);
 
 }

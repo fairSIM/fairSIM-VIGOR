@@ -66,7 +66,7 @@ public class TestAccelSpeed implements PlugIn {
     // currently deprecated, OTF is always applied before shift
     //boolean otfBeforeShift = true;  // multiply the OTF before or after shift to px,py
 
-    boolean findPeak    = true;	    // run localization and fit of shfit vector
+    boolean findPeak    = false;    // run localization and fit of shfit vector
     boolean refinePhase = false;    // run auto-correlation phase estimation (Wicker et. al)
 	
     final int visualFeedback = -1;   // amount of intermediate results to create (-1,0,1,2,3)
@@ -177,13 +177,13 @@ public class TestAccelSpeed implements PlugIn {
 	// (used for reconstruction, or as starting guess if 'locatePeak' is off, but 'findPeak' on)
 	
 	// green
-	if (true) {
+	if (false) {
 	    param.dir(0).setPxPy( 137.44, -140.91); 
 	    param.dir(1).setPxPy( -52.8,  -189.5);
 	    param.dir(2).setPxPy( 190.08,  49.96);
 	}
 	// red
-	if (false) {
+	if (true) {
 	    param.dir(0).setPxPy( 121.303, -118.94 ); 
 	    param.dir(1).setPxPy(  -42.04, -164.68 );
 	    param.dir(2).setPxPy(  163.05,   46.81 );
@@ -245,19 +245,24 @@ public class TestAccelSpeed implements PlugIn {
 
 	// copy data to GPU	
 	tCpyIn.start();
+	AccelVectorFactory.startProfiler();
 	for (int i=0; i<inSt.getSize();i++) { 
-		    inFFT[i/nrPhases][i%nrPhases].setFrom16bitPixels( imgs[i] );
+		inFFT[i/nrPhases][i%nrPhases].setFrom16bitPixels( imgs[i] );
+		inFFT[i/nrPhases][i%nrPhases].times( fadeVec );
+		inFFT[i/nrPhases][i%nrPhases].fft2d(false);
 	};
 	Vec.syncConcurrent();
+	AccelVectorFactory.stopProfiler();
 	tCpyIn.stop();
 	
 	// compute the input FFT
 	tInFft.start();
+	/*
 	for (int i=0; i<inSt.getSize();i++) { 
 		inFFT[i/nrPhases][i%nrPhases].times( fadeVec );
 		inFFT[i/nrPhases][i%nrPhases].fft2d(false);
 	}
-	Vec.syncConcurrent(); 
+	Vec.syncConcurrent(); */
 	tInFft.stop(); 
 
 	tRec.hold();
@@ -818,10 +823,11 @@ public class TestAccelSpeed implements PlugIn {
 	Tool.trace(" All:                         "+tAll);
 
 	// DONE, display all results
+	/*
 	pwSt.display();
 	pwSt2.display();
 	spSt.display();
-	spSt2.display();
+	spSt2.display(); */
 
     }
 

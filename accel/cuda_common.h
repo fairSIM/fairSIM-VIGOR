@@ -38,9 +38,11 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 
 // cuFFT plan handling
 typedef struct {
-    cufftHandle cuPlan;
+    cufftHandle cuPlan;		    // plan for this fft
+    cudaStream_t fftStream;	    // CUDA stream for this fft
     int size;
 } fftPlan;
+
 
 // structure for real-valued vectors
 typedef struct {
@@ -81,7 +83,19 @@ typedef struct {
 } cplxVecHandle;
 
 // callback to return async copy buffer
-void returnBufferToJava( cudaStream_t stream, cudaError_t status, void* ptr );
+void returnRealBufferToJava( cudaStream_t stream, cudaError_t status, void* ptr );
+// callback to return async copy buffer
+void returnRealDeviceBufferToJava( cudaStream_t stream, cudaError_t status, void* ptr );
+
+// callback to return async copy buffer
+void returnCplxBufferToJava( cudaStream_t stream, cudaError_t status, void* ptr );
+// callback to return async copy buffer
+void returnCplxDeviceBufferToJava( cudaStream_t stream, cudaError_t status, void* ptr );
+
+
+
+// sync theirs stream to ours
+void syncStreams( cudaStream_t wait, cudaStream_t signal );
 
 __global__ void kernelAdd( int len, float * out, float * in ); 
 __global__ void kernelAxpy( int len, float * out, float * in, float a );

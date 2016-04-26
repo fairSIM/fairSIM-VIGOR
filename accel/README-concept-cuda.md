@@ -125,6 +125,19 @@ the results of the example above will for example change depending on the
 random thread execution order. However, while on the CPU this example only introduces
 wrong results, it now potentially also introduces dead-locks.
 
+## My notes on CUDA event interface
+
+`cudaStreamWaitEvent( evt )` has some requirements and features concerning the host-side of the code:
+
+* The record call of the `evt` must have returned before we can wait on it. This has
+  to be ensured by thread sync or simply by the correct order when running a single thread.
+* If `evt` is recorded multiple times to the stream, it will wait for the last recorded position
+* After the call is complete, the event may be released!
+
+
+
+
+
 
 
 

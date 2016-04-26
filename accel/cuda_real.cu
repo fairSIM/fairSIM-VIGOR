@@ -31,6 +31,8 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 #include "cuda_common.h"
 
 
+
+
 // =================== REAL VECTORS ===============================
 
 // allocate the vector
@@ -136,25 +138,40 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal_copyBuffer
      
 	native->tmpHostBuffer = (void*)buffer;
 
-	//memcpy( native->tmpHostBuffer, java, native->size );	    // copy to tmp. host-side buffer
-	env->ReleasePrimitiveArrayCritical( javaArr, java, native->size );  // unlock java memory
+	// to GPU, fully async
+	if ( !toJava ) {
+	    // copy to host-side pinned buffer
+	    memcpy( native->tmpHostBuffer, java, native->size );   
+	    env->ReleasePrimitiveArrayCritical( javaArr, java, native->size );  
 	
-	// start async transfer to device
-	cudaMemcpyAsync( native->data, native->tmpHostBuffer, native->size,
-	    cudaMemcpyHostToDevice, native->vecStream);
+	    // start async transfer to device
+	    cudaRE( cudaMemcpyAsync( native->data, native->tmpHostBuffer, native->size,
+		cudaMemcpyHostToDevice, native->vecStream));
 
-	// add callback to give back the buffer after transfer
-	cudaRE( cudaStreamAddCallback( native->vecStream, &returnBufferToJava, (void*)native, 0)); 
+	    // add callback to give back the buffer after transfer
+	    cudaRE( cudaStreamAddCallback( native->vecStream, 
+		&returnRealBufferToJava, (void*)native, 0)); 
+	}
+	// to CPU, async but have to wait since when we return data should be there
+	if ( toJava ) {
+	    // start async transfer from device
+	    cudaRE( cudaMemcpyAsync( native->tmpHostBuffer, native->data, native->size,
+		cudaMemcpyDeviceToHost, native->vecStream) );
+	    
+	    // wait for copy to complete
+	    cudaRE( cudaStreamSynchronize( native->vecStream ) );	
+
+	    // copy to java, release array, return buffer
+	    memcpy( java, native->tmpHostBuffer, native->size );   
+	    env->ReleasePrimitiveArrayCritical( javaArr, java, native->size );  
+	    env->CallVoidMethod( native->factoryInstance, native->retBufHost, native->tmpHostBuffer);
+	}
     
     }
 
-        
-
 }
 
-
 // ---- Linear algebra ----
-
 
 // add vectors
 JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal_nativeAdd

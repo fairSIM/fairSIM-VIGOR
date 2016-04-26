@@ -38,7 +38,7 @@ class AccelVectorCplx extends AbstractVectorCplx {
     /** store the factory (and realm) */
     final protected AccelVectorFactory ourFactory;
 
-    protected int ourCopyMode = 2 ;
+    protected int ourCopyMode = 0 ;
 
     /** creates a new vector, allocates memory */
     AccelVectorCplx(AccelVectorFactory vf, int n ){
@@ -406,13 +406,10 @@ class AccelVectorCplx2d extends AccelVectorCplx implements Vec2d.Cplx {
 
 	long ptrbufHost = ourFactory.getNativeHostBuffer();
 	long ptrbufDevice = ourFactory.getNativeDeviceBuffer();
-
-
+	
 	nativeCOPYSHORT( this.natData, ptrbufHost, ptrbufDevice, in, elemCount );
 	deviceNew = true;
 	
-	ourFactory.nativeHostBuffers.offer( ptrbufHost );
-	ourFactory.nativeDeviceBuffers.offer( ptrbufDevice );
     }
 
     @Override
@@ -422,6 +419,7 @@ class AccelVectorCplx2d extends AccelVectorCplx implements Vec2d.Cplx {
 	readyDevice();
 	nativeFFT( fftPlan, natData, inverse );
 	deviceNew = true;
+	FFTProvider.returnInstance( width, height, fftPlan );
     }
 	
     @Override

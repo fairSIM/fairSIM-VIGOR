@@ -124,4 +124,11 @@ public class AccelVectorFactory implements VectorFactory {
     native static void nativeSync();
     native long nativeAllocMemory(int size);
     native long nativeAllocMemoryHost(int size);
+
+    /** start the NVidia profiler */
+    public native static void startProfiler();
+    /** stop the NVidia profiler */
+    public native static void stopProfiler();
+
+
 }

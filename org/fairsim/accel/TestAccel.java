@@ -40,6 +40,14 @@ public class TestAccel {
 
     private String natVer="n/a";
 
+    void sleep(int ms) {
+	try {
+	    Thread.sleep(ms);
+	} catch (Exception e) {
+	    throw new RuntimeException(e);
+	}
+    }
+
     public static void main( String [] arg ){
    
 	
@@ -92,79 +100,93 @@ public class TestAccel {
 	Tool.Timer t0 = Tool.getTimer();
 	Tool.Timer t1 = Tool.getTimer();
 	Tool.Timer t2 = Tool.getTimer();
-   
-	    for (int loop=0; loop<7; loop++) {
-	    // standard copy
+	int bytes = 512*512*8*3*25;
+  
+	AccelVectorFactory.startProfiler();
+
+	// standard copy
+	for (int loop=0; loop<7; loop++) {
 	    t0.start();
 	    for (int i=0; i<25; i++) {
 		va[i%10].syncBuffer();
 		vb[i%10].syncBuffer();
-		if (loop>2)
+		if (loop>2) {
 		    va[i%10].add(vb[i%10]);
+		    va[i%10].add(vb[i%10]);
+		    va[i%10].add(vb[i%10]);
+		    va[i%10].add(vb[i%10]);
+		    va[i%10].add(vb[i%10]);
+		}
 		va[i%10].readyBuffer();
 	    }
 	    AccelVectorFactory.nativeSync();
 	    t0.stop();
-
-
-	    // pinned host memory
-	    for (int i=0; i<10; i++) {
-		va[i].ourCopyMode = 1;
-		vb[i].ourCopyMode = 1;
-	    }
 	    
+	    double mbs0 = (bytes/t0.msElapsed()/1024./1.024);
+	    Tool.trace("CPY    standard "+t0+String.format(" %7.2f MB/s ", mbs0));
+	}
+
+	sleep(250);
+
+	for (int i=0; i<10; i++) {
+	    va[i].ourCopyMode = 1;
+	    vb[i].ourCopyMode = 1;
+	}
+	
+	// pinned host memory
+	for (int loop=0; loop<7; loop++) {
 	    t1.start();
 	    for (int i=0; i<25; i++) {
 		va[i%10].syncBuffer();
 		vb[i%10].syncBuffer();
-		if (loop>2)
+		if (loop>2 ){
 		    va[i%10].add(vb[i%10]);
+		    va[i%10].add(vb[i%10]);
+		    va[i%10].add(vb[i%10]);
+		    va[i%10].add(vb[i%10]);
+		    va[i%10].add(vb[i%10]);
+		}
 		va[i%10].readyBuffer();
 	    }
 	    AccelVectorFactory.nativeSync();
 	    t1.stop();
-
+	    double mbs1 = (bytes/t1.msElapsed()/1024./1.024);
+	    Tool.trace("CPY host-pinned "+t1+String.format(" %7.2f MB/s ", mbs1));
+	}
 
 	    
-	    // buffered + pinned host memory
-	    for (int i=0; i<10; i++) {
-		va[i].ourCopyMode = 2;
-		vb[i].ourCopyMode = 2;
-	    }
-	    
+	for (int i=0; i<10; i++) {
+	    va[i].ourCopyMode = 2;
+	    vb[i].ourCopyMode = 2;
+	}
+	
+	sleep(250);
+	
+	// buffered + pinned host memory
+	for (int loop=0; loop<7; loop++) {
 	    t2.start();
 	    for (int i=0; i<25; i++) {
 		va[i%10].syncBuffer();
 		vb[i%10].syncBuffer();
-		if (loop>2)
+		if (loop>2) {
 		    va[i%10].add(vb[i%10]);
+		    va[i%10].add(vb[i%10]);
+		    va[i%10].add(vb[i%10]);
+		    va[i%10].add(vb[i%10]);
+		    va[i%10].add(vb[i%10]);
+		}
 		va[i%10].readyBuffer();
 	    }
 	    AccelVectorFactory.nativeSync();
 	    t2.stop();
-
-	    //if (true) return;
-
-	    if (loop > 0) {
-		Tool.trace(" --- Run "+loop+((loop>2)?(" (incl. comp)"):(""))+" ---- ");
-	
-		int bytes = 512*512*8*3*25;
-		double mbs0 = (bytes/t0.msElapsed()/1024./1.024);
-		double mbs1 = (bytes/t1.msElapsed()/1024./1.024);
-		double mbs2 = (bytes/t2.msElapsed()/1024./1.024);
-
-		Tool.trace("CPY    standard "+t0+String.format(" %7.2f MB/s ", mbs0));
-		Tool.trace("CPY host-pinned "+t1+String.format(" %7.2f MB/s ", mbs1));
-		Tool.trace("CPY    buffered "+t2+String.format(" %7.2f MB/s ", mbs2));
-	    }
+	    double mbs2 = (bytes/t2.msElapsed()/1024./1.024);
+	    Tool.trace("CPY    buffered "+t2+String.format(" %7.2f MB/s ", mbs2));
 	}
+	
 	Tool.trace(" ----- ");
-
+	AccelVectorFactory.stopProfiler();
 
     }
-
-
-
 
 
     // test / time fft
