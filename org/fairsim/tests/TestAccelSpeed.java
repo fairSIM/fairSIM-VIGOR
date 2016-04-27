@@ -66,7 +66,7 @@ public class TestAccelSpeed implements PlugIn {
     // currently deprecated, OTF is always applied before shift
     //boolean otfBeforeShift = true;  // multiply the OTF before or after shift to px,py
 
-    boolean findPeak    = false;    // run localization and fit of shfit vector
+    boolean findPeak    = true ;    // run localization and fit of shfit vector
     boolean refinePhase = false;    // run auto-correlation phase estimation (Wicker et. al)
 	
     final int visualFeedback = -1;   // amount of intermediate results to create (-1,0,1,2,3)
@@ -823,11 +823,10 @@ public class TestAccelSpeed implements PlugIn {
 	Tool.trace(" All:                         "+tAll);
 
 	// DONE, display all results
-	/*
 	pwSt.display();
 	pwSt2.display();
 	spSt.display();
-	spSt2.display(); */
+	spSt2.display(); 
 
     }
 

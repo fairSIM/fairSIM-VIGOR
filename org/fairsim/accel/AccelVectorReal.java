@@ -33,14 +33,17 @@ class AccelVectorReal extends AbstractVectorReal {
     final long natData;
     boolean deviceNew = false, hostNew = false;
 
-    public int ourCopyMode = 2;
+    public int ourCopyMode ;
 
     final protected AccelVectorFactory ourFactory;
 
     /** creates a new vector, allocates memory */
     AccelVectorReal(AccelVectorFactory vf, int n ){
 	super(n);
+	
 	ourFactory = vf;
+	ourCopyMode = vf.defaultCopyMode();
+	
 	natData = alloc( vf, n );
 	if (natData == 0) {
 	    throw new java.lang.OutOfMemoryError("No memory for"+

@@ -77,6 +77,15 @@ public class TestProfileSim  extends Thread {
 	//output = new short[width*height*2*2];
 	output = Vec.getBasicVectorFactory().createReal2D(2*width, 2*height);
 
+	// generate the FFT plans
+	inFFT[0].fft2d(true);
+	inFFT[0].fft2d(false);
+	inFFT[0].zero();
+	fullResult.fft2d(true);
+	fullResult.fft2d(false);
+	fullResult.zero();
+
+
 	// generate some fake input images
 	inImgsShrt = new short[nrImgs][width*height];
 	for (int i=0; i<nrImgs; i++)
@@ -172,26 +181,47 @@ public class TestProfileSim  extends Thread {
 
 	System.load(wd+"libcudaimpl.so");
 	Tool.trace("Running with CUDA support now");
-	Vec.setVectorFactory( AccelVectorFactory.getFactory()); 
+	
+	AccelVectorFactory avf = AccelVectorFactory.getFactory();
+	
+	//avf.setDefaultCopyMode(AccelVectorFactory.DEFAULT_COPY_MODE);
+	//avf.setDefaultCopyMode(AccelVectorFactory.HOSTPINNED_COPY_MODE);
+	avf.setDefaultCopyMode(AccelVectorFactory.BUFFERED_COPY_MODE);
+
+	Vec.setVectorFactory( avf ); 
 	SimpleMT.useParallel(false);
 
 	
 	// start the reconstruction loop
 	TestProfileSim tps1 = new TestProfileSim(512,512);
 	TestProfileSim tps2 = new TestProfileSim(512,512);
-    
+	TestProfileSim tps3 = new TestProfileSim(512,512);
+	TestProfileSim tps4 = new TestProfileSim(512,512);
+
+
+	Tool.Timer t1 = Tool.getTimer();
+	int count = 15;
 	if (arg[0].equals("one")) {
 	    tps1.start();
 	    tps1.join();
+	    
 	}
-    if (arg[0].equals("two")) {
+	if (arg[0].equals("two")) {
 	    tps1.start();
 	    tps2.start();
+	    tps3.start();
+	    tps4.start();
+
 	    tps1.join();
 	    tps2.join();
+	    tps3.join();
+	    tps4.join();
+	    count*=4;
 	}
+	t1.stop();
 
-
+	Tool.trace("Reconstructed "+count+" images in "+t1+" : "+
+	    String.format(" %7.4f fps", count/t1.msElapsed()*1000.));
 
     }
 

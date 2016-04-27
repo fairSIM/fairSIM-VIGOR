@@ -30,6 +30,11 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 public class AccelVectorFactory implements VectorFactory {
 
+    public static final int DEFAULT_COPY_MODE = 0;
+    public static final int HOSTPINNED_COPY_MODE = 1;
+    public static final int BUFFERED_COPY_MODE = 2;
+
+    private int defaultCopyMode = 2;
 
     // native-memory buffer for efficient copying
     static final int nativeBufferSize  = 1024*1024*8;
@@ -48,7 +53,17 @@ public class AccelVectorFactory implements VectorFactory {
 	for (int i=0; i<nativeBufferCount; i++)
 	    nativeHostBuffers.offer( nativeAllocMemoryHost( nativeBufferSize)); 
     }
-    
+   
+
+    public int defaultCopyMode() {
+	return defaultCopyMode;
+    }
+
+    public void setDefaultCopyMode(int cm ) {
+	defaultCopyMode = cm;
+    }
+
+
 
     /** Obtain a buffer in pinned native host memory (please return it!) */
     long getNativeHostBuffer() {

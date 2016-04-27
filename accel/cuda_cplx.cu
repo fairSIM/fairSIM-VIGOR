@@ -210,7 +210,8 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_nativeCOPYCPLX
 
 // copy short [] to the GPU for direct image processing
 JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx2d_nativeCOPYSHORT
-  (JNIEnv *env, jobject, jlong vt, jlong bufHost, jlong bufDevice, jshortArray javaArr, jint len) {
+  (JNIEnv *env, jobject, jlong vt, jlong bufHost, jlong bufDevice, jshortArray javaArr, 
+    jint len, jint mode) {
     
     // get the GPU-sided vector
     cplxVecHandle * ft = (cplxVecHandle *)vt;
@@ -232,8 +233,14 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx2d_nativeCOPYSHORT
     env->ReleasePrimitiveArrayCritical(javaArr, java, 0);
 
     // copy pinned host to device
-    cudaRE( cudaMemcpyAsync( ft->tmpDevBuffer, ft->tmpHostBuffer, 
-	len*sizeof(uint16_t), cudaMemcpyHostToDevice, ft->vecStream ) );
+    if ( mode == 2 ) { 
+	cudaRE( cudaMemcpyAsync( ft->tmpDevBuffer, ft->tmpHostBuffer, 
+	    len*sizeof(uint16_t), cudaMemcpyHostToDevice, ft->vecStream ) );
+    } 
+    else {
+	cudaRE( cudaMemcpy( ft->tmpDevBuffer, ft->tmpHostBuffer, 
+	    len*sizeof(uint16_t), cudaMemcpyHostToDevice ) );
+    }
 
     // return the host buffer (via callback in stream)
     cudaRE( cudaStreamAddCallback( ft->vecStream, &returnCplxBufferToJava, (void*)ft, 0)); 

@@ -38,13 +38,17 @@ class AccelVectorCplx extends AbstractVectorCplx {
     /** store the factory (and realm) */
     final protected AccelVectorFactory ourFactory;
 
-    protected int ourCopyMode = 0 ;
+    protected int ourCopyMode;
 
     /** creates a new vector, allocates memory */
     AccelVectorCplx(AccelVectorFactory vf, int n ){
 	super(n);
 	ourFactory = vf;
+	ourCopyMode = vf.defaultCopyMode();
+	
 	natData = alloc( vf, n );
+
+
 	if (natData == 0) {
 	    throw new java.lang.OutOfMemoryError("No memory for"+
 		"allocating native vector");
@@ -407,7 +411,7 @@ class AccelVectorCplx2d extends AccelVectorCplx implements Vec2d.Cplx {
 	long ptrbufHost = ourFactory.getNativeHostBuffer();
 	long ptrbufDevice = ourFactory.getNativeDeviceBuffer();
 	
-	nativeCOPYSHORT( this.natData, ptrbufHost, ptrbufDevice, in, elemCount );
+	nativeCOPYSHORT( this.natData, ptrbufHost, ptrbufDevice, in, elemCount, ourCopyMode );
 	deviceNew = true;
 	
     }
@@ -449,7 +453,8 @@ class AccelVectorCplx2d extends AccelVectorCplx implements Vec2d.Cplx {
 
     // ------ Native methods ------
 
-    native void nativeCOPYSHORT( long ptrOut, long hostBuffer, long deviceBuffer, short [] in, int elem);
+    native void nativeCOPYSHORT( long ptrOut, long hostBuffer, long deviceBuffer, short [] in, 
+	int elem, int mode);
 
     native void nativeSet( long data, int x, int y, int width, float re, float im);
     native float [] nativeGet( long data, int x, int y, int width);
