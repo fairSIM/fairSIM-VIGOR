@@ -423,8 +423,8 @@ public class TestInstantRecon  {
 		img.scal( 4096/max );
 
 		// set image
-		dspl.newImage( img );
-
+		dspl.newImage( 0, img );
+		dspl.refresh();
 	    }
 	}
 
