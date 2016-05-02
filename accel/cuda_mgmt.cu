@@ -44,7 +44,7 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorFactory_nativeSync
 JNIEXPORT jlong JNICALL Java_org_fairsim_accel_AccelVectorFactory_nativeAllocMemory
   (JNIEnv *env, jobject, jint size) {
     void * buf;
-    cudaMalloc( &buf, size );
+    cudaRE( cudaMalloc( &buf, size ));
     return (jlong)buf;
 };
 
@@ -52,7 +52,7 @@ JNIEXPORT jlong JNICALL Java_org_fairsim_accel_AccelVectorFactory_nativeAllocMem
 JNIEXPORT jlong JNICALL Java_org_fairsim_accel_AccelVectorFactory_nativeAllocMemoryHost
   (JNIEnv *env, jobject, jint size) {
     void * buf;
-    cudaMallocHost( &buf, size );
+    cudaRE( cudaMallocHost( &buf, size ));
     return (jlong)buf;
 };
 

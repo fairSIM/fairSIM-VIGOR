@@ -8,7 +8,7 @@
 <NrAngles type="int">3</NrAngles>
 <NrBands type="int">3</NrBands>
 
-<ReconThreads type="int">2</ReconThreads>
+<ReconThreads type="int">3</ReconThreads>
 <NetworkBuffer type="int">100</NetworkBuffer>
 <DiskBuffer type="int">500</DiskBuffer>
 <DiskFolder type="string">/vol-ssd/VIGOR-stream</DiskFolder>

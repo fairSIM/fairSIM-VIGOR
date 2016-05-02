@@ -33,7 +33,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
       fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
       
       char errString[1024];
-      sprintf(errString,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      sprintf(errString,"JNI-CUDA: %s %s %d", cudaGetErrorString(code), file, line);
 	
       // retrieve env
       JNIEnv * env; int detachLater=0;
@@ -45,16 +45,19 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 	detachLater=1;    
       }       
 
-      jclass exClass = (env)->FindClass( "java/lang/Exception" );
+      jclass exClass = (env)->FindClass( "java/lang/RuntimeException" );
       env->ThrowNew( exClass,errString );
       
       if (detachLater)
 	cachedJVM->DetachCurrentThread(); 
 
 
-      if (abort) exit(code);
+      //if (abort) exit(code);
    }
 }
+
+
+
 
 
 // cuFFT plan handling

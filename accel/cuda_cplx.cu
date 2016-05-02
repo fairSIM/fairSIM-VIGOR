@@ -45,13 +45,13 @@ JNIEXPORT jlong JNICALL Java_org_fairsim_accel_AccelVectorCplx_alloc
     vec->len = len;
     vec->size = len*sizeof(cuComplex);
 
-    cudaMalloc( (void**)&vec->data,	len*sizeof(cuComplex));
-    cudaMemset( (cuComplex *)vec->data, 0,	len*sizeof(cuComplex));
+    cudaRE( cudaMalloc( (void**)&vec->data,	len*sizeof(cuComplex)));
+    cudaRE( cudaMemset( (cuComplex *)vec->data, 0,	len*sizeof(cuComplex)));
 
-    cudaMalloc(  (void**)&vec->deviceReduceBuffer,  sizeof(cuComplex)*maxReduceBlocks );
-    cudaMallocHost((void**)&vec->hostReduceBuffer,  sizeof(cuComplex)*maxReduceBlocks ); 
+    cudaRE( cudaMalloc(  (void**)&vec->deviceReduceBuffer,  sizeof(cuComplex)*maxReduceBlocks ));
+    cudaRE( cudaMallocHost((void**)&vec->hostReduceBuffer,  sizeof(cuComplex)*maxReduceBlocks )); 
 
-    cudaStreamCreate( &vec->vecStream );
+    cudaRE( cudaStreamCreate( &vec->vecStream ) );
     
     // store link to the vector factory
     jclass avfCl  = env->GetObjectClass( factory );
@@ -70,12 +70,12 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_dealloc
   (JNIEnv * env, jobject mo, jlong addr) {
 
     cplxVecHandle * vec = (cplxVecHandle *)addr;
-    cudaStreamSynchronize( vec->vecStream);
-    cudaStreamDestroy( vec->vecStream );
+    cudaRE( cudaStreamSynchronize( vec->vecStream));
+    cudaRE( cudaStreamDestroy( vec->vecStream ));
 
-    cudaFree( vec->data );
-    cudaFree( vec->deviceReduceBuffer );
-    cudaFreeHost( vec->hostReduceBuffer );
+    cudaRE( cudaFree( vec->data ));
+    cudaRE( cudaFree( vec->deviceReduceBuffer ));
+    cudaRE( cudaFreeHost( vec->hostReduceBuffer ));
     
     env->DeleteGlobalRef( vec->factoryClass );
     env->DeleteGlobalRef( vec->factoryInstance );
@@ -344,10 +344,10 @@ JNIEXPORT jdouble JNICALL Java_org_fairsim_accel_AccelVectorCplx_nativeREDUCE
 	ft->vecStream >>>( ft->data, (float*)(ft->deviceReduceBuffer), len, true );
 
  
-    cudaMemcpyAsync( ft->hostReduceBuffer, ft->deviceReduceBuffer, 
-	blocksize*sizeof(float), cudaMemcpyDeviceToHost, ft->vecStream );
+    cudaRE( cudaMemcpyAsync( ft->hostReduceBuffer, ft->deviceReduceBuffer, 
+	blocksize*sizeof(float), cudaMemcpyDeviceToHost, ft->vecStream ));
     
-    cudaStreamSynchronize( ft->vecStream );    
+    cudaRE( cudaStreamSynchronize( ft->vecStream ));    
 
     double res= 0;
 
@@ -418,7 +418,7 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_nativeZero
   (JNIEnv *env, jobject mo, jlong ptr, jint len) {
 
     cplxVecHandle * ft = ((cplxVecHandle*)ptr);
-    cudaMemsetAsync( ft->data, 0, len*sizeof(cuComplex), ft->vecStream );
+    cudaRE( cudaMemsetAsync( ft->data, 0, len*sizeof(cuComplex), ft->vecStream ));
 }
 
 // scale the vector (async)
@@ -442,7 +442,7 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx2d_nativeSet
 
     cuComplex * ft = ((cplxVecHandle *)ptr)->data + x + y * width;
     cuComplex set = make_cuComplex( re, im );
-    cudaMemcpy( ft, &set, sizeof(cuComplex), cudaMemcpyHostToDevice); 
+    cudaRE( cudaMemcpy( ft, &set, sizeof(cuComplex), cudaMemcpyHostToDevice)); 
 
 }
 
@@ -452,7 +452,7 @@ JNIEXPORT jfloatArray JNICALL Java_org_fairsim_accel_AccelVectorCplx2d_nativeGet
 
     cuComplex * ft = ((cplxVecHandle *)ptr)->data + x + y * width;
     cuComplex get;
-    cudaMemcpy( &get, ft, sizeof(cuComplex), cudaMemcpyDeviceToHost); 
+    cudaRE( cudaMemcpy( &get, ft, sizeof(cuComplex), cudaMemcpyDeviceToHost)); 
 
     float a[2];
     a[0] = cuCrealf( get );
@@ -497,7 +497,7 @@ JNIEXPORT jlong JNICALL Java_org_fairsim_accel_FFTProvider_nativeCreatePlan2d
 
     fftPlan * pl = (fftPlan*)calloc(1, sizeof(fftPlan));
     
-    cudaStreamCreate( &pl->fftStream );
+    cudaRE( cudaStreamCreate( &pl->fftStream ));
     pl->size = w*h;
 
     printf("Creating FFTW plan %d x %d ... ", w, h);
@@ -552,7 +552,7 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx2d_nativePasteFreq
 
     syncStreams( fo->vecStream, fi->vecStream );
 
-    cudaMemsetAsync( fo->data, 0, wo*ho*sizeof(cuComplex), fo->vecStream);
+    cudaRE( cudaMemsetAsync( fo->data, 0, wo*ho*sizeof(cuComplex), fo->vecStream));
     kernelCplxPasteFreq<<< numBlocks, blocks, 0, fo->vecStream >>>( fo->data, wo, ho, fi->data, wi, hi, xOff, yOff );
 
     syncStreams( fi->vecStream, fo->vecStream);

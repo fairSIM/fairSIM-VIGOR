@@ -45,13 +45,13 @@ JNIEXPORT jlong JNICALL Java_org_fairsim_accel_AccelVectorReal_alloc
     vec->len  = len;
     vec->size = len*sizeof(float);
 
-    cudaMalloc( (void**)&vec->data,	len*sizeof(float));
-    cudaMemset( (float *)vec->data, 0,	len*sizeof(float));
+    cudaRE( cudaMalloc( (void**)&vec->data,	len*sizeof(float)) );
+    cudaRE( cudaMemset( (float *)vec->data, 0,	len*sizeof(float)) );
 
-    cudaMalloc(  (void**)&vec->deviceReduceBuffer, sizeof(float)*maxReduceBlocks);
-    cudaMallocHost((void**)&vec->hostReduceBuffer,  sizeof(float) * maxReduceBlocks ); 
+    cudaRE( cudaMalloc(  (void**)&vec->deviceReduceBuffer, sizeof(float)*maxReduceBlocks) );
+    cudaRE( cudaMallocHost((void**)&vec->hostReduceBuffer,  sizeof(float) * maxReduceBlocks ) ); 
         
-    cudaStreamCreate( &vec->vecStream );
+    cudaRE( cudaStreamCreate( &vec->vecStream ) );
 
     // store link to the vector factory
     jclass avfCl  = env->GetObjectClass( factory );
@@ -70,12 +70,12 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal_dealloc
   (JNIEnv * env, jobject mo, jlong addr) {
 
     realVecHandle * vec = (realVecHandle *)addr;
-    cudaStreamSynchronize( vec->vecStream);    // TODO: this might not be needed here
-    cudaStreamDestroy( vec->vecStream );    
+    cudaRE( cudaStreamSynchronize( vec->vecStream) );    // TODO: this might not be needed here
+    cudaRE( cudaStreamDestroy( vec->vecStream ) );    
 
-    cudaFree( vec->data );
-    cudaFree( vec->deviceReduceBuffer );
-    cudaFreeHost( vec->hostReduceBuffer );
+    cudaRE( cudaFree( vec->data ) );
+    cudaRE( cudaFree( vec->deviceReduceBuffer ) );
+    cudaRE( cudaFreeHost( vec->hostReduceBuffer ) );
     
     env->DeleteGlobalRef( vec->factoryClass );
     env->DeleteGlobalRef( vec->factoryInstance );
@@ -331,22 +331,22 @@ __global__ void kernelScal( int len, float * out, float scal ) {
 }
 
 
-// setter for 2d vector
+// setter for 2d vector TODO: These should be deprecated
 JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal2d_nativeSet
   (JNIEnv * env, jobject mo, jlong ptr, jint x, jint y, jint width, jfloat val) {
 
     float * ft = ((realVecHandle *)ptr)->data + x + y * width;
-    cudaMemcpy( ft, &val, sizeof(float), cudaMemcpyHostToDevice); 
+    cudaRE( cudaMemcpy( ft, &val, sizeof(float), cudaMemcpyHostToDevice) ); 
 
 }
 
-// getter for 2d vector
+// getter for 2d vector TODO: These should be deprecated
 JNIEXPORT jfloat JNICALL Java_org_fairsim_accel_AccelVectorReal2d_nativeGet
   (JNIEnv *env, jobject mo, jlong ptr, jint x, jint y, jint width) {
 
     float * ft = ((realVecHandle *)ptr)->data + x + y * width;
     float get;
-    cudaMemcpy( &get, ft, sizeof(float), cudaMemcpyDeviceToHost); 
+    cudaRE( cudaMemcpy( &get, ft, sizeof(float), cudaMemcpyDeviceToHost) ); 
 
     return get;
 }
@@ -356,7 +356,7 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal_nativeZero
   (JNIEnv *env, jobject mo, jlong ptr, jint len) {
 
     float * ft = ((realVecHandle *)ptr)->data;
-    cudaMemset( ft, 0, len*sizeof(float));
+    cudaRE( cudaMemset( ft, 0, len*sizeof(float)) );
 }
 
 // scale the vector
