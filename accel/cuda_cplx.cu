@@ -45,11 +45,15 @@ JNIEXPORT jlong JNICALL Java_org_fairsim_accel_AccelVectorCplx_alloc
     vec->len = len;
     vec->size = len*sizeof(cuComplex);
 
-    cudaRE( cudaMalloc( (void**)&vec->data,	len*sizeof(cuComplex)));
+    if (cudaRE( cudaMalloc( (void**)&vec->data,	len*sizeof(cuComplex)))) 
+	return 0;
+    
     cudaRE( cudaMemset( (cuComplex *)vec->data, 0,	len*sizeof(cuComplex)));
 
-    cudaRE( cudaMalloc(  (void**)&vec->deviceReduceBuffer,  sizeof(cuComplex)*maxReduceBlocks ));
-    cudaRE( cudaMallocHost((void**)&vec->hostReduceBuffer,  sizeof(cuComplex)*maxReduceBlocks )); 
+    if (cudaRE( cudaMalloc(  (void**)&vec->deviceReduceBuffer,  sizeof(cuComplex)*maxReduceBlocks )))
+	return 0 ;
+    if ( cudaRE( cudaMallocHost((void**)&vec->hostReduceBuffer,  sizeof(cuComplex)*maxReduceBlocks )) )
+	return 0 ; 
 
     cudaRE( cudaStreamCreate( &vec->vecStream ) );
     

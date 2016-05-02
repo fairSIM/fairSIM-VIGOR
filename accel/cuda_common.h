@@ -25,8 +25,8 @@ extern JavaVM* cachedJVM;
 
 // inspiered here:
 // http://stackoverflow.com/questions/14038589/what-is-the-canonical-way-to-check-for-errors-using-the-cuda-runtime-api
-#define cudaRE(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
+#define cudaRE(ans) gpuAssert((ans), __FILE__, __LINE__)
+inline int gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
 {
    if (code != cudaSuccess) 
    {
@@ -51,9 +51,10 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
       if (detachLater)
 	cachedJVM->DetachCurrentThread(); 
 
-
+      return code;
       //if (abort) exit(code);
    }
+   return 0;
 }
 
 
