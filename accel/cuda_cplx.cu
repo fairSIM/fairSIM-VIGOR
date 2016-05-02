@@ -70,11 +70,12 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_dealloc
   (JNIEnv * env, jobject mo, jlong addr) {
 
     cplxVecHandle * vec = (cplxVecHandle *)addr;
+    cudaStreamSynchronize( vec->vecStream);
+    cudaStreamDestroy( vec->vecStream );
 
     cudaFree( vec->data );
     cudaFree( vec->deviceReduceBuffer );
     cudaFreeHost( vec->hostReduceBuffer );
-    cudaStreamDestroy( vec->vecStream );
     
     env->DeleteGlobalRef( vec->factoryClass );
     env->DeleteGlobalRef( vec->factoryInstance );

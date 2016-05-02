@@ -68,10 +68,15 @@ public class ReconstructionRunner {
 	return ok;
     }
 
+    public ReconstructionRunner( Conf.Folder cfg, 
+	VectorFactory avf, String [] whichChannels)  
+	throws Conf.EntryNotFoundException {
+	this(cfg,avf,whichChannels, true);
+    }
 
     /** Reads from cfg-folder all channels in 'channels' */
     public ReconstructionRunner( Conf.Folder cfg, 
-	VectorFactory avf, String [] whichChannels ) 
+	VectorFactory avf, String [] whichChannels, boolean autostart ) 
 	throws Conf.EntryNotFoundException {
 
 	nrThreads = cfg.getInt("ReconThreads").val();
@@ -106,17 +111,21 @@ public class ReconstructionRunner {
 	    channels[i].chNumber = fld.getInt("ChannelNumber").val();
 	    channels[i].label = whichChannels[i];
 	}
+	
 
 	// create and start reconstruction threads
 	reconThreads = new ReconstructionThread[ nrThreads ];
+	
 	for ( int i=0; i<nrThreads; i++) {
 	    reconThreads[i] = new ReconstructionThread( avf ); 
-	    reconThreads[i].start();
-	    Tool.trace("Started recon thread: "+i);
+	    if (autostart) {
+		reconThreads[i].start();
+		Tool.trace("Started recon thread: "+i);
+	    }
 	}
-
 	// precompute filters for all threads
 	setupFilters();
+
     }
 
 
@@ -206,32 +215,39 @@ public class ReconstructionRunner {
 	final Vec2d.Cplx [] otfVector;
 	final Vec2d.Real dampBorder ;
 	final Vec2d.Real [] apoVector, wienDenom;
+	    
+	Vec2d.Cplx [] fullResult;
+	Vec2d.Cplx [] widefield;
+	
+	Vec2d.Cplx [][][] inFFT ;
+	Vec2d.Cplx [][][] separate; 
+	Vec2d.Cplx [][][] shifted;
 
+	int maxRecon=0;
+	
+	final int band2 = nrBands*2-1;
+
+	/** pre-allocate all the vectors */
 	ReconstructionThread( VectorFactory v ) {
 	    avf = v;
 	    otfVector  = avf.createArrayCplx2D(nrChannels, width, height );
 	    dampBorder = avf.createReal2D( width, height );
 	    apoVector  = avf.createArrayReal2D(nrChannels, 2*width, 2*height );
 	    wienDenom  = avf.createArrayReal2D(nrChannels, 2*width, 2*height );
+	    
+	    fullResult =avf.createArrayCplx2D( nrChannels, 2*width, 2*height );
+	    widefield = avf.createArrayCplx2D( nrChannels, width, height );
+	    inFFT = avf.createArrayCplx2D( 
+		nrChannels, nrDirs, nrPhases, width, height );
+	    separate  = avf.createArrayCplx2D(
+		nrChannels, nrDirs, band2, width, height);
+	    shifted   = avf.createArrayCplx2D(
+		nrChannels, nrDirs, band2, 2*width, 2*height);
 	}
 
 	public void run() {
-
-	    Vec2d.Cplx [] fullResult = 
-		avf.createArrayCplx2D( nrChannels, 2*width, 2*height );
-	    Vec2d.Cplx [] widefield = 
-		avf.createArrayCplx2D( nrChannels, width, height );
-
-	    // vectors to store the input
-	    Vec2d.Cplx [][][] inFFT = avf.createArrayCplx2D( 
-		nrChannels, nrDirs, nrPhases, width, height );
 	   
 	    // vectors for intermediate results
-	    final int band2 = nrBands*2-1;
-	    Vec2d.Cplx [][][] separate  = avf.createArrayCplx2D(
-		nrChannels, nrDirs, band2, width, height);
-	    Vec2d.Cplx [][][] shifted   = avf.createArrayCplx2D(
-		nrChannels, nrDirs, band2, 2*width, 2*height);
 
 	    Tool.Timer tAll = Tool.getTimer();
 	    int reconCount=0;
@@ -349,6 +365,9 @@ public class ReconstructionRunner {
 		// some feedback
 		reconCount++;
 
+		if (maxRecon>0 && reconCount>=maxRecon)
+		    break;
+
 		if (reconCount%10==0) {
 		    int rawImgs = nrChannels*nrDirs*nrPhases;
 		    Tool.trace(String.format(
@@ -363,6 +382,65 @@ public class ReconstructionRunner {
 	}
 
     }
+
+
+    /** To run the ReconstructionThreads through the NVidia profiler */
+    public static void main( String [] args ) throws Exception {
+	
+	if (args.length<3) {
+	    System.out.println("usage: config.xml nrThread nrImages");
+	    return;
+	}
+
+	
+	String wd = System.getProperty("user.dir")+"/accel/";
+	System.load(wd+"libcudaimpl.so");
+	VectorFactory avf = AccelVectorFactory.getFactory();
+	Conf cfg = Conf.loadFile( args[0] );
+
+	ReconstructionRunner rr = new ReconstructionRunner(
+	    cfg.r().cd("vigor-settings"), avf, new String [] {"568"}, false);
+
+	// warm-up fft
+	avf.createCplx2D(512,512).fft2d(false);
+	avf.createCplx2D(1024,1024).fft2d(false);
+
+	int nrThreads = Integer.parseInt(args[1]);
+	int nrCount   = Integer.parseInt(args[2]);
+	
+	for (int i=0; i<nrThreads*nrCount*4;i++)	
+	    rr.imgsToReconstruct.offer( new short[1][15][512*512] );
+
+
+	Tool.Timer t1 = Tool.getTimer();
+
+	AccelVectorFactory.startProfiler();
+
+	// start the n threads
+	for (int i=0; i<nrThreads; i++) {
+	    rr.reconThreads[i].maxRecon = nrCount;
+	    rr.reconThreads[i].start();
+
+	}
+
+	// join the n threads
+	for (int i=0; i<nrThreads; i++)
+	    rr.reconThreads[i].join();
+
+	AccelVectorFactory.stopProfiler();
+
+	t1.stop();
+
+	int nrFrames = nrCount*nrThreads;
+	Tool.trace("Timing "+t1+" for "+nrFrames);
+
+	System.exit(0);
+    }
+
+
+
+
+
 }
 
 /** Parameter fitter, on CPU */
