@@ -432,7 +432,8 @@ public class ReconstructionRunner {
 	t1.stop();
 
 	int nrFrames = nrCount*nrThreads;
-	Tool.trace("Timing "+t1+" for "+nrFrames);
+	Tool.trace("Timing "+t1+" for "+nrFrames+": "+
+	    String.format(" %7.4f fps ", nrFrames*1000/t1.msElapsed()));
 
 	System.exit(0);
     }

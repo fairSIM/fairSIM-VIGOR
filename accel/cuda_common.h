@@ -31,6 +31,27 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
    if (code != cudaSuccess) 
    {
       fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      
+      char errString[1024];
+      sprintf(errString,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+	
+      // retrieve env
+      JNIEnv * env; int detachLater=0;
+      int getEnvStat = cachedJVM->GetEnv( (void**)&env, JNI_VERSION_1_6);	
+      if ( getEnvStat == JNI_EDETACHED) {
+        if (cachedJVM->AttachCurrentThread((void **) &env, NULL) != 0) {
+	    fprintf(stderr,"Failed to attached JVM");
+	}
+	detachLater=1;    
+      }       
+
+      jclass exClass = (env)->FindClass( "java/lang/Exception" );
+      env->ThrowNew( exClass,errString );
+      
+      if (detachLater)
+	cachedJVM->DetachCurrentThread(); 
+
+
       if (abort) exit(code);
    }
 }

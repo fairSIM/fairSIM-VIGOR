@@ -277,7 +277,7 @@ public class PlainImageDisplay {
 
 	final float [][] imgBuffer ;
 	final byte  [] imgData   ;
-	//final byte  [] imgDataBuffer ;
+	final byte  [] imgDataBuffer ;
 	final short  [][]   gammaLookupTable ;
 	final short  [][][] colorLookupTable ;
 
@@ -288,7 +288,7 @@ public class PlainImageDisplay {
 	    bufferedImage = new BufferedImage(width,height, BufferedImage.TYPE_3BYTE_BGR);
 	    imgBuffer	  = new float[nrChannels][w*h];
 	    
-	    //imgDataBuffer = new  byte[3*w*h];
+	    imgDataBuffer = new  byte[3*w*h];
 	    
 	    imgData = ((DataBufferByte) bufferedImage.getRaster().getDataBuffer()).getData();
 	    
@@ -410,12 +410,12 @@ public class PlainImageDisplay {
 		if (r>255) r=255;
 
 		// set to output
-		imgData[3 * (y*width + x ) + 0 ] = (byte)b;
-		imgData[3 * (y*width + x ) + 1 ] = (byte)g;
-		imgData[3 * (y*width + x ) + 2 ] = (byte)r;
+		imgDataBuffer[3 * (y*width + x ) + 0 ] = (byte)b;
+		imgDataBuffer[3 * (y*width + x ) + 1 ] = (byte)g;
+		imgDataBuffer[3 * (y*width + x ) + 2 ] = (byte)r;
 	    
 	    }
-	    //System.arraycopy( imgDataBuffer, 0 , imgData, 0, 3*curWidth*curHeight);
+	    System.arraycopy( imgDataBuffer, 0 , imgData, 0, 3*width*height);
 	    this.repaint();
 	}
 
