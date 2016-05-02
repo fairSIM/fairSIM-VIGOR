@@ -64,6 +64,16 @@ public final class MTool {
     }
     
 
+    /** Computer the average of a ushort array, assuming its entries as unsigned */
+    public static double avr_ushort( short [] array ) {
+	double ret=0;
+	for ( short a : array ) {
+	    int val = a & 0xffff;
+	    ret += val;
+	}
+	ret /= array.length;
+	return ret;
+    }
 
 
 

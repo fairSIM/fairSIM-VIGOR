@@ -23,7 +23,7 @@ import org.fairsim.utils.Tool;
 
 /** Basic, pure java implementation of the Vector interfaces
  * ({@link Vec}, {@link Vec2d}) */
-class BasicVector implements VectorFactory {
+class BasicVector extends VectorFactory {
     
     static BasicVector instance = null;
     private BasicVector() {};

@@ -152,6 +152,12 @@ class AccelVectorReal extends AbstractVectorReal {
     }
 
     @Override
+    public void addConst(float a) {
+	readyDevice();
+	nativeADDCONST( this.natData, elemCount, a );
+    }
+
+    @Override
     public void axpy( float a, Vec.Real x ) {
 	if ( callSuper(x) ) {	
 	    super.axpy(a,x);
@@ -217,6 +223,9 @@ class AccelVectorReal extends AbstractVectorReal {
     
     /** add vectors */
     native void nativeAdd( long addrThis, long addrOther, int len );
+	
+    /** add constant float value */
+    native void nativeADDCONST( long addrThis, int len, float a );
     
     /** axpy vectors */
     native void nativeAXPY( float a, long addrThis, long addrOther, int len );

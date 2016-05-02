@@ -186,6 +186,17 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal_nativeAdd
     syncStreams( f1->vecStream, ft->vecStream );
 }
 
+// add a constant to the vector 
+JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal_nativeADDCONST
+  (JNIEnv *env, jobject mo, jlong vt, jint len, jfloat a) {
+
+    realVecHandle * ft = (realVecHandle *)vt;
+    kernelAddConst<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads,
+	0, ft->vecStream >>>( len, ft->data, (float)a );
+}
+
+
+
 // axpy
 JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorReal_nativeAXPY
   (JNIEnv *env, jobject mo, jfloat scal, jlong vt, jlong v1, jint len) {
@@ -296,6 +307,11 @@ __global__ void kernelRealCopyShort( int len, float * out, uint16_t * in ) {
 __global__ void kernelAdd( int len, float * out, float * in ) {
   int i = blockIdx.x*blockDim.x + threadIdx.x;
   if (i < len) out[i] += in[i];
+}
+
+__global__ void kernelAddConst( int len, float * out, float a ) {
+  int i = blockIdx.x*blockDim.x + threadIdx.x;
+  if (i < len) out[i] += a;
 }
 
 __global__ void kernelAxpy( int len, float * out, float * in, float a ) {

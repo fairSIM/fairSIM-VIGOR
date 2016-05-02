@@ -33,15 +33,15 @@ public class TestImageSender {
     /** Start from the command line to run the plugin */
     public static void main( String [] arg ) throws java.net.UnknownHostException {
 
-	if (arg.length<4) {
-	    System.out.println("TIFF-file white-interval delay_us host1 [host2]");
+	if (arg.length<5) {
+	    System.out.println("TIFF-file white-interval channel_nr delay_us host1 [host2]");
 	    return;
 	}
 	
 
 	// setup connections	
 	ImageSender isend = new ImageSender();
-	for (int i=3; i<arg.length; i++) {
+	for (int i=4; i<arg.length; i++) {
 	    isend.connect( arg[i], null );
 	    Tool.trace("Using connection to: "+arg[i]);
 	}
@@ -56,7 +56,8 @@ public class TestImageSender {
 	// parameters
 	final int whiteFrame = Integer.parseInt( arg[1] );
 	final boolean doWhiteFrame = (whiteFrame>0);
-	final int delayus = Integer.parseInt( arg[2] );
+	final int channelNr = Integer.parseInt( arg[2] );
+	final int delayus = Integer.parseInt( arg[3] );
 
 	Tool.trace("Image file: "+arg[0]);
 	if (doWhiteFrame)
@@ -91,8 +92,11 @@ public class TestImageSender {
 		}
 		
 		iwrap = ImageWrapper.copyImage(white,width,height,0,1,0,0,count);
+		iwrap.setPos012( 0, channelNr, 0);
 		isend.queueImage( iwrap );
+		
 		iwrap = ImageWrapper.copyImage(black,width,height,0,1,0,0,count);
+		iwrap.setPos012( 0, channelNr, 0);
 		isend.queueImage( iwrap );
 	    } else {
 		// add image from stack
@@ -101,7 +105,9 @@ public class TestImageSender {
 		
 		iwrap = ImageWrapper.copyImage( 
 		    (short[])sp.getPixels(), width, height, 0,0,0,0, count);
-	
+
+		iwrap.setPos012( 0, channelNr, 0);
+
 		stackPos = (stackPos+1)%stackLen;
 	    
 		isend.queueImage( iwrap );

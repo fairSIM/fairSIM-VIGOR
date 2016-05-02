@@ -489,13 +489,22 @@ public class OtfProvider {
 
     // ------ Load / Save operations ------
 
+
     /** Create an OTF stored in a config.
      *	@param cfg The config to load from
      *  */
     public static OtfProvider loadFromConfig( Conf cfg ) 
 	throws Conf.EntryNotFoundException {
+	return loadFromConfig( cfg.r() );
+    }
 
-	Conf.Folder fld = cfg.r().cd("otf2d");
+    /** Create an OTF stored in a config folder.
+     *	@param cfg The config to load from
+     *  */
+    public static OtfProvider loadFromConfig( Conf.Folder cfg ) 
+	throws Conf.EntryNotFoundException {
+
+	Conf.Folder fld = cfg.cd("otf2d");
 	OtfProvider ret = null;
 	boolean estimate = (!fld.contains("data"));
 	

@@ -28,7 +28,7 @@ import org.fairsim.utils.Tool;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ArrayBlockingQueue;
 
-public class AccelVectorFactory implements VectorFactory {
+public class AccelVectorFactory extends VectorFactory {
 
     public static final int DEFAULT_COPY_MODE = 0;
     public static final int HOSTPINNED_COPY_MODE = 1;

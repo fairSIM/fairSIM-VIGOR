@@ -78,8 +78,12 @@ public class PlainImageDisplay {
 	LUT(int i) { val=i; }
     };
 
-
     public PlainImageDisplay(int nrChannels, int w, int h, String ... names) {
+	this(nrChannels, w, h, true, names );
+    }
+
+    public PlainImageDisplay(int nrChannels, int w, int h, boolean slidersOnTop,
+	String ... names) {
 
 	ic = new ImageComponent(nrChannels, w,h);
 	mainPanel = new JPanel();
@@ -88,7 +92,6 @@ public class PlainImageDisplay {
 	// panel containing the image
 	JPanel p1 = new JPanel();
 	p1.add(ic);
-	mainPanel.add( p1 );
 
 
 	// JTabbelPanes for each channel
@@ -220,13 +223,22 @@ public class PlainImageDisplay {
 	    
 	    c.gridx=2; c.gridy=3; c.gridwidth=4;
 	    sliders.add(lutSelector,c);
-	    
+	   
+	    String chName="Ch "+channel;
+	    if ( names.length > channel )
+		chName = names[channel];
 
-	    perChannelTab.addTab("Ch "+channel,  sliders);
+	    perChannelTab.addTab(chName,  sliders);
 
 	}
 
-	mainPanel.add(perChannelTab);
+	if (slidersOnTop) {
+	    mainPanel.add(perChannelTab);
+	    mainPanel.add( p1 );
+	} else {
+	    mainPanel.add( p1 );
+	    mainPanel.add(perChannelTab);
+	}
 
     }
   
@@ -361,7 +373,7 @@ public class PlainImageDisplay {
 
 	public void setColorTable( int channel, LUT lut ) {
 	    primaryColor( lut.getInt(), colorLookupTable[channel]);	   
-	    Tool.trace("set lut to: "+lut.toString()+" "+lut.getInt());
+	    //Tool.trace("set lut to: "+lut.toString()+" "+lut.getInt());
 	}
 
 

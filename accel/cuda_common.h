@@ -98,6 +98,7 @@ void returnCplxDeviceBufferToJava( cudaStream_t stream, cudaError_t status, void
 void syncStreams( cudaStream_t wait, cudaStream_t signal );
 
 __global__ void kernelAdd( int len, float * out, float * in ); 
+__global__ void kernelAddConst( int len, float * out, float c ); 
 __global__ void kernelAxpy( int len, float * out, float * in, float a );
 __global__ void kernelTimes( int len, float * out, float * in );
 __global__ void kernelRealReduce(float *g_idata, float *g_odata, unsigned int n, const bool sqr);
@@ -106,6 +107,7 @@ __global__ void kernelRealCopyShort( int len, float * out, uint16_t * in );
 __global__ void kernelCplxCopyReal( int len, cuComplex *out, float *in);
 __global__ void kernelCplxCopyShort( int len, cuComplex * out, uint16_t * in );
 __global__ void kernelCplxAdd( int len, cuComplex * out, cuComplex * in ); 
+__global__ void kernelCplxAddConst( int len, cuComplex * out, cuComplex c ); 
 __global__ void kernelCplxAxpy( int len, cuComplex * out, cuComplex * in, cuComplex a );
 __global__ void kernelCplxTimesCplx( int len, cuComplex * out, cuComplex * in, bool conj );
 __global__ void kernelCplxTimesReal( int len, cuComplex * out, float * in );

@@ -55,6 +55,12 @@ new SimpleMT.PFor(0,len) {
  * */
 public final class SimpleMT {
 
+    // TODO: Make this thread-save by cheching inside the
+    // loop if the loop itself is in a SimpleMT thread...
+    // ... e.g., by checking the thread pool
+    // Even nicer would be implementing an execution queue...
+
+
     private static int nrThreads = Runtime.getRuntime().availableProcessors();
     static {
 	Tool.trace("SimpleMT: Init to "+nrThreads+" threads ");
@@ -65,6 +71,14 @@ public final class SimpleMT {
     static private boolean doParallel = true;
     static private boolean parallelInProgress = false;
 
+    public static int getNrThreads() {
+	return nrThreads;
+    }
+
+    public static void setNrThreads(int n) {
+	nrThreads = n;
+	ex=Executors.newFixedThreadPool(nrThreads);
+    }
 
     /*
     public interface SubLoop {

@@ -34,27 +34,48 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.GridLayout;
 
+import java.util.Arrays;
+
 import org.fairsim.utils.Conf;
+import org.fairsim.sim_algorithm.SimParam;
+import org.fairsim.sim_algorithm.OtfProvider;
 import org.fairsim.transport.ImageReceiver;
 import org.fairsim.transport.ImageDiskWriter;
 import org.fairsim.transport.ImageWrapper;
+import org.fairsim.linalg.VectorFactory;
+import org.fairsim.accel.AccelVectorFactory;
+import org.fairsim.sim_gui.PlainImageDisplay;
 
+import org.fairsim.linalg.Vec2d;
 import org.fairsim.utils.Tool;
+import org.fairsim.utils.SimpleMT;
 
 /** Provides the control interface for live mode */
 public class LiveControlPanel {
 
     boolean isRecording = false;    // if the raw stream is recorded
 
+    final JProgressBar networkBufferBar;
+    final JProgressBar reconBufferInputBar;
+    final JProgressBar reconBufferOutputBar;
+    
     final JProgressBar fileBufferBar;
 
-    final ImageDiskWriter  liveStreamWriter;
-    final ImageReceiver	   imageReceiver;
+    // The different threads in use:
+    final ImageDiskWriter	liveStreamWriter;	
+    final ImageReceiver		imageReceiver;
+    final ReconstructionRunner  reconRunner;
+    final SimSequenceExtractor  seqDetection;
+    
+    
+    final PlainImageDisplay	wfDisplay;
+    final PlainImageDisplay	reconDisplay;
 
     final JTextArea  statusField;
     final JTextField statusMessage;
 
-    public LiveControlPanel(final Conf.Folder cfg) 
+    public LiveControlPanel(final Conf.Folder cfg, 
+	VectorFactory avf, String [] channels) 
 	throws Conf.EntryNotFoundException, java.io.IOException {
 	
 	// get parameters
@@ -67,6 +88,30 @@ public class LiveControlPanel {
 	JFrame mainFrame = new JFrame("Live SIM control");
 	JPanel mainPanel = new JPanel();
 	mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+
+	// GUI - buffering
+	JPanel reconBuffersPanel = new JPanel();
+	reconBuffersPanel.setBorder(BorderFactory.createTitledBorder(
+	    "Reconstruction buffers") );
+	reconBuffersPanel.setLayout( new GridLayout( 3, 1,2,2 ));
+
+	networkBufferBar = new JProgressBar();
+	networkBufferBar.setString("network input buffer");
+	networkBufferBar.setStringPainted(true);
+
+	reconBufferInputBar = new JProgressBar();
+	reconBufferInputBar.setString("recon input buffer");
+	reconBufferInputBar.setStringPainted(true);
+	
+	reconBufferOutputBar = new JProgressBar();
+	reconBufferOutputBar.setString("recon output buffer");
+	reconBufferOutputBar.setStringPainted(true);
+	
+	reconBuffersPanel.add( networkBufferBar );
+	reconBuffersPanel.add( reconBufferInputBar );
+	reconBuffersPanel.add( reconBufferOutputBar );
+
+	mainPanel.add( reconBuffersPanel );
 
 	// GUI - image record function
 	JPanel recorderPanel = new JPanel();
@@ -117,7 +162,7 @@ public class LiveControlPanel {
 	JPanel statusPanel = new JPanel();
 	statusPanel.setBorder(BorderFactory.createTitledBorder(
 	    "status messages") );
-	statusField = new JTextArea(20,40);
+	statusField = new JTextArea(30,60);
 	statusField.setEditable(false);
 	DefaultCaret cr = (DefaultCaret)statusField.getCaret();
 	cr.setUpdatePolicy( DefaultCaret.ALWAYS_UPDATE );
@@ -152,16 +197,50 @@ public class LiveControlPanel {
 	//  ------- 
 	//  initialize the components
 	//  ------- 
+
+	int size = cfg.getInt("RawPxlCount").val();
+	int nrCh = channels.length;
+
+	// network receiver and image storage
+	int syncFrameFreq   = cfg.getInt("SyncFrameFreq").val();
 	int netBufferSize   = cfg.getInt("NetworkBuffer").val();
-	imageReceiver	    = new ImageReceiver(netBufferSize,512,512);
+	imageReceiver	    = new ImageReceiver(netBufferSize,size,size);
 	
 	String saveFolder   = cfg.getStr( "DiskFolder" ).val();
 	int diskBufferSize  = cfg.getInt("DiskBuffer").val();
 	liveStreamWriter = new ImageDiskWriter( saveFolder, diskBufferSize );
 	imageReceiver.setDiskWriter( liveStreamWriter );
-
-	// start the components
+	
+	// start the network receiver
 	imageReceiver.startReceiving( null, null );	
+	
+	// start the reconstruction threads
+	reconRunner = new ReconstructionRunner(cfg, avf, channels); 
+
+	// start the SIM sequence detection
+	seqDetection = new SimSequenceExtractor( syncFrameFreq, 
+	    imageReceiver, reconRunner);
+
+	// setup the displays
+	wfDisplay    = new PlainImageDisplay( nrCh,   size,   size, channels );
+	reconDisplay = new PlainImageDisplay( nrCh, 2*size, 2*size, channels );
+	JFrame hrFr = new JFrame("Reconstruction");
+	JFrame lrFr = new JFrame("Widefiled");
+	hrFr.add( reconDisplay.getPanel() );
+	lrFr.add(    wfDisplay.getPanel() );
+	hrFr.pack();
+	lrFr.pack();
+
+	hrFr.setVisible(true);
+	lrFr.setVisible(true);
+
+	// setup the display-update threads
+	SimpleImageForward sif1 = new SimpleImageForward(false);
+	SimpleImageForward sif2 = new SimpleImageForward(true);
+
+	sif1.start();
+	sif2.start();
+
 
 	DynamicDisplayUpdate updateThread = new DynamicDisplayUpdate();
 	updateThread.start();
@@ -169,19 +248,7 @@ public class LiveControlPanel {
     }
 
 
-    /** starts and displays the GUI */
-    public static void main(String [] arg) {
-	try {
-	    Conf cfg = Conf.loadFile( arg[0] );
-	    LiveControlPanel lcp = new LiveControlPanel( cfg.r().cd("vigor-settings"));
-	} catch (Exception e) {
-	    System.err.println("Error loading config or initializing");
-	    e.printStackTrace();
-	    return;
-	}
-    }
-
-
+   
     /** Thread updating dynamic display */
     class DynamicDisplayUpdate extends Thread {
     
@@ -194,17 +261,82 @@ public class LiveControlPanel {
 		fileBufferBar.setValue( liveStreamWriter.bufferState());
 	
 		int dropped = liveStreamWriter.nrDroppedFrames();
-		if ( dropped > 0 )
-		    Tool.error("#"+dropped+" not saved", false);
+		if ( dropped > 0 && isRecording ) Tool.error("#"+dropped+" not saved", false);
 
 		try {
-		    Thread.sleep(1000);
+		    Thread.sleep(500);
 		} catch (InterruptedException e) {
 		    return;
 		}	
 	    }
 	}
 
+    }
+
+
+    class SimpleImageForward extends Thread {
+	
+	final boolean doWidefield;
+	
+	SimpleImageForward( boolean dwf ) {
+	    doWidefield = dwf;
+	}
+
+	public void run() {
+	    while (true) {
+		try {
+		    Vec2d.Real [] img ; 
+		    if (doWidefield) {
+		        img = reconRunner.finalWidefield.take();
+		    } else {
+		        img =  reconRunner.finalRecon.take();
+		    }
+		    
+		    for (int c=0; c<reconRunner.nrChannels; c++) {
+			if (doWidefield)
+			    wfDisplay.newImage( c, img[c] );
+			else
+			    reconDisplay.newImage( c, img[c] );
+		    }
+		} catch (InterruptedException e ) {
+		    Tool.trace("Display thread interrupted, why?");
+		}
+		    
+		if (doWidefield)
+		    wfDisplay.refresh();
+		else
+		    reconDisplay.refresh();
+	    }
+	}
+    }
+
+
+    /** starts and displays the GUI */
+    public static void main(String [] arg) {
+	// tweak SimpleMT
+	SimpleMT.setNrThreads( Math.max( SimpleMT.getNrThreads()-2, 2));
+	
+	
+	// load the CUDA library
+	boolean set=false;
+	String wd = System.getProperty("user.dir")+"/accel/";
+	Tool.trace("loading library from: "+wd);
+	System.load(wd+"libcudaimpl.so");
+	VectorFactory avf = AccelVectorFactory.getFactory(); 
+	if (arg.length<2) {
+	    System.out.println("Start with: config-file.xml [488] [568] [647] ...");
+	    return;
+	}
+	try {
+	    Conf cfg = Conf.loadFile( arg[0] );
+	    LiveControlPanel lcp = new LiveControlPanel( 
+		cfg.r().cd("vigor-settings"),avf, 
+		Arrays.copyOfRange(arg, 1, arg.length));
+	} catch (Exception e) {
+	    System.err.println("Error loading config or initializing");
+	    e.printStackTrace();
+	    System.exit(-1);
+	}
     }
 
 

@@ -184,7 +184,18 @@ class AccelVectorCplx extends AbstractVectorCplx {
 	deviceNew = true;
     }
 
+    /*
+    @Override
+    public void addConst(float a) {
+	readyDevice();
+	nativeADDCONST( this.natData, elemCount, a, 0.f );
+    } */
     
+    @Override
+    public void addConst(Cplx.Float a) {
+	readyDevice();
+	nativeADDCONST( this.natData, elemCount, a.re, a.im );
+    }
 
 
     @Override
@@ -288,6 +299,9 @@ class AccelVectorCplx extends AbstractVectorCplx {
     
     /** add vectors */
     native void nativeAdd( long addrThis, long addrOther, int len );
+    
+    /** add constant float value */
+    native void nativeADDCONST( long addrThis, int len , float re, float im);
 
     /** axpy vectors */
     native void nativeAXPY( float re, float im, long addrThis, long addrOther, int len );

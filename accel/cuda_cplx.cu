@@ -270,6 +270,18 @@ JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_nativeAdd
 
 }
 
+// add constant (async)
+JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_nativeADDCONST
+  (JNIEnv *env, jobject mo, jlong vt, jint len, jfloat areal, jfloat aimag) {
+
+    cuComplex constant = make_cuComplex( areal, aimag);
+    cplxVecHandle * ft = (cplxVecHandle *)vt;
+    
+    kernelCplxAddConst<<< (len+nrCuThreads-1)/nrCuThreads, nrCuThreads,
+	0, ft->vecStream >>>( len, ft->data, constant );
+}
+
+
 // axpy (async)
 JNIEXPORT void JNICALL Java_org_fairsim_accel_AccelVectorCplx_nativeAXPY
   (JNIEnv *env, jobject mo, jfloat re, jfloat im, jlong vt, jlong v1, jint len) {
@@ -367,6 +379,12 @@ __global__ void kernelCplxAdd( int len, cuComplex * out, cuComplex * in ) {
   int i = blockIdx.x*blockDim.x + threadIdx.x;
   if (i < len) out[i] = cuCaddf( out[i], in[i]);
 }
+
+__global__ void kernelCplxAddConst( int len, cuComplex *out, cuComplex a) {
+  int i = blockIdx.x*blockDim.x + threadIdx.x;
+  if (i < len) out[i] = cuCaddf( out[i], a);
+}
+
 
 __global__ void kernelCplxAxpy( int len, cuComplex * out, cuComplex * in, cuComplex a ) {
   int i = blockIdx.x*blockDim.x + threadIdx.x;
