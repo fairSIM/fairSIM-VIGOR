@@ -34,12 +34,17 @@ import javax.swing.JLabel;
 import javax.swing.JButton;
 import javax.swing.JTabbedPane;
 
+
+
 import java.awt.GridBagLayout;
 import javax.swing.BoxLayout;
 import java.awt.GridBagConstraints;
 
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 
@@ -232,11 +237,28 @@ public class PlainImageDisplay {
 
 	}
 
+	// info
+	final JLabel imageInfoLabel=new JLabel("use mousewheel to zoom");
+	JPanel labelPanel = new JPanel();
+	labelPanel.add( imageInfoLabel );
+	
+	ic.setUpdateListener( new ImageComponent.IUpdate() {
+	    @Override
+	    public void newZoom( int zoomLevel, int zoomX, int zoomY){
+		imageInfoLabel.setText(
+		    String.format("Zoom %2dx, ROI: %4d, %4d", zoomLevel,zoomX,zoomY));
+	    }
+	});
+
+
+	// layout of the complete display
 	if (slidersOnTop) {
 	    mainPanel.add(perChannelTab);
+	    mainPanel.add(labelPanel);
 	    mainPanel.add( p1 );
 	} else {
 	    mainPanel.add( p1 );
+	    mainPanel.add(labelPanel);
 	    mainPanel.add(perChannelTab);
 	}
 
@@ -268,7 +290,9 @@ public class PlainImageDisplay {
         BufferedImage bufferedImage = null;
 	final int width, height;
 	final int nrChannels;
-    
+   
+	IUpdate ourUpdateListener = null;
+
 	final int gammaLookupTableSize = 1024;
 
 	int [] scalMax, scalMin;
@@ -280,6 +304,8 @@ public class PlainImageDisplay {
 	final byte  [] imgDataBuffer ;
 	final short  [][]   gammaLookupTable ;
 	final short  [][][] colorLookupTable ;
+
+	int zoomLevel=1, zoomX=0, zoomY=0;
 
         public ImageComponent(int ch, int w, int h) {
 	    
@@ -312,6 +338,38 @@ public class PlainImageDisplay {
 	    for (int c=0; c<nrChannels; c++) {
 		setColorTable( c, LUT.values()[(c+1)%7] );
 	    }
+	
+	    /*
+	    this.addMouseListener( new MouseAdapter() {
+		@Override
+		public void mouseClicked(MouseEvent e) {
+		    int x = e.getX();
+		    int y = e.getY();
+		    System.out.println("mouse clicked: "+x+" "+y);
+		}
+	    }); */
+	    this.addMouseWheelListener( new MouseAdapter() {
+		@Override
+		public void mouseWheelMoved( MouseWheelEvent e ) {
+		    int xPosMid = e.getX();
+		    int yPosMid = e.getY();
+		    //System.out.println("Scroller: "+e.getWheelRotation());
+		    //System.out.println("mouse clicked: "+x+" "+y);
+	    
+		    int wSize =  width/zoomLevel;
+		    int hSize = height/zoomLevel;
+		   
+		    // zoom out 
+		    if (e.getWheelRotation()>0) {
+			setZoom(zoomLevel-1, zoomX+wSize/2, zoomY+hSize/2);
+		    } else {
+		    // zoom in
+			setZoom(zoomLevel+1, 
+			    xPosMid/zoomLevel + zoomX, 
+			    yPosMid/zoomLevel + zoomY);
+		    }
+		}
+	    });
 	}
 
 	// adapted from imageJ
@@ -337,7 +395,6 @@ public class PlainImageDisplay {
         	}
 	    }
 	}
-
 
 
 	public void setImage( int ch, float [] img ) {
@@ -415,11 +472,56 @@ public class PlainImageDisplay {
 		imgDataBuffer[3 * (y*width + x ) + 2 ] = (byte)r;
 	    
 	    }
-	    System.arraycopy( imgDataBuffer, 0 , imgData, 0, 3*width*height);
+	    
+	    if (zoomLevel==1) {
+		System.arraycopy( imgDataBuffer, 0 , imgData, 0, 3*width*height);
+	    } else {
+		for (int y=0; y<height; y++)	
+		for (int x=0; x<width;  x++)	
+		for (int i=0; i<3;  i++)	
+		    imgData[3*(x + y*width)+i] = imgDataBuffer[ 
+		     3*( (x/zoomLevel+zoomX) + width*(y/zoomLevel+zoomY))+i];
+	    }
+	    
 	    this.repaint();
 	}
 
- 
+	/** Set the zoom level and midpoint position */
+	public void setZoom( int level, int xPos, int yPos ) {
+	    if (level<1 || level>8 )
+		return;
+	    if (level==1) {
+		zoomLevel=1;
+		zoomX=0; zoomY=0;
+		if (ourUpdateListener!=null)
+		    ourUpdateListener.newZoom( zoomLevel, zoomX, zoomY);
+		return;
+	    }
+	    
+	    int wSize =  width/level;
+	    int hSize = height/level;
+	    xPos-=wSize/2;
+	    yPos-=hSize/2;
+	    xPos = Math.max(xPos,0);
+	    yPos = Math.max(yPos,0);
+	    xPos = Math.min(xPos, width-wSize-1);
+	    yPos = Math.min(yPos,height-hSize-1);
+	    zoomLevel=level;
+	    zoomX=xPos;
+	    zoomY=yPos;
+	    //System.out.println("Updated ROI: "+xPos+" "+yPos+"/"+zoomX+" "+zoomY+" l:"+zoomLevel);
+	    if (ourUpdateListener!=null)
+		ourUpdateListener.newZoom( zoomLevel, zoomX, zoomY);
+	}
+
+	public interface IUpdate {
+	    public void newZoom( int level, int xPos, int yPos );
+	}
+    
+	public void setUpdateListener( IUpdate l ) {
+	    ourUpdateListener = l;
+	}
+
         @Override
         public Dimension getPreferredSize() {
             return new Dimension(width, height);
@@ -467,10 +569,14 @@ public class PlainImageDisplay {
 
 	Tool.Timer t1 = Tool.getTimer();
 
+	for (int ch = 0; ch < nrCh; ch++) 
 	for (int i=0;i<100;i++) {
 	    for (int y=0;y<height;y++)
 	    for (int x=0;x<width;x++) {
-		pxl[i][x+y*width]=(short)(Math.random()*2500);
+		if ( (x<200 || x>220) && (y<150 || y>170) )
+		    pxl[i][x+y*width]=(short)(Math.random()*2500);
+		else
+		    pxl[i][x+y*width]=(short)(Math.random()*250);
 	    }
 	}
 
