@@ -197,6 +197,22 @@ public class ImageReceiver {
 
 	ImageReceiver nl = new ImageReceiver(16,512,512);
 	nl.startReceiving( null, null);
+	
+	Tool.Timer t1 = Tool.getTimer();
+	long count=0,lastcount=0;
+    
+	while (true) {
+	    nl.takeImage();
+	    count++;
+	    if (count%100==0) {
+		t1.stop();
+		Tool.trace(String.format("received %10d images: %7.2f fps",
+		    count, 100/(t1.msElapsed()/1000)));
+		t1.start(); 
+	    }
+	    
+	}
+
     }
 
 

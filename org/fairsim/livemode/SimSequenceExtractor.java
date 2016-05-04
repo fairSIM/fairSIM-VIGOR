@@ -53,7 +53,8 @@ public class SimSequenceExtractor {
 	channelMapping = new TreeMap<Integer, PerChannelBuffer >() ;
 	channels = new PerChannelBuffer[ nrChannels ];
 	for (int i=0; i<nrChannels; i++) {
-	    channels[i] = new PerChannelBuffer(9*9*10);	
+	    channels[i] = new PerChannelBuffer(9*9*10);
+	    Tool.trace("Created receive buffer for channel: "+reconRunner.getChannel(i).chNumber);	
 	    channelMapping.put( reconRunner.getChannel(i).chNumber, channels[i]);
 	}
     
@@ -83,7 +84,7 @@ public class SimSequenceExtractor {
 		int chNr = iw.pos1();	// pos1 holds the data packets image channel
 		PerChannelBuffer pc = channelMapping.get(chNr);
 		if (pc==null) {
-		    Tool.trace("ImgSort: received data packet w/o channel");
+		    Tool.trace("ImgSort: received data packet w/o channel: "+chNr);
 		} else {
 		    pc.pushImg( iw );
 		}

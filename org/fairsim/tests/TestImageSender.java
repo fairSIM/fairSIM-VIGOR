@@ -108,7 +108,7 @@ public class TestImageSender {
 
 		iwrap.setPos012( 0, channelNr, 0);
 
-		stackPos = (stackPos+1)%stackLen;
+		stackPos = (stackPos+1)%((stackLen/whiteFrame)*whiteFrame);
 	    
 		isend.queueImage( iwrap );
 	    }
@@ -124,9 +124,9 @@ public class TestImageSender {
 	    }
 	   
 	   // wait the delay time for adding new image
-	    if (delayus > 2000) {
+	    if (delayus > 10000) {
 		try {
-		    Thread.sleep( (delayus-1000)/1000 );
+		    Thread.sleep( (delayus-5000)/1000 );
 		}
 		catch ( InterruptedException e) {
 		    System.err.println("ERR: "+e);

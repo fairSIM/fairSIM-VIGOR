@@ -310,7 +310,9 @@ public class PlainImageDisplay {
         public ImageComponent(int ch, int w, int h) {
 	    
 	    width=w; height=h; nrChannels = ch;
-	    
+	   
+	    setIgnoreRepaint(true);
+ 
 	    bufferedImage = new BufferedImage(width,height, BufferedImage.TYPE_3BYTE_BGR);
 	    imgBuffer	  = new float[nrChannels][w*h];
 	    
@@ -562,6 +564,7 @@ public class PlainImageDisplay {
 	// create a frame and add the display
 	JFrame mainFrame = new JFrame("Plain Image Receiver");
 	mainFrame.add( pd.getPanel() ); 
+	
 	mainFrame.pack();
 	mainFrame.setVisible(true);
 

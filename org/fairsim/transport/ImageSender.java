@@ -37,7 +37,7 @@ public class ImageSender {
 
 
     // buffer for images to send
-    BlockingQueue<ImageWrapper> imageQueue = new ArrayBlockingQueue<ImageWrapper>(16);
+    BlockingQueue<ImageWrapper> imageQueue = new ArrayBlockingQueue<ImageWrapper>(64);
    
     // list of TCP connections to use
     List<SendingThread> connection = new ArrayList<SendingThread>();
@@ -173,7 +173,7 @@ public class ImageSender {
 	throws java.net.UnknownHostException {
 
 	if (arg.length<2) {
-	    System.out.println("Usage: delay(ms) host1 [host2] [host3...]");
+	    System.out.println("Usage: delay(us) host1 [host2] [host3...]");
 	    return;
 	}
 
@@ -181,36 +181,60 @@ public class ImageSender {
 	String [] hosts = new String[arg.length-1];
 	System.arraycopy( arg, 1, hosts, 0 , hosts.length);
 
-	System.out.println(" delay: "+delay);
+	System.out.println(" running with delay (us): "+delay);
 
 	ImageSender nl = new ImageSender(hosts);
 
-	int count=0;
-	short [] tmp = new short[512*512];
+	short [][] tmp = new short[512][512*512];
 	
+	// pre-calculate some images
+	for (int i=0; i<tmp.length; i++)
+	    for (int y=0; y<512; y++)
+		for (int x=0; x<512; x++)
+		    tmp[i][x+y*512] = (short)((x*16 + y%16 + i*32 )%2048);
+
+	long refTime = System.nanoTime();	
+
+	int count=0;
 	while (true) {
 
+	    // TODO: move all this timing stuff into utils.Tool
+	    long runAt   = refTime+delay*1000;	// when to run next, in ns
+	    long delay_ms = (runAt - System.nanoTime()) / 1000000;
+
+	    // output some warning if the system is too slow
+	    if (runAt<0) {
+		System.err.println("Delay too slow, system not fast enough to send");
+	    }   
+
+	    // only use seep if there are at least 1 ms to sleep
+	    if (delay_ms>=10)
 	    try {
-		Thread.sleep( delay );
+		Thread.sleep( delay_ms-5 );
 	    }
 	    catch ( InterruptedException e) {
 		System.err.println("ERR: "+e);
 		return;
 	    }
+	    
+	    // busy-wait for the rest
+	    while ( System.nanoTime() < runAt ) {
+	    
+	    }   
+ 
+	    // we want 'non-blocking', i.e. set the time BEFORE we use some to send the image
+	    refTime=System.nanoTime();
 
 	    ImageWrapper iw = new ImageWrapper(512,512);
 
-	    for (int y=0; y<512; y++)
-	    for (int x=0; x<512; x++)
-		tmp[x+y*512] = (short)((x*16 + y%16 + count*32 )%2048);
-
-	    iw.copy(tmp, 512, 512);
+	    iw.copy(tmp[count%tmp.length], 512, 512);
 	    iw.setPosAB(1,2);
 	    iw.setPos012(0,1,count++);
 
 	    boolean ret = nl.queueImage( iw );
 	    if (!ret)
 		System.out.println("dropped frame");
+	
 	}
     }
 
