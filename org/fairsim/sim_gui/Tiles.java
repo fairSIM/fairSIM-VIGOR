@@ -29,6 +29,7 @@ import javax.swing.JComboBox;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JList;
 import javax.swing.JComponent;
+import javax.swing.JSlider;
 
 import javax.swing.BoxLayout;
 import javax.swing.Box;
@@ -44,9 +45,14 @@ import java.awt.Dimension;
 /** Various GUI components */
 public class Tiles {
 
+    /** Components that allow the user to select a number */
+    public interface NumberTile {
+	/** Retrieves the currently display value */
+	public double getVal();
+    }
 
     /** Labeled JSpinner to select numbers */
-    public static class LNSpinner extends JPanel {
+    public static class LNSpinner extends JPanel implements NumberTile {
 
 	private List<NumberListener> listener = new ArrayList<NumberListener>();
     
@@ -88,6 +94,7 @@ public class Tiles {
 	}
 
 	/** Get the spinners current value */
+	@Override
 	public double getVal() {
 	    return ((Number)spr.getValue()).doubleValue();
 	}
@@ -102,15 +109,69 @@ public class Tiles {
 	    listener.remove( l );
 	}
 
-
-
     }
 
     /** Notification that an LNSpinner changed to a new number */
     public interface NumberListener {
 	/** Gets called with the new number */
-	public void number(double n, LNSpinner e);
+	public void number(double n, NumberTile e);
 
+    }
+
+
+    /** JSlider set to a defined value range and step size */
+    public static class ValueSlider extends JPanel implements NumberTile {
+
+	final double min, max, stepsize;
+	final int    sliderLength;
+	double value;
+    
+	private List<NumberListener> listener = new ArrayList<NumberListener>();
+	final JSlider slider;
+
+	public ValueSlider( double imin, double imax, double step, double initVal) {
+	    if (imin>=imax || step<=0 || initVal>imax || initVal<imin )
+		throw new RuntimeException("Parameters not sesible");
+	    this.min = imin;
+	    this.max = imax;
+	    this.stepsize = step;
+	    sliderLength = (int)((max-min)/stepsize);
+	    int initPos  = (int)((initVal-min)/stepsize);
+	    this.value   = min + initPos*stepsize;
+
+	    final JLabel curValueLabel = new JLabel(String.format("%8.3f",value));
+
+	    slider = new JSlider(JSlider.HORIZONTAL, 0, sliderLength, initPos);
+	    final ValueSlider ref = this;
+
+	    slider.addChangeListener( new ChangeListener() {
+		public void stateChanged(ChangeEvent e) {
+		    ref.value = slider.getValue()*stepsize+min;
+		    curValueLabel.setText( String.format("%8.3f",ref.value));
+		    for ( NumberListener l : listener )
+			l.number( ref.value, ref );
+		}
+	    });
+	    this.add(slider);
+	    this.add(curValueLabel);
+	}
+
+	/** Retrieve the value the slider is currently set to */
+	public double getVal() {
+	    return value;
+	}
+
+	/** Add a NumberListener */
+	public void addNumberListener( NumberListener l ) {
+	    listener.add( l );
+	}
+	
+	/** Remove a NumberListener */
+	public void removeNumberListener( NumberListener l ) {
+	    listener.remove( l );
+	}
+    
+    
     }
 
 

@@ -268,7 +268,7 @@ public class ImageControl {
 	} 
 	
 	pxlSizeSpinner.addNumberListener( new Tiles.NumberListener() {
-	    public void number( double pxl, Tiles.LNSpinner ign ) {
+	    public void number( double pxl, Tiles.NumberTile ign ) {
 		pxlSize = pxl;
 		pxlSet = true;
 		pxlSizeLabel.setText("set manually to");
