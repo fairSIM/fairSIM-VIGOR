@@ -51,6 +51,9 @@ import java.nio.FloatBuffer;
 import java.nio.DoubleBuffer;
 import javax.xml.bind.DatatypeConverter;
 
+// Time stamps
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
 /** Wrappers around entries to a configuration file */
 public class Conf {
@@ -221,9 +224,22 @@ public class Conf {
 	    return getEntryOrFail( name, DoubleEntry.class ); 
 	}
 	
+	/** Return the TimeDateEntry named 'name', or null.
+	 *  Convenience shortcut to getEntry(name, DoubleEntry.class) */
+	public TimeDateEntry getTDE(String name) throws EntryNotFoundException {    
+	    return getEntryOrFail( name, TimeDateEntry.class ); 
+	}
+
 	/** Create a new Double 'd' named 'name' */
 	public DoubleEntry newDbl(String name ) {
 	    DoubleEntry e = new DoubleEntry();
+	    setEntry(name, e);
+	    return e;
+	}
+	
+	/** Create a new TimeDateEntry 'd' named 'name' */
+	public TimeDateEntry newTDE(String name ) {
+	    TimeDateEntry e = new TimeDateEntry();
 	    setEntry(name, e);
 	    return e;
 	}
@@ -525,6 +541,53 @@ public class Conf {
 
     }
 
+    /** Entry for storing a time and date */
+    public static class TimeDateEntry extends Entry {
+
+	long ourTime = 0;
+
+	/** Get first value */
+	public long val() {
+	    return ourTime;
+	}
+	/** Sets the entry to the current timestamp */
+	public TimeDateEntry setToCurrent() {
+	    ourTime = System.currentTimeMillis();
+	    return this;
+	}
+
+	/** Sets the entry to a timestamp provided in ms since 1 Jan 1970 */
+	public TimeDateEntry set( long ms ) {
+	    ourTime = ms;
+	    return this;
+	}
+
+	@Override
+	String prettyPrint() {
+	    String ret  = "(TIME/DATE) "+Tool.readableTimeStampMillis(ourTime,true);
+	    return ret;
+	}
+	
+	@Override
+	String getText() {
+	    String inttext=" "+ourTime+" ";
+	    return inttext;
+	}
+	
+	@Override
+	String getType() { return "timepoint"; }
+	
+	@Override
+	void fromText( String text ) {
+	    Scanner sc = new Scanner(text);
+	    sc.useLocale( Locale.US );
+	   
+	    if ( sc.hasNextLong() )
+		ourTime = sc.nextLong();
+	}
+	
+    }
+   
 
     
     // ========================================================================
@@ -646,6 +709,9 @@ public class Conf {
 		
 		if ( t.equals( "data" )) 
 		    fdl.newData( name ).fromText( c );
+		
+		if ( t.equals( "timepoint" )) 
+		    fdl.newTDE( name ).fromText( c );
 	    
 	    
 	    } catch ( Exception ex ) {

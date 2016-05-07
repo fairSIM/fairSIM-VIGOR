@@ -21,6 +21,8 @@ package org.fairsim.livemode;
 import javax.swing.JPanel;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
+	
 import javax.swing.JButton;
 import javax.swing.BoxLayout;
 
@@ -69,6 +71,8 @@ public class ParameterTab {
 	    throw new RuntimeException("Null pointer");
 	this.sp = sp;
 	rp = new ReconParameters();
+
+	mainPanel.setLayout( new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
 
 	mainPanel.add( fp.panel );
 	mainPanel.add( rp.panel );
@@ -122,11 +126,42 @@ public class ParameterTab {
     class ReconParameters {
     
 	JPanel panel = new JPanel();
-
 	{
+
+	    // displaying the available parameter sets
+	    JList	availableParameters = new JList(new String [] { "foo", "bar", "fooz", "barz", "bary" } );
+
+	    availableParameters.setVisibleRowCount(5);
+
+	    JScrollPane pane1 = new JScrollPane( availableParameters,
+		JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+		JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
+	    // displaying the currently active parameter
+	    JTextArea	statusField = new JTextArea(12,35);
+	    statusField.setEditable(false);
+
+	    statusField.setText(sp.prettyPrint(true));
+
+
+	    // merging everything in one panel
+	    JButton	runFitButton = new JButton("run fit");
+	    runFitButton.setToolTipText("run a parameter fit on the current image");
+
+	    panel.setLayout(new GridBagLayout());
+	    panel.setBorder(BorderFactory.createTitledBorder(
+		"Reconstruction parameters") );
+	   
+	    GridBagConstraints c = new GridBagConstraints();	
+	    c.gridx=1; c.gridy=1; c.gridheight=3; c.gridwidth=4;
+	    panel.add( pane1, c );
 	    
-	    JTextArea statusField = new JTextArea(30,10);
+	    c.gridx=1; c.gridy=12; c.gridheight=1; c.gridwidth=2;
+	    JPanel tmp =  new JPanel(); tmp.add( runFitButton);
+	    panel.add( tmp , c);
 	    
+	    c.gridx=1; c.gridy=4; c.gridheight=7; c.gridwidth=4;
+	    panel.add( statusField, c );
 
 	}
     }

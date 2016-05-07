@@ -87,6 +87,26 @@ public final class Tool {
     }
 
 
+    /** Format a 'milliseconds since 1 Jan 1970' timestamp in ISO */ 
+    static public String readableTimeStampMillis( long ms , boolean spaces ) {
+	java.text.DateFormat df;
+	if (!spaces) {
+	    df = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmssZ");
+	    df.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+	} else {
+	    df = new java.text.SimpleDateFormat("yyyy-MM-dd' T 'HH:mm:ss '('Z')'");
+	}
+
+	String nowAsISO = df.format(new java.util.Date(ms));
+	return nowAsISO;
+    }
+
+    /** Format a 'seconds since 1 Jan 1970' timestamp in ISO */ 
+    static public String readableTimeStampSeconds( double seconds , boolean spaces) {
+	long val = (long)(seconds*1000);
+	return readableTimeStampMillis(val, spaces);
+    }
+
     /** Implement and pass Tool.Logger to redirect log output,
      *  or set null to disable output completely */
     public static void setLogger( Tool.Logger t ) {

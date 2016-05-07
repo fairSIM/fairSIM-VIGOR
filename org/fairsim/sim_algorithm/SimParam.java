@@ -56,6 +56,9 @@ public class SimParam implements Vec2d.Size, Vec3d.Size {
     private OtfProvider   currentOtf2D=null;
     private OtfProvider3D currentOtf3D=null;
 
+    // creation/modification date
+    private long paramDate = System.currentTimeMillis();
+
 
     /** Use factory method {@link #create} to obtain object */
     protected SimParam(int bands, int dirs, int phases, boolean threeD) { 
@@ -435,8 +438,26 @@ public class SimParam implements Vec2d.Size, Vec3d.Size {
 	    throw new RuntimeException("Wrong band index");
     }
 
+
     // ----------------------------------------------------------------------------------
     
+    /** get the timestamp associated with this parameter set */
+    public long getParamTimestamp() {
+	return paramDate; 
+    }
+
+    /** set the timestamp associated with this 
+     *	parameter set to current system time */
+    public void setParamTimestamp() {
+	paramDate = System.currentTimeMillis();
+    }
+    
+    /** set the timestamp associated with this parameter set */
+    public void setParamTimestamp( long ms ) {
+	paramDate = ms;
+    }
+
+
     /** Save the parameters to a configuration folder.
 	Creates sub-folders 'sim-param'  */
     public void saveConfig( Conf.Folder cfg ) {
@@ -451,7 +472,8 @@ public class SimParam implements Vec2d.Size, Vec3d.Size {
 	fd.newDbl("microns-per-pxl").setVal(micronsPerPixel);
 	fd.newDbl("wiener-parameter").setVal( wienerFilterParameter );
 	fd.newDbl("apodization-cutoff").setVal( apoCutOff );
-    
+	fd.newTDE("timestamp").set( paramDate );
+
 	for ( int d=0; d < nrDirs; d++ ) {
 	    Conf.Folder df = fd.mk(String.format("dir-%d",d));
 	    SimParam.Dir dir = this.dir(d);
@@ -485,6 +507,12 @@ public class SimParam implements Vec2d.Size, Vec3d.Size {
 	// pixel size
 	ret.setPxlSize( fd.getInt("img-size-pxl").val(),
 			fd.getDbl("microns-per-pxl").val() );
+
+	// timestamp of config
+	if ( fd.contains("timestamp") ) {
+	    ret.setParamTimestamp( fd.getTDE("timestamp").val());
+	} 
+
 
 	// image type
 	IMGSEQ isq = IMGSEQ.fromName( fd.getStr("img-seq").val() );
@@ -594,12 +622,16 @@ public class SimParam implements Vec2d.Size, Vec3d.Size {
     /** Returns a multi-line, human-readable output of parameters */
     public String prettyPrint(boolean phaInDeg) {
 	final double pf = ((phaInDeg)?(180/Math.PI):(1));
-	String ret = "#--- SIM parameter summary ---\n";
-	ret += String.format("# pxl %7.5f microns (freq pxl %8.6f cycles/micron)\n ----\n",
+	String ret = "--- SIM parameter summary ---\n";
+	ret += String.format("pxl %7.5f microns (freq pxl %8.6f cycles/micron)\n",
 	     micronsPerPixel, cyclesPerMicron);
+	    
+	ret += String.format("Nr bands: %d, timestamp: %s\n ------\n", 
+	    nrBands, Tool.readableTimeStampMillis(paramDate, true));
+	
 	for ( Dir d : directions ) {
 	    int b = d.nrBand()-1; 
-	    ret += String.format("Nr bands: %d, shift of outer-most band:\n", b);
+	    //ret += String.format("Nr bands: %d, shift of outer-most band:\n", b);
 	    ret += String.format("px: %6.3f py: %6.3f (len %6.3f) \n",
 		d.px(b), d.py(b), Math.sqrt(d.px(b)*d.px(b)+d.py(b)*d.py(b)));
 	    ret += String.format("phases (%s) [ ",((phaInDeg)?("deg"):("rad")) );
