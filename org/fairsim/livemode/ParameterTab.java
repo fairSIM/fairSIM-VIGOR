@@ -25,10 +25,12 @@ import javax.swing.JList;
 	
 import javax.swing.JButton;
 import javax.swing.BoxLayout;
+import javax.swing.Box;
 
 import java.awt.GridLayout;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
+import java.awt.Insets;
 
 import javax.swing.BorderFactory;
 import javax.swing.JProgressBar;
@@ -48,7 +50,8 @@ import org.fairsim.sim_algorithm.OtfProvider;
 //import org.fairsim.transport.ImageReceiver;
 //import org.fairsim.transport.ImageDiskWriter;
 //import org.fairsim.transport.ImageWrapper;
-//import org.fairsim.linalg.VectorFactory;
+import org.fairsim.linalg.VectorFactory;
+import org.fairsim.linalg.Vec;
 //import org.fairsim.accel.AccelVectorFactory;
 
 import org.fairsim.utils.Tool;
@@ -61,15 +64,21 @@ public class ParameterTab {
 
     final JPanel mainPanel = new JPanel();
 	
-    private FilterParameters fp = new FilterParameters();
+    private FilterParameters fp ;
     private ReconParameters rp ;
 
-    final private SimParam sp;	// the SimParam object we work on
+    final private int ourChannelIndex;
+    final private ReconstructionRunner.PerChannel ourChannel;
+    final private ReconstructionRunner		  ourReconRunner;
 
-    ParameterTab( Conf.Folder cfg, SimParam sp ) {
-	if (sp==null)	// TODO: throw null pointer here
-	    throw new RuntimeException("Null pointer");
-	this.sp = sp;
+    /** Create a parameter tab linked to the (live) reconstruction channel c */
+    ParameterTab( ReconstructionRunner rr, int chIdx ) {
+
+	this.ourChannelIndex = chIdx;
+	this.ourReconRunner = rr;
+	this.ourChannel = rr.getChannel(chIdx);
+	
+	fp = new FilterParameters();
 	rp = new ReconParameters();
 
 	mainPanel.setLayout( new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
@@ -83,17 +92,30 @@ public class ParameterTab {
     class FilterParameters {
 	JPanel panel = new JPanel();
 	{
-	    Tiles.ValueSlider wienerParam = 
+	    final Tiles.ValueSlider wienerParam = 
 		new Tiles.ValueSlider(0, 0.25, 0.005, 0.05);
-	    Tiles.ValueSlider attStr = 
+	    final Tiles.ValueSlider attStr = 
 		new Tiles.ValueSlider(0.5, 1, 0.0025, 0.9);
-	    Tiles.ValueSlider attFWHM = 
+	    final Tiles.ValueSlider attFWHM = 
 		new Tiles.ValueSlider(0.5, 2.5, 0.005, 1.2);
 
-	    JCheckBox attenuationCheckbox = 
+	    final JCheckBox attenuationCheckbox = 
 		new JCheckBox("Enable attenuation");
 
 	    JButton applyButton = new JButton("apply!");
+
+	    applyButton.addActionListener( new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    ourChannel.useAttenuation  = attenuationCheckbox.isSelected();
+		    ourChannel.attStr  = attStr.getVal();
+		    ourChannel.attFWHM = attFWHM.getVal();
+		    ourChannel.wienParam = wienerParam.getVal();
+		    boolean ok = ourReconRunner.doFilterUpdate.offer(ourChannelIndex);
+		    if (!ok)
+			Tool.trace("too many changes queued, please wait...");
+		}
+	    });
+	
 
 	    panel.setLayout(new GridBagLayout());
 	    panel.setBorder(BorderFactory.createTitledBorder(
@@ -131,17 +153,19 @@ public class ParameterTab {
 	    // displaying the available parameter sets
 	    JList	availableParameters = new JList(new String [] { "foo", "bar", "fooz", "barz", "bary" } );
 
-	    availableParameters.setVisibleRowCount(5);
+	    //availableParameters.setVisibleRowCount(5);
 
 	    JScrollPane pane1 = new JScrollPane( availableParameters,
 		JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
 		JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
+	    availableParameters.setPrototypeCellValue("1970-01-01 T 12:34:56 (Z)");
+
 	    // displaying the currently active parameter
 	    JTextArea	statusField = new JTextArea(12,35);
 	    statusField.setEditable(false);
 
-	    statusField.setText(sp.prettyPrint(true));
+	    statusField.setText(ourChannel.param.prettyPrint(true));
 
 
 	    // merging everything in one panel
@@ -152,16 +176,31 @@ public class ParameterTab {
 	    panel.setBorder(BorderFactory.createTitledBorder(
 		"Reconstruction parameters") );
 	   
-	    GridBagConstraints c = new GridBagConstraints();	
-	    c.gridx=1; c.gridy=1; c.gridheight=3; c.gridwidth=4;
+	    GridBagConstraints c = new GridBagConstraints();
+	    c.insets = new Insets(3,3,3,3);
+	    c.gridx=1; c.gridy=1; c.gridheight=3; c.gridwidth=4; 
+	    //c.weighty=1; c.weightx=1;
 	    panel.add( pane1, c );
+	    c.weighty=0; c.weightx=0;
 	    
-	    c.gridx=1; c.gridy=12; c.gridheight=1; c.gridwidth=2;
-	    JPanel tmp =  new JPanel(); tmp.add( runFitButton);
-	    panel.add( tmp , c);
-	    
-	    c.gridx=1; c.gridy=4; c.gridheight=7; c.gridwidth=4;
+	    c.gridx=1; c.gridy=4; c.gridheight=8; c.gridwidth=4; 
 	    panel.add( statusField, c );
+	    
+	    c.gridx=1; c.gridy=12; c.gridheight=1; c.gridwidth=1; c.weightx=1;
+	    panel.add(Box.createHorizontalGlue(), c);
+	    c.gridx=4;
+	    panel.add(Box.createHorizontalGlue(), c);
+	    c.gridx=2; c.gridwidth=2; c.weightx=0;
+	    panel.add( runFitButton , c);
+	    
+	    runFitButton.addActionListener( new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    boolean ok = ourReconRunner.doParameterRefit.offer(ourChannelIndex);
+		    if (!ok)
+			Tool.trace("too many updates pending, please wait...");
+		}
+	    });
+	
 
 	}
     }
@@ -176,13 +215,41 @@ public class ParameterTab {
     /** Small test display function */
     public static void main( String [] arg) throws Exception {
 	    Conf cfg = Conf.loadFile( arg[0] );
-	    Conf.Folder fld = cfg.r().cd("vigor-settings").cd("channel-"+arg[1]);
-	    SimParam param = SimParam.loadConfig( fld );
+	   
+	    ReconstructionRunner rr = new ReconstructionRunner( 
+		cfg.r().cd("vigor-settings"), 
+		Vec.getBasicVectorFactory(), 
+		new String [] {arg[1]},
+		    true);
+
 	    JFrame jf = new JFrame("Test display");
-	    ParameterTab pt = new ParameterTab( cfg.r().cd("vigor-settings"), param);
+	    
+	    ParameterTab pt = new ParameterTab( rr, 0 );
 	    jf.add( pt.getPanel() );
 	    jf.pack();
 	    jf.setVisible(true);
+    
+    
+	    // If a TIF was provided, send it
+	    if (arg.length>2) {
+		ij.ImagePlus ip = ij.IJ.openImage(arg[2]);
+		ij.ImageStack iSt = ip.getImageStack();
+		short [][][] imgs = new 
+		    short[1][rr.nrDirs * rr.nrPhases][rr.width*rr.height];
+		int stackPos=0;
+		for (int a=0; a<rr.nrDirs; a++)
+		    for (int p=0; p<rr.nrPhases; p++) {
+			ij.process.ShortProcessor sp = 
+			    iSt.getProcessor(stackPos+1).convertToShortProcessor();
+
+			System.arraycopy( (short[])sp.getPixels(),0,  
+			    imgs[0][stackPos],
+			    0, rr.width * rr.height);
+			stackPos++;
+		}
+		rr.queueImage( imgs );
+	    }
+    
     }
 
 }
