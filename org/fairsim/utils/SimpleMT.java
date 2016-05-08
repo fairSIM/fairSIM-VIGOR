@@ -22,6 +22,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.ExecutionException ;
 
 import java.util.List;
@@ -69,7 +71,7 @@ public final class SimpleMT {
 	Executors.newFixedThreadPool(nrThreads);
 
     static private boolean doParallel = true;
-    static private boolean parallelInProgress = false;
+    static private ReentrantLock parallelSectionLock = new ReentrantLock(true);
 
     public static int getNrThreads() {
 	return nrThreads;
@@ -120,10 +122,12 @@ public final class SimpleMT {
     
     /** Execute a parallel loop, called by the constructor */
     private static void execute(final PFor loop){
-	if (doParallel&&(!parallelInProgress)) {
-	    // only run the outermost loop in parallel
-	    parallelInProgress=true;
-	    
+	// we only run in parallel is TWO conditions are met:
+	// 1 - doParallel is true (obviously ...)
+	// 2 - the parallelSectionLock is can be obtained, so only
+	// one parallel section is executed at once
+	if (doParallel && parallelSectionLock.tryLock() ) {
+
 	    // split the loop into sub-loop
 	    final int [][] sp = split( nrThreads, loop.start, loop.end );
 	    List<Calls> cb = new ArrayList<Calls>(nrThreads);
@@ -138,11 +142,13 @@ public final class SimpleMT {
 		    }
 		} );
 	    }
+
+	    // only ever run one set of parallel executions from all
+	    // threads (so not to overfill the CPU)
 	    execute( cb );
-	    parallelInProgress=false;
+	    parallelSectionLock.unlock();
 	
 	} else {
-	    // run in serial if already in parallel loop, or parallel is turned off
 	    for (int i=loop.start; i<loop.end; i+=loop.inc)
 		loop.at(i);
 	}
@@ -150,9 +156,9 @@ public final class SimpleMT {
 
     /** Execute a parallel loop, called by the constructor */
     private static void execute(final StrPFor loop){
-	if (doParallel&&(!parallelInProgress)) {
-	    // only run the outermost loop in parallel
-	    parallelInProgress=true;
+
+	// see above what this does
+	if (doParallel && parallelSectionLock.tryLock() ) {
 	    
 	    // split the loop into sub-loop
 	    List<Calls> cb = new ArrayList<Calls>(nrThreads);
@@ -168,8 +174,11 @@ public final class SimpleMT {
 		    }
 		} );
 	    }
+	    
+	    // only ever run one set of parallel executions from all
+	    // threads (so not to overfill the CPU)
 	    execute( cb );
-	    parallelInProgress=false;
+	    parallelSectionLock.unlock();
 	
 	} else {
 	    // run in serial if already in parallel loop, or parallel is turned off
