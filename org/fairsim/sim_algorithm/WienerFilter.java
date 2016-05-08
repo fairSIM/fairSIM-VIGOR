@@ -102,7 +102,7 @@ public class WienerFilter {
 	}
 	t1.stop();
 
-	Tool.trace("Wiener filter setup complete, took "+t1);
+	//Tool.trace("Wiener filter setup complete, took "+t1);
     }
     
     
