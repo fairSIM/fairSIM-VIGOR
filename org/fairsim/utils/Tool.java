@@ -167,9 +167,31 @@ public final class Tool {
 
     /** A generic tuple */
     public static class Tuple<F,S> {
-	public F first;
-	public S second;
+	public final F first;
+	public final S second;
+
+	public Tuple (F first, S second) {
+	    this.first  = first;
+	    this.second = second;
+	}
     }
+
+
+    /* TODO: compare this to utils.Future and such, and maybe finish it
+    public static class Errant<D, Tool.Callback<R>> {
+	
+	final D val;
+	final Tool.Callback<R> iface;
+
+	protected Errant( D val, Tool.Callback<R> iface) {
+
+	}
+
+
+	public returnResult(R) {
+
+    } */
+     
 
 }
 

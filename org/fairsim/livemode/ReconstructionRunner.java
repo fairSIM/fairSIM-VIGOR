@@ -45,8 +45,9 @@ public class ReconstructionRunner {
     BlockingQueue<Vec2d.Real []> finalWidefield;
     BlockingQueue<Vec2d.Real []> finalRecon;
     
-    BlockingQueue<Integer> doFilterUpdate = new ArrayBlockingQueue<Integer>(16);
-    BlockingQueue<Integer> doParameterRefit = new ArrayBlockingQueue<Integer>(16);
+    BlockingQueue<Integer> doFilterUpdate   = new ArrayBlockingQueue<Integer>(16);
+    BlockingQueue<Tool.Tuple<Integer,Tool.Callback<SimParam>>> doParameterRefit = 
+	new ArrayBlockingQueue<Tool.Tuple<Integer, Tool.Callback<SimParam>>>(16);
     
     private final ReconstructionThread [] reconThreads ;
 
@@ -379,9 +380,12 @@ public class ReconstructionRunner {
 
 	    while (true) {
 		try {
-		    int ch = doParameterRefit.take();
+		    Tool.Tuple<Integer, Tool.Callback<SimParam>> a
+			= doParameterRefit.take();
+		    
+		    int ch = (a.first!=null)?(a.first):(-1);
 		    if (ch>=0 && ch<nrChannels)
-			this.doRefit(ch);
+			this.doRefit(ch, a.second);
 		} catch (InterruptedException e ) {
 		    Tool.trace("Parameter refit interrupted, why?");
 		}
@@ -390,12 +394,13 @@ public class ReconstructionRunner {
 
 
 	/** run a parameter refit on channel # idx */
-	public void doRefit( final int chIdx ) {
+	public void doRefit( final int chIdx, Tool.Callback<SimParam> caller ) {
 
-	    SimParam sp = getChannel(chIdx).param;
+	    SimParam sp = getChannel(chIdx).param.duplicate();
 	    OtfProvider otfPr = sp.otf();
 
-	    // copy over the images
+	    // copy over the images // TODO: directly after startup, this
+	    // throws execption, so this check seems not enough
 	    if (latestImage == null ) {
 	        Tool.trace("No image available yet!");
 	        return;
@@ -449,6 +454,10 @@ public class ReconstructionRunner {
 		par.setModulation( 1, p1.hypot() );
 		par.setModulation( 2, p2.hypot() );
 	    }
+
+	    sp.setParamTimestamp();
+
+	    caller.callback(sp);
 	}
     
     }	

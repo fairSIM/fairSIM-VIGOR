@@ -145,7 +145,7 @@ public class ParameterTab {
     }
 
     /** sub-class for reconstruction parameters */
-    class ReconParameters {
+    class ReconParameters implements Tool.Callback<SimParam> {
     
 	JPanel panel = new JPanel();
 	{
@@ -195,7 +195,12 @@ public class ParameterTab {
 	    
 	    runFitButton.addActionListener( new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
-		    boolean ok = ourReconRunner.doParameterRefit.offer(ourChannelIndex);
+		    
+		    Tool.Tuple<Integer, Tool.Callback<SimParam>> errant=
+			new Tool.Tuple<Integer, Tool.Callback<SimParam>>(
+			    ourChannelIndex, ReconParameters.this  );
+		    
+		    boolean ok = ourReconRunner.doParameterRefit.offer(errant);
 		    if (!ok)
 			Tool.trace("too many updates pending, please wait...");
 		}
@@ -203,6 +208,13 @@ public class ParameterTab {
 	
 
 	}
+   
+	@Override
+	public void callback(SimParam sp) {
+	    Tool.trace("new computation done, new param:");
+	    Tool.trace(sp.prettyPrint(true));
+	}
+    
     }
 
 
