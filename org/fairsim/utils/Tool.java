@@ -18,6 +18,7 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 
 package org.fairsim.utils;
 
+import java.io.File;
 
 /**
  * Logging and Timers
@@ -85,12 +86,21 @@ public final class Tool {
 	    currentLogger.writeError( message, fatal );
     }
 
+    /** Creates an absolute file from path provided a string.
+     *  This especially takes care of "~" to set the users home */
+    static public File getFile(String path) {
+	if (path.startsWith("~"+File.separator)){
+	    path=System.getProperty("user.home")+path.substring(1);
+	}
+	return new File(path).getAbsoluteFile();
+    }
+
 
     /** Format a 'milliseconds since 1 Jan 1970' timestamp in ISO */ 
     static public String readableTimeStampMillis( long ms , boolean spaces ) {
 	java.text.DateFormat df;
 	if (!spaces) {
-	    df = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmssZ");
+	    df = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
 	    df.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
 	} else {
 	    df = new java.text.SimpleDateFormat("yyyy-MM-dd' T 'HH:mm:ss '('Z')'");

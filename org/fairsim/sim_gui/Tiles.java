@@ -28,8 +28,12 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.JComboBox;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JList;
+import javax.swing.ListModel;
+import javax.swing.DefaultListModel;
+import javax.swing.ListCellRenderer;
 import javax.swing.JComponent;
 import javax.swing.JSlider;
+import javax.swing.AbstractListModel;
 
 import javax.swing.BoxLayout;
 import javax.swing.Box;
@@ -341,6 +345,51 @@ public class Tiles {
 	    super();
 	}
     };
+
+    
+    /** Provides a list model that allows to implement a presentation function */
+    public static abstract class TList<T> extends JList {
+	    
+	public TList() {
+	    super( new DefaultListModel() );
+	    this.setCellRenderer( new ListCellRenderer() {
+		public Component getListCellRendererComponent(
+		   JList list,           // the list
+		   Object value,            // value to display
+		   int index,               // cell index
+		   boolean isSelected,      // is the cell selected
+		   boolean cellHasFocus)    // does the cell have focus
+		{
+		    @SuppressWarnings("unchecked")
+		    JLabel ret = new JLabel( convertToString((T)value, index) );
+		    if (isSelected) {
+			ret.setBackground(list.getSelectionBackground());
+			ret.setForeground(list.getSelectionForeground());
+		    } else {
+			ret.setBackground(list.getBackground());
+			ret.setForeground(list.getForeground());
+		    }
+		    ret.setEnabled(list.isEnabled());
+		    ret.setFont(list.getFont());
+		    ret.setOpaque(true);
+		    return ret;
+		 }
+	    });
+	}
+	
+	public abstract String convertToString(T val, int index);
+
+	/** add an element to the end of the list */
+	public void addElement( T elem ) {
+	   ListModel lm = this.getModel();
+	   if (!( lm instanceof DefaultListModel ))
+	       throw new RuntimeException("Wrong listmodel for this opeartion to work");
+	    DefaultListModel dlm = (DefaultListModel)lm;
+	    dlm.addElement( elem );
+	}
+	
+
+    }
 
     /** Container */
     public static class Container<T> {

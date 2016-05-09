@@ -13,6 +13,8 @@
 <DiskBuffer type="int">500</DiskBuffer>
 <DiskFolder type="string">/vol/ssd-cache/VIGOR-stream</DiskFolder>
 
+<ParamFolder type="string">~/VIGOR-parameters/</ParamFolder>
+
 <SyncFrameFreq type="int">10</SyncFrameFreq>
 
 <!-- PER-channel values at startup -->

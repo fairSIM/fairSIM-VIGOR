@@ -38,11 +38,17 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JScrollPane;
 import javax.swing.JCheckBox;
+import javax.swing.AbstractListModel;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.ArrayList;
+
+import java.io.File;
+import java.io.FileNotFoundException;
 
 import org.fairsim.utils.Conf;
 import org.fairsim.sim_algorithm.SimParam;
@@ -71,13 +77,22 @@ public class ParameterTab {
     final private ReconstructionRunner.PerChannel ourChannel;
     final private ReconstructionRunner		  ourReconRunner;
 
+    final File paramDir;
+
     /** Create a parameter tab linked to the (live) reconstruction channel c */
-    ParameterTab( ReconstructionRunner rr, int chIdx ) {
+    ParameterTab( ReconstructionRunner rr, int chIdx, Conf.Folder cfg ) 
+	throws Conf.EntryNotFoundException, FileNotFoundException {
 
 	this.ourChannelIndex = chIdx;
 	this.ourReconRunner = rr;
 	this.ourChannel = rr.getChannel(chIdx);
 	
+	paramDir = Tool.getFile(cfg.getStr("ParamFolder").val());
+	if ( !paramDir.isDirectory()) {
+	    throw new FileNotFoundException("Provided path is not a folder: "+
+		paramDir.getPath());
+	}
+    
 	fp = new FilterParameters();
 	rp = new ReconParameters();
 
@@ -148,18 +163,28 @@ public class ParameterTab {
     class ReconParameters implements Tool.Callback<SimParam> {
     
 	JPanel panel = new JPanel();
+
+	final Tiles.TList<SimParam> availableParameters;
+
+	// general initialization
 	{
 
 	    // displaying the available parameter sets
-	    JList	availableParameters = new JList(new String [] { "foo", "bar", "fooz", "barz", "bary" } );
+	    availableParameters = new Tiles.TList<SimParam>() {
+		@Override
+		public String convertToString(SimParam sp, int idx) {
+		    return Tool.readableTimeStampMillis( sp.getParamTimestamp(), true)+
+			((idx==0)?(" (default)"):(""));
+		}
+	    };
 
 	    //availableParameters.setVisibleRowCount(5);
-
 	    JScrollPane pane1 = new JScrollPane( availableParameters,
 		JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
 		JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
-	    availableParameters.setPrototypeCellValue("1970-01-01 T 12:34:56 (Z)");
+	    availableParameters.addElement( ourChannel.param );
+	    fillListFromFolder();
 
 	    // displaying the currently active parameter
 	    JTextArea	statusField = new JTextArea(12,35);
@@ -211,10 +236,41 @@ public class ParameterTab {
    
 	@Override
 	public void callback(SimParam sp) {
-	    Tool.trace("new computation done, new param:");
-	    Tool.trace(sp.prettyPrint(true));
+	    //Tool.trace("new computation done, new param:");
+	    //Tool.trace(sp.prettyPrint(true));
+	    availableParameters.addElement(sp);
+	    String name = "param_ch"+ourChannel.chNumber+"_"+
+		Tool.readableTimeStampMillis( sp.getParamTimestamp(), false)+".xml";
+	    Tool.trace("Storing new parameter as: "+name);
+	    // store the result
+	    Conf paramConf = new Conf("fairsim");
+	    sp.saveConfig( paramConf.r());
+	    try {
+		paramConf.saveFile( paramDir.getPath()+File.separator+name);
+	    } catch (Conf.SomeIOException e) {
+		Tool.error("Saving failed: "+e, false);
+	    }
 	}
     
+	/** scans a folder and loads all parameter sets matching a pattern */
+	void fillListFromFolder() {
+	    File [] listOfFiles = paramDir.listFiles();
+	    for ( File i : listOfFiles ) {
+		if (i.getName().startsWith("param_ch"+ourChannel.chNumber)) {
+		    try {
+			Conf cfg = Conf.loadFile( i.getPath());
+			SimParam sp = SimParam.loadConfig( cfg.r());
+			availableParameters.addElement( sp );
+		    } catch ( Exception e ) {
+			Tool.error("Loading "+i.getName()+"failed: "+e, false);
+		    }
+
+		}
+	    }
+
+	}
+
+
     }
 
 
@@ -236,7 +292,7 @@ public class ParameterTab {
 
 	    JFrame jf = new JFrame("Test display");
 	    
-	    ParameterTab pt = new ParameterTab( rr, 0 );
+	    ParameterTab pt = new ParameterTab( rr, 0, cfg.r().cd("vigor-settings") );
 	    jf.add( pt.getPanel() );
 	    jf.pack();
 	    jf.setVisible(true);
