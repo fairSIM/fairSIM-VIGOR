@@ -99,7 +99,6 @@ public class SimParam implements Vec2d.Size, Vec3d.Size {
 	sp.otf( otf );
 	return sp;
     }
-   
 
 
     /** New set of SIM reconstruction parameters for 3D reconstruction. 
@@ -131,8 +130,37 @@ public class SimParam implements Vec2d.Size, Vec3d.Size {
 	return sp;
     }
    
+    /** Copy an existing SimParam dataset */
+    public SimParam duplicate() {
+	SimParam ret = new SimParam(nrBands, nrDirs, nrPhases, this.is3D);
 
+	// copy the simple variables
+	ret.imgSize		    = this.imgSize;
+	ret.micronsPerPixel	    = this.micronsPerPixel;
+	ret.cyclesPerMicron	    = this.cyclesPerMicron;
+	ret.stackSize		    = this.stackSize;
+	ret.micronsPerSlice	    = this.micronsPerSlice;
+	ret.cyclesPerMicronInZ	    = this.cyclesPerMicronInZ;
+	ret.imgSeq		    = this.imgSeq;
+	ret.wienerFilterParameter   = this.wienerFilterParameter;
+	ret.apoCutOff		    = this.apoCutOff;
+	ret.modLowLimit		    = this.modLowLimit;
+	ret.modHighLimit	    = this.modHighLimit;
+	ret.paramDate		    = this.paramDate;
 
+	// copy the OTFs
+	if ( this.currentOtf2D!=null )
+	    ret.currentOtf2D = this.currentOtf2D.duplicate();
+	if ( this.currentOtf3D!=null )
+	    ret.currentOtf3D = this.currentOtf3D.duplicate();
+	
+	// copy the directions
+	for (int d=0; d<this.nrDirs; d++)
+	    ret.directions[d] = this.directions[d].duplicate();
+
+	return ret;
+
+    }
 
     
 
@@ -271,12 +299,14 @@ public class SimParam implements Vec2d.Size, Vec3d.Size {
 	
 	private final int nrBands;  // how many bands
 	private final int nrPhases; // how many phases
+	private int thisBand;	    // which band is this
+	
 	private double pX, pY;	    // shift vector (band1)
 	private double phaOff;	    // global phase offsets
+	private boolean hasIndividualPhases;	// if non-equidist. phases are set
+	
 	private double [] phases;   // phases
 	private double [] modul;    // modulation 
-	private int thisBand;	    // which band is this
-	private boolean hasIndividualPhases;	// if non-equidist. phases are set
 
 	Dir(int nBands, int nPha, int thisBand) {
 	    
@@ -296,6 +326,22 @@ public class SimParam implements Vec2d.Size, Vec3d.Size {
 		modul[i] = 1.0;
 	
 	}
+
+	/** copy these direction values */
+	Dir duplicate() {
+	    Dir ret = new Dir(nrBands, nrPhases, thisBand);
+
+	    ret.pX		    = this.pX;
+	    ret.pY		    = this.pY;
+	    ret.phaOff		    = this.phaOff;
+	    ret.hasIndividualPhases = this.hasIndividualPhases;
+	    
+	    System.arraycopy( this.phases , 0 , ret.phases, 0, this.phases.length);
+	    System.arraycopy( this.modul  , 0 , ret.modul , 0, this.modul.length );
+
+	    return ret;
+	}
+
 
 	void failBand(int i) {
 	    if ((i<0)||(i>=nrBands))

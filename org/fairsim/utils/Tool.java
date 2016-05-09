@@ -29,7 +29,6 @@ public final class Tool {
     /** The tool implementation in use*/
     static private Tool.Logger currentLogger;
 
-
     /** Simple logger */
     public interface Logger {
 	public void writeTrace(String message); 
@@ -121,19 +120,19 @@ public final class Tool {
     /** Return a Tool.Timer, which is automatically started. */
     static public Timer getTimer() { return new Timer(); };
     
-    /** A simple timer */
+    /** A simple timer. TODO: The meaning of stop, pause, ... could
+     *  be much clearer */
     public static class Timer {
 	long start, stop, runtime, outtime;
 	Timer() { 
-	    //start =  System.currentTimeMillis(); 
-	    start =  System.nanoTime(); 
+	    start();
 	}
 	/** start the timer */
 	public void start() { 
 	    //start = System.currentTimeMillis(); 
 	    start =  System.nanoTime(); 
 	};
-	/** stop the timer */
+	/** stop the timer (next start resets it) */
 	public void stop() { 
 	    //stop = System.currentTimeMillis(); 
 	    stop = System.nanoTime(); 
@@ -141,7 +140,7 @@ public final class Tool {
 	    outtime=runtime;
 	    runtime=0;
 	    }
-	/** pause the timer */
+	/** pause the timer (next start continues) */
 	public void hold(){
 	    //stop = System.currentTimeMillis();
 	    stop = System.nanoTime(); 
@@ -158,6 +157,18 @@ public final class Tool {
 	@Override public String toString(){ 
 	    return String.format("%10.3f ms",(outtime/1000000.));
 	}
+    }
+
+
+    /** A generic callback interface */
+    public static interface Callback<T> {
+	public void callback(T a);
+    }
+
+    /** A generic tuple */
+    public static class Tuple<F,S> {
+	public F first;
+	public S second;
     }
 
 }

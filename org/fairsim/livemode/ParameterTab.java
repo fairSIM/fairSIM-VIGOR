@@ -228,8 +228,7 @@ public class ParameterTab {
 	    jf.add( pt.getPanel() );
 	    jf.pack();
 	    jf.setVisible(true);
-    
-    
+   
 	    // If a TIF was provided, send it
 	    if (arg.length>2) {
 		ij.ImagePlus ip = ij.IJ.openImage(arg[2]);

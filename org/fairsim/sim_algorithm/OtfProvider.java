@@ -125,6 +125,41 @@ public class OtfProvider {
 	return ret;
     }
 
+    /** Copy an existing OTF */
+    public OtfProvider duplicate( ) {
+	
+	OtfProvider ret = new OtfProvider();
+	
+	ret.cyclesPerMicron	= this.cyclesPerMicron;
+	ret.na			= this.na;
+	ret.lambda		= this.lambda;
+	ret.cutOff		= this.cutOff;
+	ret.isEstimate		= this.isEstimate;
+	ret.isMultiBand		= this.isMultiBand;
+	ret.maxBand		= this.maxBand;
+	ret.samplesLateral	= this.samplesLateral;
+	ret.vecSize		= this.vecSize;
+	ret.vecCyclesPerMicron	= this.cyclesPerMicron;
+	
+	ret.vals	= new Cplx.Float[ ret.maxBand ][ ret.samplesLateral ];
+	ret.valsAtt	= new Cplx.Float[ ret.maxBand ][ ret.samplesLateral ];
+	ret.valsOnlyAtt = new float[ ret.maxBand ][ ret.samplesLateral ];
+
+	for (int b=0; b<this.maxBand; b++) {
+	    for ( int s=0; s<this.samplesLateral; s++ ) {
+		ret.vals[b][s]		= this.vals[b][s];
+		ret.valsAtt[b][s]	= this.valsAtt[b][s];
+		ret.valsOnlyAtt[b][s]	= this.valsOnlyAtt[b][s];
+	    }
+	}
+
+	ret.setAttenuation( this.attStrength, this.attFWHM );
+	ret.switchAttenuation( this.useAttenuation );
+	
+	return ret;
+    }
+
+
     /** Returns a short description (GUI display, etc) */
     public String printState(boolean html) {
 	String ret ="";
