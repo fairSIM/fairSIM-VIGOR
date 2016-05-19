@@ -37,7 +37,7 @@ public class ImageSender {
 
 
     // buffer for images to send
-    BlockingQueue<ImageWrapper> imageQueue = new ArrayBlockingQueue<ImageWrapper>(64);
+    BlockingQueue<ImageWrapper> imageQueue = new ArrayBlockingQueue<ImageWrapper>(2048);
    
     // list of TCP connections to use
     List<SendingThread> connection = new ArrayList<SendingThread>();
@@ -47,6 +47,12 @@ public class ImageSender {
     public ImageSender() {
 
     }
+
+    /** Start ImageSender without initial connection, but with given buffer size*/
+    public ImageSender(int bufSize) {
+	imageQueue = new ArrayBlockingQueue<ImageWrapper>(bufSize);
+    }
+
 
     /** open connections to all hosts on default port */
     public ImageSender( String ... host ) throws java.net.UnknownHostException {

@@ -511,6 +511,9 @@ public class PlainImageDisplay {
 	    zoomLevel=level;
 	    zoomX=xPos;
 	    zoomY=yPos;
+	
+	    this.paintImage();	
+
 	    //System.out.println("Updated ROI: "+xPos+" "+yPos+"/"+zoomX+" "+zoomY+" l:"+zoomLevel);
 	    if (ourUpdateListener!=null)
 		ourUpdateListener.newZoom( zoomLevel, zoomX, zoomY);

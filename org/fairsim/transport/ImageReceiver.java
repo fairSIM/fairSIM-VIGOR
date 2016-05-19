@@ -32,7 +32,11 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import javax.swing.JFrame;
+
 import org.fairsim.utils.Tool;
+import org.fairsim.sim_gui.PlainImageDisplay;
+
 
 public class ImageReceiver {
 
@@ -195,14 +199,35 @@ public class ImageReceiver {
     public static void main(String [] arg) 
 	throws java.net.UnknownHostException, java.io.IOException {
 
-	ImageReceiver nl = new ImageReceiver(16,512,512);
+	if (arg.length<=2) {
+	    System.out.println("Usage: width height (no)display");
+	    return;
+	}
+
+	final int width = Integer.parseInt( arg[0] );
+	final int height = Integer.parseInt( arg[1] );
+
+	boolean showDisplay = false;
+
+
+	PlainImageDisplay displ01 = null;
+	if (arg[2].equals("display")) {
+	    displ01 = new PlainImageDisplay(width, height);
+	    JFrame mainFrame = new JFrame("Test display");
+	    mainFrame.add( displ01.getPanel());
+	    mainFrame.pack();
+	    mainFrame.setVisible(true);	    
+	}   
+
+
+	ImageReceiver nl = new ImageReceiver(400,width,height);
 	nl.startReceiving( null, null);
 	
 	Tool.Timer t1 = Tool.getTimer();
 	long count=0,lastcount=0;
     
 	while (true) {
-	    nl.takeImage();
+	    ImageWrapper iw = nl.takeImage();
 	    count++;
 	    if (count%100==0) {
 		t1.stop();
@@ -210,8 +235,18 @@ public class ImageReceiver {
 		    count, 100/(t1.msElapsed()/1000)));
 		t1.start(); 
 	    }
-	    
+	   
+	    if (count%10==0 && displ01!=null) {
+		displ01.newImage(0, iw.getPixels());
+		displ01.refresh();
+	    }
+		
+	     
 	}
+
+    
+
+
 
     }
 
