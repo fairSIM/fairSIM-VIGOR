@@ -387,7 +387,13 @@ public class Tiles {
 	    DefaultListModel dlm = (DefaultListModel)lm;
 	    dlm.addElement( elem );
 	}
-	
+
+	// emulate Java7 behaviour
+	@Override
+	@SuppressWarnings("unchecked")
+	public T getSelectedValue() {
+	    return (T)super.getSelectedValue();
+	}
 
     }
 

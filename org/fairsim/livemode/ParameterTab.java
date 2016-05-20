@@ -187,10 +187,27 @@ public class ParameterTab {
 	    fillListFromFolder();
 
 	    // displaying the currently active parameter
-	    JTextArea	statusField = new JTextArea(12,35);
+	    final JTextArea	statusField = new JTextArea(12,35);
 	    statusField.setEditable(false);
 
 	    statusField.setText(ourChannel.param.prettyPrint(true));
+
+	    // button to set the selected parameter set as the current one
+	    JButton useParameterButton = new JButton("apply parameters");
+	    useParameterButton.setToolTipText(
+		"use the parameter set selected in the list for reconstruction");
+
+	    useParameterButton.addActionListener( new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+		    SimParam sp = availableParameters.getSelectedValue();
+		    if (sp!=null) {
+			ourChannel.param = sp;
+			statusField.setText(ourChannel.param.prettyPrint(true));
+		    }
+		}
+
+	    });
+
 
 
 	    // merging everything in one panel
@@ -202,21 +219,29 @@ public class ParameterTab {
 		"Reconstruction parameters") );
 	   
 	    GridBagConstraints c = new GridBagConstraints();
-	    c.insets = new Insets(3,3,3,3);
-	    c.gridx=1; c.gridy=1; c.gridheight=3; c.gridwidth=4; 
-	    //c.weighty=1; c.weightx=1;
-	    panel.add( pane1, c );
-	    c.weighty=0; c.weightx=0;
+	    //c.insets = new Insets(3,3,3,3);
 	    
-	    c.gridx=1; c.gridy=4; c.gridheight=8; c.gridwidth=4; 
+	    // status
+	    c.gridx=0; c.gridy=0; c.gridheight=3; c.gridwidth=4; 
 	    panel.add( statusField, c );
 	    
-	    c.gridx=1; c.gridy=12; c.gridheight=1; c.gridwidth=1; c.weightx=1;
-	    panel.add(Box.createHorizontalGlue(), c);
-	    c.gridx=4;
-	    panel.add(Box.createHorizontalGlue(), c);
-	    c.gridx=2; c.gridwidth=2; c.weightx=0;
-	    panel.add( runFitButton , c);
+	    // list
+	    c.weightx = 1;
+	    c.weighty = 1;
+	    c.fill = GridBagConstraints.BOTH;
+	    c.gridx=0; c.gridy=3; c.gridheight=7; c.gridwidth=4;  
+	    JPanel tmp1 = new JPanel();
+	    tmp1.add( pane1 );
+	    panel.add( tmp1, c );
+	  
+	    // buttons
+	    c.weightx=0; c.weighty=0;
+	    c.gridx=1; c.gridy=10; c.gridheight=1; c.gridwidth=4; 
+	    JPanel buttonsPanel = new JPanel();
+	    buttonsPanel.add( useParameterButton );
+	    buttonsPanel.add( runFitButton );
+	    panel.add( buttonsPanel, c);
+    
 	    
 	    runFitButton.addActionListener( new ActionListener() {
 		public void actionPerformed(ActionEvent e) {

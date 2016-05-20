@@ -28,6 +28,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.text.DefaultCaret;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 
 import java.awt.Color;
 import java.awt.event.ActionListener;
@@ -188,11 +189,8 @@ public class LiveControlPanel {
 	    }
 	});
     
-	// setup frame and display
-	mainFrame.add(mainPanel);
-	mainFrame.pack();
-	mainFrame.setVisible(true);
-	
+
+
 	
 	//  ------- 
 	//  initialize the components
@@ -234,12 +232,27 @@ public class LiveControlPanel {
 	hrFr.setVisible(true);
 	lrFr.setVisible(true);
 
+	// setup main interface tabs
+	JTabbedPane tabbedPane = new JTabbedPane();
+    
+	tabbedPane.addTab( "main", mainPanel );
+
+	for (int ch=0 ; ch<nrCh ; ch++) {
+	    ParameterTab pTab = new ParameterTab( reconRunner, ch, cfg );
+	    tabbedPane.addTab( channels[ch], pTab.getPanel());
+	}
+	    
+
+	mainFrame.add(tabbedPane);
+	mainFrame.pack();
+	mainFrame.setVisible(true);
+	
 	// setup the display-update threads
 	SimpleImageForward sif1 = new SimpleImageForward(false);
 	SimpleImageForward sif2 = new SimpleImageForward(true);
 
 	sif1.start();
-	sif2.start();
+	sif2.start(); 
 
 
 	DynamicDisplayUpdate updateThread = new DynamicDisplayUpdate();

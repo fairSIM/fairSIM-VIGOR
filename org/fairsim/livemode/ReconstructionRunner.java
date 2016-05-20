@@ -430,6 +430,11 @@ public class ReconstructionRunner {
 		final int hb = (par.nrBand()==3)?(3):(1);
 		final int nBand = par.nrBand()-1;
 
+		if (otfPr == null) {
+		    Tool.error("problem: OTF provider is null??" , true);
+		    return;
+		}
+
 		double [] peak = 
 		    Correlation.fitPeak( separate[0], separate[hb], 0, 1, 
 			otfPr, -par.px(nBand), -par.py(nBand), 
