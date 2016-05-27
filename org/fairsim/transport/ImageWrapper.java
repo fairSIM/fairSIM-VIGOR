@@ -37,6 +37,8 @@ public class ImageWrapper {
     int width, height, bpp;
     int posA, posB, pos0, pos1, pos2;
 
+    long timeCamera, timeCapture, timeRecord;
+
     byte []	buffer;
     ByteBuffer	header;
 
@@ -207,11 +209,9 @@ public class ImageWrapper {
 		dat[ (2 * y * width + x) + 1 ] = 0; 
 	    }
 	}
-
    
 	vec.syncBuffer();
     }
-
 
 
     /** Create a wrapped image. Convenience method. */
@@ -224,8 +224,6 @@ public class ImageWrapper {
 	ret.setPos012( pos0, pos1, pos2 );
 	return ret;
     }
-
-
 
 
     void writeHeader() {
@@ -245,6 +243,11 @@ public class ImageWrapper {
 	header.putShort( 40, (short)pos0 );
 	header.putShort( 42, (short)pos1 );
 	header.putInt(   44, ( int )pos2 );
+    
+	header.putLong( 48, timeCamera  );
+	header.putLong( 56, timeCapture );
+	header.putLong( 64, timeRecord  );
+
     }
 
     void parseHeader() throws BrokenHeaderException {
@@ -263,6 +266,10 @@ public class ImageWrapper {
 	pos0	= header.getShort( 40 );
 	pos1	= header.getShort( 42 );
 	pos2	= header.getInt(   44 );
+
+	timeCamera   = header.getLong( 48 );
+	timeCapture  = header.getLong( 56 );
+	timeRecord   = header.getLong( 64 );
 
 	if ( width > maxWidth || height > maxHeight )
 	    throw new BrokenHeaderException(String.format(
@@ -305,6 +312,11 @@ public class ImageWrapper {
     public int pos0() { return pos0; }
     public int pos1() { return pos1; }
     public int pos2() { return pos2; }
+
+    public long timeCamera() { return timeCamera; }
+    public long timeCapture() { return timeCapture; }
+    public long timeRecord() { return timeRecord; }
+
 
 }
 

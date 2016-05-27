@@ -302,9 +302,9 @@ public class LiveControlPanel {
 		    if (doWidefield) {
 		        img = reconRunner.finalWidefield.take();
 		    } else {
-		        reconRunner.finalRecon.take();
-		        reconRunner.finalRecon.take();
-		        reconRunner.finalRecon.take();
+		        //reconRunner.finalRecon.take();
+		        //reconRunner.finalRecon.take();
+		        //reconRunner.finalRecon.take();
 		        img =  reconRunner.finalRecon.take();
 		    }
 		    

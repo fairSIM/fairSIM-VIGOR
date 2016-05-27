@@ -14,7 +14,8 @@ byte	type	function
 16	int8	protocol version    (currently: 1)
 17	int8	datatype of pixel data (currently: 2 - unsigned short)
 
-18	14bytes	reserved for extensions (zero when send, ignored when received)
+18	uint8	"LIVESIM\0" (8 byte US-ASCII) 
+26	6byte	currently not used	
 
 32	int16	width of frame, in #pixel
 34	int16	height of frame, in #pixel
@@ -23,11 +24,21 @@ byte	type	function
 
 40	int16	pos0	Position in z-plane
 42	int16	pos1	Position in color (typically: use exitation wavelength)
-44	int32	pos2	Position in time
+44	int32	pos2	Position in time (integer, not stamp)
 
-48	80bytes	reserved for extension (zero when send, ignored when received)
+48	int64	cam-time    Timestamp (see below) camera
+56	int64	cap-time    Timestamp (see below) capture computer
+64	int64	rec-time    Timestamp (see below) receiving / storing computer
+
+72	56 bytes    unused, for later upgrade
 
 128	start payload, bytes: length*sizeof(datatype of pixel data)
+
+## Timestamp
+
+Timestamps are in integer microseconds since epoch.
+Both "0x0000000000000000" as "0xFFffFFffFFffFFff" must be read as "timestamp not available".
+Multiple timestamps are saved to avoid synchronization issues.
 
 ## Datatypes of pixel data (vers. 1)
 

@@ -340,7 +340,7 @@ public class ReconstructionRunner {
 
 		if (reconCount%10==0) {
 		    int rawImgs = nrChannels*nrDirs*nrPhases;
-		    Tool.trace(String.format(
+		    Tool.tell(String.format(
 			"reconst:  #%5d %7.2f ms/fr %7.2f ms/raw %7.2f fps(hr) %7.2f fps(raw)", 
 			reconCount, tAll.msElapsed()/10, tAll.msElapsed()/(10*rawImgs),
 			1000./(tAll.msElapsed()/10.), 
