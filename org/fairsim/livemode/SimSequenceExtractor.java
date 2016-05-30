@@ -53,8 +53,10 @@ public class SimSequenceExtractor {
 	channelMapping = new TreeMap<Integer, PerChannelBuffer >() ;
 	channels = new PerChannelBuffer[ nrChannels ];
 	for (int i=0; i<nrChannels; i++) {
-	    channels[i] = new PerChannelBuffer(9*9*10);
-	    Tool.trace("Created receive buffer for channel: "+reconRunner.getChannel(i).chNumber);	
+	    channels[i] = new PerChannelBuffer(9*9*10, 
+		reconRunner.getChannel(i).chNumber);
+	    Tool.trace("Created receive buffer for channel: "
+		+reconRunner.getChannel(i).chNumber);	
 	    channelMapping.put( reconRunner.getChannel(i).chNumber, channels[i]);
 	}
     
@@ -126,7 +128,8 @@ public class SimSequenceExtractor {
 	
 	BlockingQueue<ImageWrapper> rawImgs;
 	BlockingQueue<short [][]>     simSeq;
-	final int queueSize;
+	final int queueSize, chNumber;
+
 	int missedRaw =0;
 	int missedSim =0;
 	int noSyncSince=0;
@@ -134,8 +137,9 @@ public class SimSequenceExtractor {
 	int queryRaw() { return rawImgs.size(); }
 	int querySim() { return simSeq.size(); }
 
-	PerChannelBuffer(int queueSize) {
+	PerChannelBuffer(int queueSize, int chNumber) {
 	    this.queueSize = queueSize;
+	    this.chNumber  = chNumber;
 	    rawImgs = new ArrayBlockingQueue<ImageWrapper>( queueSize );
 	    simSeq  = new ArrayBlockingQueue<short [][]>( queueSize );
 	}
@@ -153,28 +157,43 @@ public class SimSequenceExtractor {
 	    final int nrRawPerSeq = reconRunner.nrDirs*reconRunner.nrPhases;
 
 	    while ( true ) {
+
 		try {
 
-		    // detect a bright frame (avr > 10000)
-		    ImageWrapper iw = rawImgs.take();
-		    short pxl [] = iw.getPixels();
-		    
-		    if (MTool.avr_ushort( pxl ) < 10000) {
-			noSyncSince++;
-			continue;
+		    long lastTimeStamp = 0;
+
+		    // first, loop over incoming images until we find a sync frame
+		    while ( true ) {
+			
+			// take a frame, get it's timestamp
+			ImageWrapper iwSync = rawImgs.take();
+			long curTimeStamp = iwSync.timeCamera();		    
+			
+			// version 1 (for camera with precise time-stamp, like PCO)
+			if ( Math.abs( curTimeStamp - lastTimeStamp - 4000 ) < 50 ) {
+			    Tool.trace("SYNC "+chNumber+": via timestamp/PCO");
+			    break;
+			}
+			lastTimeStamp  = curTimeStamp;
+
+			// version 2 (for camera w/o timestamp, bright LED):
+			short pxl [] = iwSync.getPixels();
+			if (MTool.avr_ushort( pxl ) > 10000) {
+			    Tool.trace("SYNC "+chNumber+": via bright frame");
+			    rawImgs.take(); // ignore the next frame
+			    break;
+			}
+
+
 		    }
 
-		    // ignore the next frame
-		    rawImgs.take();
-
-
-		    // copy the next n x m frames
+		    // then, copy the next n x m frames
 		    for (int k=0; k<seqCount; k++) {
 			
 			short [][] simPxls = new short[nrRawPerSeq][];
 			
 			for (int i=0; i<nrRawPerSeq; i++) {
-			    iw = rawImgs.take();
+			    ImageWrapper iw = rawImgs.take();
 			    simPxls[i] = iw.getPixels();
 			}
 		    

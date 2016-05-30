@@ -70,10 +70,10 @@ public class ControlConnection {
 
     
     /** Creates a CommandConnection listening on a given port. */
-    public ControlConnection( int port ) {
-	
+    public ControlConnection( int port ) throws java.net.SocketException {
 
-
+	UdpListener udpListen = new UdpListener(port);
+	udpListen.start();
 
     }
 
@@ -96,17 +96,18 @@ public class ControlConnection {
 
 	@Override
 	public void run() {
-	
-	    byte [] buf		    = new byte[maxCommandLength];
-	    ByteBuffer bbr	    = ByteBuffer.wrap(buf);
-	    DatagramPacket packet   = new DatagramPacket(buf, buf.length);
-	
-	    bbr.order( java.nio.ByteOrder.LITTLE_ENDIAN );
-	    
+	    	    
 	    while (!haltThread) {
+
+		byte [] buf		    = new byte[maxCommandLength];
+		ByteBuffer bbr	    = ByteBuffer.wrap(buf);
+		DatagramPacket packet   = new DatagramPacket(buf, buf.length);
+		bbr.order( java.nio.ByteOrder.LITTLE_ENDIAN );
+
 		try {
-		   listenSocket.receive(packet);
-		   String  retState = getStringFromBytes(buf, 0, maxCommandLength);
+		    listenSocket.receive(packet);
+		    String  retState = getStringFromBytes(buf, 0, maxCommandLength);
+		    Tool.trace( retState );
 		}
 		catch (SocketTimeoutException e) {
 		    // ignore
@@ -136,6 +137,43 @@ public class ControlConnection {
 
     }
 
+
+    public static void main( String [] arg ) {
+
+	if (arg.length<1) {
+	    System.out.println("Usage: [send/listen] hostname message");
+	    return;
+	}
+
+	// listen for UDP packets
+	if (arg[0].equals("listen")) {
+	    
+	    try {
+		ControlConnection cc = new ControlConnection(32320);
+		Thread.sleep(3600*1000);
+	    } catch ( Exception e ) {
+		throw new RuntimeException(e);
+	    }
+	}
+
+	// send UDP packets
+	if (arg[0].equals("send")) {
+	    if (arg.length < 3) {
+		System.out.println("Missing: host and/or message");
+		return;
+	    }
+
+	    try {
+		ControlConnection.sendCommand(arg[2], arg[1], 32320);
+	    } catch (Exception e) {
+		throw new RuntimeException(e);
+	    }
+
+	}
+
+
+
+    }
 
 
 

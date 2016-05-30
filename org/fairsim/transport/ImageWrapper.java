@@ -37,7 +37,7 @@ public class ImageWrapper {
     int width, height, bpp;
     int posA, posB, pos0, pos1, pos2;
 
-    long timeCamera, timeCapture, timeRecord;
+    long timeCamera=0, timeCapture=0, timeRecord=0;
 
     byte []	buffer;
     ByteBuffer	header;
@@ -302,6 +302,19 @@ public class ImageWrapper {
 	if (i0<0 || i0>=32767 || i1<0 || i1>=32767 || i2<0 || i2>=2147483647)
 	    throw new RuntimeException("Index out of bound");
 	pos0 = i0; pos1 = i1; pos2 = i2;
+    }
+
+
+    public void setTimeCamera( long val ) {
+	timeCamera = val;
+    }
+
+    public void setTimeCapture( long val ) {
+	timeCapture = val;
+    }
+
+    public void setTimeRecord( long val ) {
+	timeRecord = val;
     }
 
     public int width()  { return width;  };

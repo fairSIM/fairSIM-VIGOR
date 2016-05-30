@@ -19,6 +19,7 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 package org.fairsim.utils;
 
 import java.io.File;
+import java.util.Calendar;
 
 /**
  * Logging and Timers
@@ -94,6 +95,57 @@ public final class Tool {
 	}
 	return new File(path).getAbsoluteFile();
     }
+
+
+    /** Decode a BCD timestamp (as used by PCO) 
+     *	@param BCD input, typically image acquired by camera (first 16 entries used)
+     *	@return The timestamp, in microseconds since epoch
+     * */
+    static public long decodeBcdTimestamp( short [] stamp ) {
+	long stampNr= bcdDecode(stamp, 0, 4);
+
+	int year = bcdDecode(stamp, 4, 6);
+	int month= bcdDecode(stamp, 6, 7);
+	int day  = bcdDecode(stamp, 7, 8);
+
+	int h	  = bcdDecode(stamp,  8, 9);
+	int min  = bcdDecode(stamp,  9,10);
+	int sec  = bcdDecode(stamp, 10,11);
+	int  us  = bcdDecode(stamp, 11,15);
+
+	Calendar cld = Calendar.getInstance();
+	cld.set( year, month, day, h, min, sec );
+	long ret = cld.getTimeInMillis();
+
+	ret = (ret*1000) + us;
+
+	return ret;
+    }
+
+    /** Decode double-packed (2 digit per byte) BCD-encoded values.
+     *  Beware of overflows, even with long
+     *  @param arr The input array to decode from 
+     *	@param start start of range to decode
+     *	@param end end of range to decode
+     *	@return the decoded number 
+     *  */
+    public static int bcdDecode( short [] arr, int start, int end) {
+	int ret=0;
+	int count=0;
+	
+	for (int j=end-1; j>=start; j--) {
+	    int val1 =  arr[j] & 0x000F ;
+	    int val2 = (arr[j] & 0x00F0)>>4 ;
+	    int mult = (int)Math.pow(10, count*2);
+	    //IJ.log(""+mult);
+	    ret += (val1+val2*10)*mult;
+	    count++;
+	}
+
+	return ret;
+    }
+
+
 
 
     /** Format a 'milliseconds since 1 Jan 1970' timestamp in ISO */ 
