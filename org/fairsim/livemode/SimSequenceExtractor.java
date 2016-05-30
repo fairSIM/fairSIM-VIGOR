@@ -29,6 +29,7 @@ import org.fairsim.transport.ImageWrapper;
 import org.fairsim.utils.Tool;
 import org.fairsim.linalg.MTool;
 
+import org.fairsim.utils.Conf;
 
 /** Takes raw images from the network listener, syncs
  * to SIM sequence, passes them to ReconstructionRunner */
@@ -37,18 +38,25 @@ public class SimSequenceExtractor {
     final ImageReceiver imgRecv;
     final ReconstructionRunner reconRunner; 
     final int nrChannels;
+
     final int seqCount;
+    final int syncFrameAvr;
+    final int syncFrameDelay;
 
     final PerChannelBuffer [] channels;
     private Map< Integer, PerChannelBuffer > channelMapping;
 
     /** Links ir to rr */
-    public SimSequenceExtractor( int seqCount, 
-	ImageReceiver ir, ReconstructionRunner rr ) {
+    public SimSequenceExtractor( Conf.Folder cfg, 
+	ImageReceiver ir, ReconstructionRunner rr ) 
+	throws Conf.EntryNotFoundException {
 	this.imgRecv = ir;
 	this.reconRunner = rr;
 	this.nrChannels = rr.nrChannels;
-	this.seqCount = seqCount;
+	
+	this.seqCount = cfg.getInt("SyncFrameFreq").val();
+	this.syncFrameAvr = cfg.getInt("SyncFrameAvr").val();
+	this.syncFrameDelay = cfg.getInt("SyncFrameDelay").val();
 
 	channelMapping = new TreeMap<Integer, PerChannelBuffer >() ;
 	channels = new PerChannelBuffer[ nrChannels ];
@@ -170,7 +178,7 @@ public class SimSequenceExtractor {
 			long curTimeStamp = iwSync.timeCamera();		    
 			
 			// version 1 (for camera with precise time-stamp, like PCO)
-			if ( Math.abs( curTimeStamp - lastTimeStamp - 4000 ) < 50 ) {
+			if ( Math.abs( curTimeStamp - lastTimeStamp - 5000 ) < 50 ) {
 			    Tool.trace("SYNC "+chNumber+": via timestamp/PCO");
 			    break;
 			}

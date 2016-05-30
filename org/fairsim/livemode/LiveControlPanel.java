@@ -200,7 +200,6 @@ public class LiveControlPanel {
 	int nrCh = channels.length;
 
 	// network receiver and image storage
-	int syncFrameFreq   = cfg.getInt("SyncFrameFreq").val();
 	int netBufferSize   = cfg.getInt("NetworkBuffer").val();
 	imageReceiver	    = new ImageReceiver(netBufferSize,size,size);
 	
@@ -216,8 +215,7 @@ public class LiveControlPanel {
 	reconRunner = new ReconstructionRunner(cfg, avf, channels); 
 
 	// start the SIM sequence detection
-	seqDetection = new SimSequenceExtractor( syncFrameFreq, 
-	    imageReceiver, reconRunner);
+	seqDetection = new SimSequenceExtractor(cfg, imageReceiver, reconRunner);
 
 	// setup the displays
 	wfDisplay    = new PlainImageDisplay( nrCh,   size,   size, channels );

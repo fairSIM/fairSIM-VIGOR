@@ -16,6 +16,9 @@
 <ParamFolder type="string">~/VIGOR-parameters/</ParamFolder>
 
 <SyncFrameFreq type="int">10</SyncFrameFreq>
+<SyncFrameAvr type="int">10000</SyncFrameAvr>
+<SyncFrameDelay type="int">5000</SyncFrameDelay>
+
 
 <!-- PER-channel values at startup -->
 

@@ -65,6 +65,26 @@ public class ImageWrapper {
 	bb.asShortBuffer().put( dat, 0, w*h); 
     }
 
+    /** Create an ImageWrapper from 2-byte pxl data */
+    public void copyCrop( short [] dat, int w, int h, int origW, int origH) {
+	width=w; height=h; bpp=2;
+
+	if (w*h>dat.length)
+	    throw new RuntimeException("Input data too short");
+	if (w>maxWidth || h>maxHeight)
+	    throw new RuntimeException("Input image larger than maximum size");
+
+	ByteBuffer bb = ByteBuffer.wrap( buffer, 128, buffer.length-128);
+	bb.order( ByteOrder.LITTLE_ENDIAN );
+	ShortBuffer sb = bb.asShortBuffer();
+    
+	for (int y=0; y<h; y++) {
+	    sb.put( dat, y*origW, w); 
+	}
+    }
+
+
+
     /** Create an ImageWrapper from 1-byte pxl data */
     public void copy( byte [] dat, int w, int h) {
 	width=w; height=h; bpp=1;
