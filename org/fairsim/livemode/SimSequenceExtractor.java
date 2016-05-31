@@ -82,6 +82,12 @@ public class SimSequenceExtractor {
 	Tool.trace("Image sequency detection started");
     }
 
+    
+    /** Clears all receive and sort buffers for resyncing to the stream */
+    public void clearBuffers() {
+	for ( PerChannelBuffer i : channels ) 
+	    i.clearBuffers();
+    }   
 
     /** Take images for the gereral queue, sort them by channel */
     class ImageSorter extends Thread {
@@ -101,6 +107,9 @@ public class SimSequenceExtractor {
 	    }
 	}
     }
+
+    
+
 
 
     /** Takes tuples, triples, etc of SIM images, and
@@ -158,6 +167,11 @@ public class SimSequenceExtractor {
 		missedRaw++;
 	}
 
+	void clearBuffers() {
+	    rawImgs.clear();
+	    simSeq.clear();
+	}
+
 	/** Sequence detection, emptying rawImgs, filling simSeq */
 	@Override
 	public void run ( ) {
@@ -182,6 +196,7 @@ public class SimSequenceExtractor {
 			    Tool.trace("SYNC "+chNumber+": via timestamp/PCO");
 			    break;
 			}
+			//System.out.println( "time diff: " + (curTimeStamp - lastTimeStamp) );
 			lastTimeStamp  = curTimeStamp;
 
 			// version 2 (for camera w/o timestamp, bright LED):
@@ -191,7 +206,6 @@ public class SimSequenceExtractor {
 			    rawImgs.take(); // ignore the next frame
 			    break;
 			}
-
 
 		    }
 

@@ -111,13 +111,15 @@ public final class Tool {
 	int h	  = bcdDecode(stamp,  8, 9);
 	int min  = bcdDecode(stamp,  9,10);
 	int sec  = bcdDecode(stamp, 10,11);
-	int  us  = bcdDecode(stamp, 11,15);
+	int  us  = bcdDecode(stamp, 11,14);
 
 	Calendar cld = Calendar.getInstance();
-	cld.set( year, month, day, h, min, sec );
-	long ret = cld.getTimeInMillis();
+	cld.set( year, month-1, day, h, min, sec );
 
-	ret = (ret*1000) + us;
+	long ret = cld.getTimeInMillis()/1000; 
+	// TODO: for some reason, 'getTimeInMillis' is not a multiple of 1000
+	
+	ret = (ret*1000000) +us;
 
 	return ret;
     }

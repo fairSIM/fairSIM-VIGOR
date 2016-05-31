@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import org.fairsim.linalg.Vec2d;
+import org.fairsim.utils.Tool;
 
 /** Class to encapsulate image data for network send */
 public class ImageWrapper {
@@ -69,7 +70,7 @@ public class ImageWrapper {
     public void copyCrop( short [] dat, int w, int h, int origW, int origH) {
 	width=w; height=h; bpp=2;
 
-	if (w*h>dat.length)
+	if (origW*origH>dat.length)
 	    throw new RuntimeException("Input data too short");
 	if (w>maxWidth || h>maxHeight)
 	    throw new RuntimeException("Input image larger than maximum size");
@@ -83,6 +84,26 @@ public class ImageWrapper {
 	}
     }
 
+    /** Create an ImageWrapper from 2-byte pxl data, mirroring the input in x */
+    public void copyMirrorX( short [] dat, int w, int h) {
+	width=w; height=h; bpp=2;
+
+	if (w*h>dat.length)
+	    throw new RuntimeException("Input data too short");
+	if (w>maxWidth || h>maxHeight)
+	    throw new RuntimeException("Input image larger than maximum size");
+
+	ByteBuffer bb = ByteBuffer.wrap( buffer, 128, buffer.length-128);
+	bb.order( ByteOrder.LITTLE_ENDIAN );
+	ShortBuffer sb = bb.asShortBuffer();
+
+	for (int y=0; y<h; y++) {
+	    for (int x=0; x<w; x++) {
+		//sb.put( dat, y*origW, w); 
+		sb.put( dat[ y*w + (w-x-1) ] );
+	    }
+	}
+    }
 
 
     /** Create an ImageWrapper from 1-byte pxl data */
@@ -245,6 +266,27 @@ public class ImageWrapper {
 	return ret;
     }
 
+    /** Create a wrapped image. Convenience method. */
+    public static ImageWrapper copyImageMirrorX( short [] pxl, int w, int h,
+	int posA, int posB, int pos0, int pos1, int pos2 ) {
+
+	ImageWrapper ret = new ImageWrapper( w, h );
+	ret.copyMirrorX( pxl,w,h );
+	ret.setPosAB(  posA, posB );
+	ret.setPos012( pos0, pos1, pos2 );
+	return ret;
+    }
+
+    /** Create a wrapped, cropped image. Convenience method. */
+    public static ImageWrapper copyImageCrop( short [] pxl, int w, int h, int origW, int origH, 
+	int posA, int posB, int pos0, int pos1, int pos2 ) {
+
+	ImageWrapper ret = new ImageWrapper( w, h );
+	ret.copyCrop( pxl, w,h, origW, origH );
+	ret.setPosAB(  posA, posB );
+	ret.setPos012( pos0, pos1, pos2 );
+	return ret;
+    }
 
     void writeHeader() {
 	Arrays.fill( buffer, 0, 128, (byte)0);
@@ -350,6 +392,24 @@ public class ImageWrapper {
     public long timeCapture() { return timeCapture; }
     public long timeRecord() { return timeRecord; }
 
+
+    // just a quick test
+    public static void main( String [] arg ) {
+
+	short [] tmp  = new short[512*512];
+	
+	Tool.Timer t1 = Tool.getTimer();
+
+	ImageWrapper iw =null;
+	
+	for (int i=0; i<1000; i++ ){
+	    iw = ImageWrapper.copyImageMirrorX( tmp, 512, 512,  0,0,0,0, 1 );
+	}
+
+	t1.stop();
+	System.out.println( "w "+ iw.width() + " h "+iw.height()+" "+t1);
+
+    }
 
 }
 

@@ -1,0 +1,109 @@
+<fairsim>
+<vigor-settings>
+
+<RawPxlCount type="int">512</RawPxlCount>
+<RawPxlSize type="decimal">0.08</RawPxlSize>
+
+<NrPhases type="int">3</NrPhases>
+<NrAngles type="int">3</NrAngles>
+<NrBands type="int">2</NrBands>
+
+<ReconThreads type="int">2</ReconThreads>
+<NetworkBuffer type="int">600</NetworkBuffer>
+<DiskBuffer type="int">2500</DiskBuffer>
+<DiskFolder type="string">/vol/ssd-cache/VIGOR-stream</DiskFolder>
+
+<ParamFolder type="string">~/VIGOR-parameters/</ParamFolder>
+
+<SyncFrameFreq type="int">1</SyncFrameFreq>
+<SyncFrameAvr type="int">20000</SyncFrameAvr>
+<SyncFrameDelay type="int">5000</SyncFrameDelay>
+
+<!--- Channel ORANGE-RED -->
+
+<channel-568>
+
+<offset type="decimal">200</offset>
+<ChannelNumber type="int">568</ChannelNumber>
+
+<sim-param>
+<nr-angles type="int"> 3 </nr-angles>
+<microns-per-pxl type="decimal"> 8.00000e-02 </microns-per-pxl>
+<wiener-parameter type="decimal"> 5.00000e-02 </wiener-parameter>
+<nr-bands type="int"> 2 </nr-bands>
+<img-size-pxl type="int"> 544 </img-size-pxl>
+<apodization-cutoff type="decimal"> 2.00000e+00 </apodization-cutoff>
+<nr-phases type="int"> 3 </nr-phases>
+<img-seq type="string">ZAP</img-seq>
+<timestamp type="timepoint"> 1464712501653 </timestamp>
+<dir-2>
+<shift type="decimal"> 2.99000e+01 -1.56344e+02 </shift>
+<phase-offset type="decimal"> 8.62902e-01 </phase-offset>
+<modulations type="decimal"> 1.00000e+00 6.76235e-01 </modulations>
+</dir-2>
+<dir-1>
+<shift type="decimal"> 1.56900e+02 -5.51667e+01 </shift>
+<phase-offset type="decimal"> -2.00657e+00 </phase-offset>
+<modulations type="decimal"> 1.00000e+00 8.54349e-01 </modulations>
+</dir-1>
+<dir-0>
+<shift type="decimal"> -1.21411e+02 -1.02856e+02 </shift>
+<phase-offset type="decimal"> 2.83224e+00 </phase-offset>
+<modulations type="decimal"> 1.00000e+00 6.91942e-01 </modulations>
+</dir-0>
+</sim-param>
+<otf2d>
+<NA type="decimal"> 1.40000e+00 </NA>
+<a-estimate type="decimal"> 3.00000e-01 </a-estimate>
+<emission type="int"> 600 </emission>
+</otf2d>
+
+</channel-568>
+
+<!--- Channel DARK RED -->
+
+<channel-647>
+
+<offset type="decimal">200</offset>
+<ChannelNumber type="int">647</ChannelNumber>
+
+<sim-param>
+<nr-angles type="int"> 3 </nr-angles>
+<microns-per-pxl type="decimal"> 8.00000e-02 </microns-per-pxl>
+<wiener-parameter type="decimal"> 5.00000e-02 </wiener-parameter>
+<nr-bands type="int"> 2 </nr-bands>
+<img-size-pxl type="int"> 512 </img-size-pxl>
+<apodization-cutoff type="decimal"> 2.00000e+00 </apodization-cutoff>
+<nr-phases type="int"> 3 </nr-phases>
+<img-seq type="string">ZAP</img-seq>
+<timestamp type="timepoint"> 1464721667919 </timestamp>
+<dir-2>
+<shift type="decimal"> 2.36333e+01 -1.30078e+02 </shift>
+<phase-offset type="decimal"> -2.44461e+00 </phase-offset>
+<modulations type="decimal"> 1.00000e+00 2.97544e-01 </modulations>
+</dir-2>
+<dir-1>
+<shift type="decimal"> 1.28567e+02 -4.66333e+01 </shift>
+<phase-offset type="decimal"> -1.87573e+00 </phase-offset>
+<modulations type="decimal"> 1.00000e+00 4.67179e-01 </modulations>
+</dir-1>
+<dir-0>
+<shift type="decimal"> -9.98333e+01 -8.49889e+01 </shift>
+<phase-offset type="decimal"> -1.43548e+00 </phase-offset>
+<modulations type="decimal"> 1.00000e+00 2.95683e-01 </modulations>
+</dir-0>
+</sim-param>
+<otf2d>
+<NA type="decimal"> 1.40000e+00 </NA>
+<attenuation>
+<FWHM type="decimal"> 1.20000e+00 </FWHM>
+<strength type="decimal"> 9.90000e-01 </strength>
+</attenuation>
+<a-estimate type="decimal"> 3.00000e-01 </a-estimate>
+<emission type="int"> 680 </emission>
+</otf2d>
+
+</channel-647>
+
+</vigor-settings>
+</fairsim>

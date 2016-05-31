@@ -142,11 +142,20 @@ public class LiveControlPanel {
 	    };
 	});
 
+	final JButton bufferClearButton = new JButton("buffer clear / resync");
+	bufferClearButton.addActionListener( new ActionListener() {
+	    public void actionPerformed( ActionEvent e ) {
+		seqDetection.clearBuffers();	
+	    };
+	});
+
+
 	fileBufferBar = new JProgressBar();
 	fileBufferBar.setString("save buffer");
 	fileBufferBar.setStringPainted(true);
 
 	recorderPanel.add( recordButton );
+	recorderPanel.add( bufferClearButton );
 	recorderPanel.add(filePrefix);
 	recorderPanel.add(fileBufferBar);
 	mainPanel.add(recorderPanel);

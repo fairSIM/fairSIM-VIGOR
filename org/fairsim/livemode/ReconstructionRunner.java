@@ -256,9 +256,13 @@ public class ReconstructionRunner {
 		for (int c=0; c<nrChannels; c++) {
 		    
 		    int count=0;
-		    
-		    for (int a=0; a<nrDirs; a++)
-			for (int p=0; p<nrPhases; p++) {
+    		   
+		    // REMARK: Change order of these loops to
+		    // set if 'angle then phase' or 'phase then angle'
+		    // in input
+ 
+		    for (int p=0; p<nrPhases; p++) 
+			for (int a=0; a<nrDirs; a++) {
 			    
 			short [] inImg = imgs[c][count++];
 			inFFT[c][a][p].setFrom16bitPixels( inImg );
