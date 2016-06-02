@@ -105,6 +105,30 @@ public class ImageWrapper {
 	}
     }
 
+    /** Create an ImageWrapper from 2-byte pxl data, mirroring the input in x */
+    public void copyCropMirrorX( short [] dat, int w, int h, int origW, int origH) {
+	width=w; height=h; bpp=2;
+
+	if (w*h>dat.length)
+	    throw new RuntimeException("Input data too short");
+	if (w>maxWidth || h>maxHeight)
+	    throw new RuntimeException("Input image larger than maximum size");
+
+	ByteBuffer bb = ByteBuffer.wrap( buffer, 128, buffer.length-128);
+	bb.order( ByteOrder.LITTLE_ENDIAN );
+	ShortBuffer sb = bb.asShortBuffer();
+
+	for (int y=0; y<h; y++) {
+	    for (int x=0; x<w; x++) {
+		//sb.put( dat, y*origW, w); 
+		sb.put( dat[ y*origW + (w-x-1) ] );
+	    }
+	}
+    }
+
+
+
+
 
     /** Create an ImageWrapper from 1-byte pxl data */
     public void copy( byte [] dat, int w, int h) {
@@ -288,6 +312,17 @@ public class ImageWrapper {
 	return ret;
     }
 
+    /** Create a wrapped, cropped image. Convenience method. */
+    public static ImageWrapper copyImageCropMirrorX( short [] pxl, int w, int h, int origW, int origH, 
+	int posA, int posB, int pos0, int pos1, int pos2 ) {
+
+	ImageWrapper ret = new ImageWrapper( w, h );
+	ret.copyCropMirrorX( pxl, w,h, origW, origH );
+	ret.setPosAB(  posA, posB );
+	ret.setPos012( pos0, pos1, pos2 );
+	return ret;
+    }
+
     void writeHeader() {
 	Arrays.fill( buffer, 0, 128, (byte)0);
 	
@@ -396,14 +431,14 @@ public class ImageWrapper {
     // just a quick test
     public static void main( String [] arg ) {
 
-	short [] tmp  = new short[512*512];
+	short [] tmp  = new short[520*520];
 	
 	Tool.Timer t1 = Tool.getTimer();
 
 	ImageWrapper iw =null;
 	
 	for (int i=0; i<1000; i++ ){
-	    iw = ImageWrapper.copyImageMirrorX( tmp, 512, 512,  0,0,0,0, 1 );
+	    iw = ImageWrapper.copyImageCropMirrorX( tmp, 512, 512, 520,520, 0,0,0,0, 1 );
 	}
 
 	t1.stop();

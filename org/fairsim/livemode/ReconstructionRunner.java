@@ -461,7 +461,7 @@ public class ReconstructionRunner {
 		par.setPxPy( -peak[0], -peak[1] );
 		par.setPhaOff( p1.phase() );
 		par.setModulation( 1, p1.hypot() );
-		par.setModulation( 2, p2.hypot() );
+		//par.setModulation( 2, p2.hypot() );
 	    }
 
 	    sp.setParamTimestamp();

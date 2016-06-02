@@ -193,7 +193,7 @@ public class SimSequenceExtractor {
 			
 			// version 1 (for camera with precise time-stamp, like PCO)
 			if ( Math.abs( curTimeStamp - lastTimeStamp - 5000 ) < 50 ) {
-			    Tool.trace("SYNC "+chNumber+": via timestamp/PCO");
+			    Tool.tell("SYNC "+chNumber+": via timestamp/PCO");
 			    break;
 			}
 			//System.out.println( "time diff: " + (curTimeStamp - lastTimeStamp) );
@@ -202,7 +202,7 @@ public class SimSequenceExtractor {
 			// version 2 (for camera w/o timestamp, bright LED):
 			short pxl [] = iwSync.getPixels();
 			if (MTool.avr_ushort( pxl ) > 10000) {
-			    Tool.trace("SYNC "+chNumber+": via bright frame");
+			    Tool.tell("SYNC "+chNumber+": via bright frame");
 			    rawImgs.take(); // ignore the next frame
 			    break;
 			}
