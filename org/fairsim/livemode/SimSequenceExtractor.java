@@ -23,6 +23,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 import java.util.Map;
 import java.util.TreeMap;
+import java.awt.Color;
 
 import org.fairsim.transport.ImageReceiver;
 import org.fairsim.transport.ImageWrapper;
@@ -45,15 +46,17 @@ public class SimSequenceExtractor {
 
     final PerChannelBuffer [] channels;
     private Map< Integer, PerChannelBuffer > channelMapping;
+    final private LiveControlPanel livePanel;
 
     /** Links ir to rr */
     public SimSequenceExtractor( Conf.Folder cfg, 
-	ImageReceiver ir, ReconstructionRunner rr ) 
+	ImageReceiver ir, ReconstructionRunner rr, LiveControlPanel ll ) 
 	throws Conf.EntryNotFoundException {
 	this.imgRecv = ir;
 	this.reconRunner = rr;
 	this.nrChannels = rr.nrChannels;
-	
+	this.livePanel = ll;	
+
 	this.seqCount = cfg.getInt("SyncFrameFreq").val();
 	this.syncFrameAvr = cfg.getInt("SyncFrameAvr").val();
 	this.syncFrameDelay = cfg.getInt("SyncFrameDelay").val();
@@ -62,7 +65,7 @@ public class SimSequenceExtractor {
 	channels = new PerChannelBuffer[ nrChannels ];
 	for (int i=0; i<nrChannels; i++) {
 	    channels[i] = new PerChannelBuffer(9*9*10, 
-		reconRunner.getChannel(i).chNumber);
+		reconRunner.getChannel(i).chNumber, i);
 	    Tool.trace("Created receive buffer for channel: "
 		+reconRunner.getChannel(i).chNumber);	
 	    channelMapping.put( reconRunner.getChannel(i).chNumber, channels[i]);
@@ -145,18 +148,20 @@ public class SimSequenceExtractor {
 	
 	BlockingQueue<ImageWrapper> rawImgs;
 	BlockingQueue<short [][]>     simSeq;
-	final int queueSize, chNumber;
+	final int queueSize, chNumber, chIndex;
 
 	int missedRaw =0;
 	int missedSim =0;
 	int noSyncSince=0;
+	long syncFrameCount =0;
 
 	int queryRaw() { return rawImgs.size(); }
 	int querySim() { return simSeq.size(); }
 
-	PerChannelBuffer(int queueSize, int chNumber) {
+	PerChannelBuffer(int queueSize, int chNumber, int chIndex ) {
 	    this.queueSize = queueSize;
 	    this.chNumber  = chNumber;
+	    this.chIndex   = chIndex;
 	    rawImgs = new ArrayBlockingQueue<ImageWrapper>( queueSize );
 	    simSeq  = new ArrayBlockingQueue<short [][]>( queueSize );
 	}
@@ -170,6 +175,7 @@ public class SimSequenceExtractor {
 	void clearBuffers() {
 	    rawImgs.clear();
 	    simSeq.clear();
+	    syncFrameCount=0;
 	}
 
 	/** Sequence detection, emptying rawImgs, filling simSeq */
@@ -177,13 +183,13 @@ public class SimSequenceExtractor {
 	public void run ( ) {
 
 	    final int nrRawPerSeq = reconRunner.nrDirs*reconRunner.nrPhases;
-
+	    
 	    while ( true ) {
 
 		try {
 
 		    long lastTimeStamp = 0;
-
+    
 		    // first, loop over incoming images until we find a sync frame
 		    while ( true ) {
 			
@@ -193,7 +199,11 @@ public class SimSequenceExtractor {
 			
 			// version 1 (for camera with precise time-stamp, like PCO)
 			if ( Math.abs( curTimeStamp - lastTimeStamp - 5000 ) < 50 ) {
-			    Tool.tell("SYNC "+chNumber+": via timestamp/PCO");
+			    //Tool.tell("SYNC "+chNumber+": via timestamp/PCO");
+			    syncFrameCount++;
+			    long count = syncFrameCount/5;
+			    Color bg = (count%2==0)?(Color.BLACK):(Color.GREEN);
+			    livePanel.syncButtons[chIndex].setBackground(bg);
 			    break;
 			}
 			//System.out.println( "time diff: " + (curTimeStamp - lastTimeStamp) );
@@ -202,7 +212,8 @@ public class SimSequenceExtractor {
 			// version 2 (for camera w/o timestamp, bright LED):
 			short pxl [] = iwSync.getPixels();
 			if (MTool.avr_ushort( pxl ) > 10000) {
-			    Tool.tell("SYNC "+chNumber+": via bright frame");
+			    syncFrameCount++;
+			    //Tool.tell("SYNC "+chNumber+": via bright frame");
 			    rawImgs.take(); // ignore the next frame
 			    break;
 			}

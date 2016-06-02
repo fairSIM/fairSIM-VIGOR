@@ -75,6 +75,8 @@ public class LiveControlPanel {
     final JTextArea  statusField;
     final JTextField statusMessage;
 
+    JButton [] syncButtons ;
+
     public LiveControlPanel(final Conf.Folder cfg, 
 	VectorFactory avf, String [] channels) 
 	throws Conf.EntryNotFoundException, java.io.IOException {
@@ -180,10 +182,24 @@ public class LiveControlPanel {
 	statusPanel.add( statusScroller );
 	mainPanel.add(statusPanel);
 	
-	statusMessage = new JTextField(30);
+	final int size = cfg.getInt("RawPxlCount").val();
+	final int nrCh = channels.length;
+
+	JPanel statusPanel2 = new JPanel();
+	syncButtons = new JButton[nrCh];	
+
+	for ( int c=0; c<nrCh; c++) {
+	    syncButtons[c] = new JButton("");
+	    syncButtons[c].setEnabled(false);
+	    statusPanel2.add( syncButtons[c] );
+	}
+
+	statusMessage = new JTextField(40);
 	statusMessage.setEditable(false);
 
-	mainPanel.add(statusMessage);
+	statusPanel2.add( statusMessage );
+
+	mainPanel.add(statusPanel2);
 
 	// redirect log output
 	Tool.setLogger( new Tool.Logger() {
@@ -199,14 +215,11 @@ public class LiveControlPanel {
 	});
     
 
-
 	
 	//  ------- 
 	//  initialize the components
 	//  ------- 
 
-	int size = cfg.getInt("RawPxlCount").val();
-	int nrCh = channels.length;
 
 	// network receiver and image storage
 	int netBufferSize   = cfg.getInt("NetworkBuffer").val();
@@ -224,7 +237,7 @@ public class LiveControlPanel {
 	reconRunner = new ReconstructionRunner(cfg, avf, channels); 
 
 	// start the SIM sequence detection
-	seqDetection = new SimSequenceExtractor(cfg, imageReceiver, reconRunner);
+	seqDetection = new SimSequenceExtractor(cfg, imageReceiver, reconRunner, this);
 
 	// setup the displays
 	wfDisplay    = new PlainImageDisplay( nrCh,   size,   size, channels );
