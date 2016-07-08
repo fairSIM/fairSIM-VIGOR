@@ -213,6 +213,9 @@ public class SimSequenceExtractor {
 			short pxl [] = iwSync.getPixels();
 			if (MTool.avr_ushort( pxl ) > 10000) {
 			    syncFrameCount++;
+			    long count = syncFrameCount/5;
+			    Color bg = (count%2==0)?(Color.BLACK):(Color.GREEN);
+			    livePanel.syncButtons[chIndex].setBackground(bg);
 			    //Tool.tell("SYNC "+chNumber+": via bright frame");
 			    rawImgs.take(); // ignore the next frame
 			    break;
