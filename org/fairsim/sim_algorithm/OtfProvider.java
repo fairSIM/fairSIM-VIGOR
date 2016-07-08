@@ -139,7 +139,7 @@ public class OtfProvider {
 	ret.maxBand		= this.maxBand;
 	ret.samplesLateral	= this.samplesLateral;
 	ret.vecSize		= this.vecSize;
-	ret.vecCyclesPerMicron	= this.cyclesPerMicron;
+	ret.vecCyclesPerMicron	= this.vecCyclesPerMicron;
 	
 	ret.vals	= new Cplx.Float[ ret.maxBand ][ ret.samplesLateral ];
 	ret.valsAtt	= new Cplx.Float[ ret.maxBand ][ ret.samplesLateral ];
