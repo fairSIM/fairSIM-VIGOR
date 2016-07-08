@@ -259,7 +259,8 @@ public class ReconstructionRunner {
     		   
 		    // REMARK: Change order of these loops to
 		    // set if 'angle then phase' or 'phase then angle'
-		    // in input
+		    // in input. Remember to do this ALSO in the
+		    // parameter estimation
  
 		    for (int p=0; p<nrPhases; p++) 
 			for (int a=0; a<nrDirs; a++) {
@@ -412,9 +413,15 @@ public class ReconstructionRunner {
 	    currentImage = latestImage[chIdx];
 
 	    // run input FFT
+		    
+	    // REMARK: Change order of these loops to
+	    // set if 'angle then phase' or 'phase then angle'
+	    // in input. Remember to do this ALSO in the
+	    // reconstruction
+	
 	    int count = 0;
-	    for (int a=0; a<nrDirs; a++) {
-		for (int p=0; p<nrPhases; p++) {
+	    for (int p=0; p<nrPhases; p++) {
+		for (int a=0; a<nrDirs; a++) {
 		    short [] inImg = currentImage[count++];
 		    inFFT[a][p].setFrom16bitPixels( inImg );
 		    inFFT[a][p].times( borderDampen );
