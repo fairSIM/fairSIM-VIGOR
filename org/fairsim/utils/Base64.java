@@ -25,7 +25,7 @@ public class Base64 {
 
     private static String codes = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
 
-    static byte[] decode(String input)    {
+    public static byte[] decode(String input)    {
         
 	byte decoded[] = new byte[((input.length() * 3) / 4) - 
 		(input.indexOf('=') > 0 ? (input.length() - input.indexOf('=')) : 0)];
@@ -50,7 +50,7 @@ public class Base64 {
         return decoded;
     }
 
-    static String encode(byte[] in)       {
+    public static String encode(byte[] in)       {
         StringBuffer out = new StringBuffer((in.length * 4) / 3);
         int b;
         for (int i = 0; i < in.length; i += 3)  {
