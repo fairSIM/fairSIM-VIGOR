@@ -262,20 +262,21 @@ public class ReconstructionRunner {
 		    // in input. Remember to do this ALSO in the
 		    // parameter estimation
  
-		    for (int p=0; p<nrPhases; p++) 
-			for (int a=0; a<nrDirs; a++) {
+		    for (int a=0; a<nrDirs; a++) { 
+			for (int p=0; p<nrPhases; p++) {
 			    
-			short [] inImg = imgs[c][count++];
-			inFFT[c][a][p].setFrom16bitPixels( inImg );
+			    short [] inImg = imgs[c][count++];
+			    inFFT[c][a][p].setFrom16bitPixels( inImg );
 
-			// fade borders
-			inFFT[c][a][p].times( dampBorder );
-			
-			// TODO: this would be a place to add the compensation 
+			    // fade borders
+			    inFFT[c][a][p].times( dampBorder );
+			    
+			    // TODO: this would be a place to add the compensation 
 
-			// add them up to widefield
-			widefield[c].add( inFFT[c][a][p] );
-			inFFT[c][a][p].fft2d(false);
+			    // add them up to widefield
+			    widefield[c].add( inFFT[c][a][p] );
+			    inFFT[c][a][p].fft2d(false);
+			}
 		    }
 		
 		    // copy back wide-field
@@ -420,8 +421,8 @@ public class ReconstructionRunner {
 	    // reconstruction
 	
 	    int count = 0;
-	    for (int p=0; p<nrPhases; p++) {
-		for (int a=0; a<nrDirs; a++) {
+	    for (int a=0; a<nrDirs; a++) {
+		for (int p=0; p<nrPhases; p++) {
 		    short [] inImg = currentImage[count++];
 		    inFFT[a][p].setFrom16bitPixels( inImg );
 		    inFFT[a][p].times( borderDampen );
