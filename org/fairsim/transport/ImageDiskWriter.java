@@ -65,6 +65,9 @@ public class ImageDiskWriter {
 
     /** Queue an image to be saved */
     public void saveImage( ImageWrapper iw ) {
+	// only accept images if the writer is set to record
+	if (fileRunner==null) return;
+
 	boolean isQueued = saveQueue.offer( iw );
 	if (!isQueued) fullBufferCount++;
     }
