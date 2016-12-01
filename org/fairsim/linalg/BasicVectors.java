@@ -23,15 +23,15 @@ import org.fairsim.utils.Tool;
 
 /** Basic, pure java implementation of the Vector interfaces
  * ({@link Vec}, {@link Vec2d}) */
-class BasicVector extends VectorFactory {
+public class BasicVectors extends VectorFactory {
     
-    static BasicVector instance = null;
-    private BasicVector() {};
+    static BasicVectors instance = null;
+    private BasicVectors() {};
 
     /** Get the factory (singleton) for BasicVectors */
-    public static BasicVector getFactory() {
+    public static BasicVectors getFactory() {
 	if (instance == null)
-	    instance = new BasicVector();
+	    instance = new BasicVectors();
 	return instance;
     }
 

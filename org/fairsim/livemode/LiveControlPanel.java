@@ -45,9 +45,13 @@ import org.fairsim.transport.ImageDiskWriter;
 import org.fairsim.transport.ImageWrapper;
 import org.fairsim.linalg.VectorFactory;
 import org.fairsim.accel.AccelVectorFactory;
+import org.fairsim.registration.Registration;
+import org.fairsim.linalg.Vec;
 import org.fairsim.sim_gui.PlainImageDisplay;
 
 import org.fairsim.linalg.Vec2d;
+import org.fairsim.registration.RegistrationPanel;
+import org.fairsim.slmcontroller.SlmPanel;
 import org.fairsim.utils.Tool;
 import org.fairsim.utils.SimpleMT;
 
@@ -161,6 +165,8 @@ public class LiveControlPanel {
 	recorderPanel.add(filePrefix);
 	recorderPanel.add(fileBufferBar);
 	mainPanel.add(recorderPanel);
+        
+        mainPanel.add(new RegistrationPanel(avf, cfg, channels));
 
 	JButton fitPeakButton = new JButton("run parameter fit");
 	fitPeakButton.addActionListener( new ActionListener() {
@@ -168,7 +174,6 @@ public class LiveControlPanel {
 		//rt.triggerParamRefit();
 	    };
 	});
-
 
 	// error output and such
 	JPanel statusPanel = new JPanel();
@@ -186,7 +191,7 @@ public class LiveControlPanel {
 	final int nrCh = channels.length;
 
 	JPanel statusPanel2 = new JPanel();
-	syncButtons = new JButton[nrCh];	
+	syncButtons = new JButton[nrCh];
 
 	for ( int c=0; c<nrCh; c++) {
 	    syncButtons[c] = new JButton("");
@@ -214,7 +219,7 @@ public class LiveControlPanel {
 	    }
 	});
     
-
+        
 	
 	//  ------- 
 	//  initialize the components
@@ -256,6 +261,7 @@ public class LiveControlPanel {
 	JTabbedPane tabbedPane = new JTabbedPane();
     
 	tabbedPane.addTab( "main", mainPanel );
+        tabbedPane.addTab( "slm", new SlmPanel(cfg) );
 
 	for (int ch=0 ; ch<nrCh ; ch++) {
 	    ParameterTab pTab = new ParameterTab( reconRunner, ch, cfg );
@@ -346,7 +352,6 @@ public class LiveControlPanel {
 	}
     }
 
-
     /** starts and displays the GUI */
     public static void main(String [] arg) {
 	// tweak SimpleMT
@@ -354,12 +359,30 @@ public class LiveControlPanel {
 	
 	
 	// load the CUDA library
-	boolean set=false;
-	String wd = System.getProperty("user.dir")+"/accel/";
-	Tool.trace("loading library from: "+wd);
-	System.load(wd+"libcudaimpl.so");
-	VectorFactory avf = AccelVectorFactory.getFactory(); 
-	if (arg.length<2) {
+        String OS = System.getProperty("os.name").toLowerCase();
+        VectorFactory avf;
+        // following Factory for Linux-GPU-Reconstruction
+        if ( OS.contains("nix") || OS.contains("nux") || OS.contains("aix") ) {
+            String wd = System.getProperty("user.dir")+"/accel/";
+            Tool.trace("loading library from: "+wd);
+            System.load(wd+"libcudaimpl.so");
+            avf = AccelVectorFactory.getFactory();
+        }
+        
+        // following Factory for Windows-GPU-Reconstruction
+        else if ( OS.contains("win") ) {
+            String wd = System.getProperty("user.dir")+"\\";
+            Tool.trace("loading library from: "+wd);
+            System.load(wd+"libcudaimpl.dll");
+            avf = AccelVectorFactory.getFactory();
+        }
+        
+        // following Factory for CPU-Reconstruction
+        else {
+            avf = Vec.getBasicVectorFactory();
+        }
+        
+        if (arg.length<2) {
 	    System.out.println("Start with: config-file.xml [488] [568] [647] ...");
 	    return;
 	}

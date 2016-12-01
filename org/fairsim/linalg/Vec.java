@@ -46,7 +46,7 @@ public final class Vec {
     private Vec() { throw new AssertionError(); }
 
     /** Vector factory to use */
-    static VectorFactory vf = BasicVector.getFactory();
+    static VectorFactory vf = BasicVectors.getFactory();
 
     /** Set the factory used for obtaining vectors through
      * the static 'create' functions. */
@@ -91,7 +91,7 @@ public final class Vec {
 
     /** Return the basic (non-accelerated) vector factory */
     public static VectorFactory getBasicVectorFactory() {
-	return BasicVector.getFactory();
+	return BasicVectors.getFactory();
     }
 
     // ================================================================

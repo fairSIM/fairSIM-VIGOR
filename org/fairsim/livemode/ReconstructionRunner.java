@@ -27,6 +27,8 @@ import org.fairsim.utils.Conf;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.zip.DataFormatException;
+import org.fairsim.registration.Registration;
 
 /** Manages a collection of reconstruction threads
  * and parameter fitting. */
@@ -282,8 +284,17 @@ public class ReconstructionRunner {
 		    // copy back wide-field
 		    widefield[c].scal(1.f/(nrDirs*nrPhases));
 		    cpuWidefield[c].copy( widefield[c] );
+                    
+                    // registers wide-fild images
+                    if (Registration.isWidefield()) {
+                        try {
+                            Registration reg = Registration.getRegistration(channels[c].label);
+                            cpuWidefield[c] = reg.registerWfImageNew(cpuWidefield[c]);
+                        } catch (NoSuchFieldException ex) {
+                        }
+                    }
 		}
-
+                
 		finalWidefield.offer( cpuWidefield );
 
 		
@@ -331,6 +342,16 @@ public class ReconstructionRunner {
 		    
 		    fullResult[channel].fft2d(true);
 		    cpuRes[channel].copy( fullResult[channel] );
+                    
+                    // registers reconstructed images
+                    if (Registration.isRecon()) {
+                        try {
+                            Registration reg = Registration.getRegistration(channels[channel].label);
+                            cpuRes[channel] = reg.registerReconImageNew(cpuRes[channel]);
+                        } catch (NoSuchFieldException ex) {
+                            //do nothing
+                        }
+                    }
 		} // end per-channel loop
 	
 		finalRecon.offer( cpuRes );
