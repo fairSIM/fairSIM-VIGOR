@@ -45,13 +45,14 @@ import org.fairsim.transport.ImageDiskWriter;
 import org.fairsim.transport.ImageWrapper;
 import org.fairsim.linalg.VectorFactory;
 import org.fairsim.accel.AccelVectorFactory;
+import org.fairsim.controller.ClientGui;
 import org.fairsim.registration.Registration;
 import org.fairsim.linalg.Vec;
 import org.fairsim.sim_gui.PlainImageDisplay;
 
 import org.fairsim.linalg.Vec2d;
 import org.fairsim.registration.RegistrationPanel;
-import org.fairsim.slmcontroller.SlmPanel;
+import org.fairsim.controller.ClientGui;
 import org.fairsim.utils.Tool;
 import org.fairsim.utils.SimpleMT;
 
@@ -261,7 +262,7 @@ public class LiveControlPanel {
 	JTabbedPane tabbedPane = new JTabbedPane();
     
 	tabbedPane.addTab( "main", mainPanel );
-        tabbedPane.addTab( "slm", new SlmPanel(cfg) );
+        tabbedPane.addTab("controller", new ClientGui(cfg) );
 
 	for (int ch=0 ; ch<nrCh ; ch++) {
 	    ParameterTab pTab = new ParameterTab( reconRunner, ch, cfg );

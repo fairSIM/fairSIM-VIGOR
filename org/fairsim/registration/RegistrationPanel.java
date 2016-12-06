@@ -33,9 +33,6 @@ public class RegistrationPanel extends javax.swing.JPanel {
      * Creates new form RegistrationPanel
      */
     public RegistrationPanel(VectorFactory vf, Conf.Folder cfg, String[] channels) {
-        setBorder( BorderFactory.createTitledBorder("Image Registration") );
-	setLayout( new GridLayout( 3, 1,2,2 ));
-        
         initComponents();
         
         for (String channel : channels) {
@@ -57,14 +54,16 @@ public class RegistrationPanel extends javax.swing.JPanel {
         toggleWidefield = new javax.swing.JToggleButton();
         toggleRecon = new javax.swing.JToggleButton();
 
-        toggleWidefield.setText("Register in widefield");
+        setBorder(javax.swing.BorderFactory.createTitledBorder("image registration"));
+
+        toggleWidefield.setText("register in widefield");
         toggleWidefield.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 toggleWidefieldActionPerformed(evt);
             }
         });
 
-        toggleRecon.setText("Register in reconstruction");
+        toggleRecon.setText("register in reconstruction");
         toggleRecon.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 toggleReconActionPerformed(evt);

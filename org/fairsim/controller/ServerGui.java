@@ -16,9 +16,9 @@ You should have received a copy of the GNU General Public License
 along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 */
 
-package org.fairsim.slmcontroller;
+package org.fairsim.controller;
 
-import static org.fairsim.slmcontroller.Server.startServer;
+import static org.fairsim.controller.ControllerServer.startServer;
 
 /**
  *
@@ -27,13 +27,18 @@ import static org.fairsim.slmcontroller.Server.startServer;
 public class ServerGui extends javax.swing.JFrame {
 
     boolean online;
+    ControllerServer server;
+    SlmController slm;
+    ArduinoController arduino;
 
     /**
      * Creates new form ServerGUI
      */
     public ServerGui() {
         initComponents();
-        startServer(this);
+        slm = new SlmController(this);
+        arduino = new ArduinoController(this);
+        server = startServer(this, slm, arduino);
     }
     
     void showText(String text) {

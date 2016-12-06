@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 */
 
-package org.fairsim.slmcontroller;
+package org.fairsim.controller;
 
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
