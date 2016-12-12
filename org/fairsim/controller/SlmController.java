@@ -21,7 +21,6 @@ package org.fairsim.controller;
 import com.forthdd.commlib.exceptions.AbstractException;
 import com.forthdd.commlib.exceptions.CommException;
 import com.forthdd.commlib.r4.R4CommLib;
-import java.io.PrintWriter;
 
 /**
  *

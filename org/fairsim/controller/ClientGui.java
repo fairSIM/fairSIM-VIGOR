@@ -66,7 +66,7 @@ public class ClientGui extends javax.swing.JPanel {
     }
 
     private void initSlm() {
-        slmControllers = new ArrayList<>();
+        slmControllers = new ArrayList<Component>();
         slmControllers.add(slmComboBox);
         slmControllers.add(slmDeactivateButton);
         slmControllers.add(slmActivateButton);
@@ -79,7 +79,7 @@ public class ClientGui extends javax.swing.JPanel {
     }
 
     private void initArduino() {
-        arduinoCommands = new ArrayList<>();
+        arduinoCommands = new ArrayList<String>();
         arduinoCommands.add("M3");
         arduinoCommands.add("M21");
         arduinoCommands.add("M22");
@@ -87,11 +87,16 @@ public class ClientGui extends javax.swing.JPanel {
             arduinoComboBox.addItem(command);
         }
 
-        arduinoControllers = new ArrayList<>();
+        arduinoControllers = new ArrayList<Component>();
         arduinoControllers.add(arduinoComboBox);
         arduinoControllers.add(arduinoDisconnectButton);
         arduinoControllers.add(arduinoStartButton);
         arduinoControllers.add(arduinoStopButton);
+        arduinoControllers.add(arduinoRedButton);
+        arduinoControllers.add(arduinoGreenButton);
+        arduinoControllers.add(arduinoBlueButton);
+        arduinoControllers.add(arduinoBreakTimeTextField);
+        arduinoControllers.add(arduinoPhotoButton);
         disableArduinoControllers();
         arduinoConnectButton.setEnabled(false);
     }
@@ -194,7 +199,7 @@ public class ClientGui extends javax.swing.JPanel {
             slmInstruction.lock.unlock();
             //enableSlmControllers();
             try {
-                if (client.output.startsWith("Error: ")) {
+                if (client.output.startsWith("Slm: Error: ")) {
                     handleSlmError(client.output);
                     instructionDone = false;
                 } else if (client.output.startsWith("Arduino: Error: ")) {
@@ -242,6 +247,11 @@ public class ClientGui extends javax.swing.JPanel {
         } else if (error.contains("IOException")) {
             disconnectArduino();
             showText("Gui: Reconnect to the arduino is necessary");
+            connectArduino();
+        } else if (error.contains("PortInUseException")) {
+            disableArduinoControllers();
+            arduinoConnectButton.setEnabled(true);
+            showText("Gui: Arduino connection already in use");
         }
     }
 
@@ -286,7 +296,7 @@ public class ClientGui extends javax.swing.JPanel {
         slmTime = new javax.swing.JLabel();
         slmRepertoir = new javax.swing.JLabel();
         slmConnectButton = new javax.swing.JButton();
-        slmComboBox = new javax.swing.JComboBox<>();
+        slmComboBox = new org.fairsim.sim_gui.Tiles.TComboBox<String>();
         slmDisconnectButton = new javax.swing.JButton();
         slmRebootButton = new javax.swing.JButton();
         slmDefault = new javax.swing.JLabel();
@@ -300,11 +310,17 @@ public class ClientGui extends javax.swing.JPanel {
         serverLabel = new javax.swing.JLabel();
         textArea1 = new java.awt.TextArea();
         arduinoPanel = new javax.swing.JPanel();
-        arduinoComboBox = new javax.swing.JComboBox<>();
+        arduinoComboBox = new org.fairsim.sim_gui.Tiles.TComboBox<String>();
         arduinoConnectButton = new javax.swing.JButton();
         arduinoDisconnectButton = new javax.swing.JButton();
         arduinoStartButton = new javax.swing.JButton();
         arduinoStopButton = new javax.swing.JButton();
+        arduinoRedButton = new javax.swing.JToggleButton();
+        arduinoGreenButton = new javax.swing.JToggleButton();
+        arduinoBlueButton = new javax.swing.JToggleButton();
+        arduinoBreakTimeTextField = new javax.swing.JTextField();
+        arduinoDelayLabel = new javax.swing.JLabel();
+        arduinoPhotoButton = new javax.swing.JButton();
 
         slmPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("SLM-Controller"));
         slmPanel.setName(""); // NOI18N
@@ -399,7 +415,7 @@ public class ClientGui extends javax.swing.JPanel {
                 .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(slmSelectButton)
                     .addComponent(slmRefreshButton))
-                .addGap(0, 0, Short.MAX_VALUE))
+                .addGap(0, 76, Short.MAX_VALUE))
             .addGroup(slmPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -468,7 +484,7 @@ public class ClientGui extends javax.swing.JPanel {
             .addGroup(clientServerPanelLayout.createSequentialGroup()
                 .addComponent(serverLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(textArea1, javax.swing.GroupLayout.DEFAULT_SIZE, 125, Short.MAX_VALUE))
+                .addComponent(textArea1, javax.swing.GroupLayout.DEFAULT_SIZE, 99, Short.MAX_VALUE))
         );
 
         arduinoPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Arduino-Controller"));
@@ -501,36 +517,92 @@ public class ClientGui extends javax.swing.JPanel {
             }
         });
 
+        arduinoRedButton.setForeground(new java.awt.Color(255, 0, 0));
+        arduinoRedButton.setText("Red");
+        arduinoRedButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                arduinoRedButtonActionPerformed(evt);
+            }
+        });
+
+        arduinoGreenButton.setForeground(new java.awt.Color(0, 255, 0));
+        arduinoGreenButton.setText("Green");
+        arduinoGreenButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                arduinoGreenButtonActionPerformed(evt);
+            }
+        });
+
+        arduinoBlueButton.setForeground(new java.awt.Color(0, 0, 255));
+        arduinoBlueButton.setText("Blue");
+        arduinoBlueButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                arduinoBlueButtonActionPerformed(evt);
+            }
+        });
+
+        arduinoBreakTimeTextField.setText("0");
+
+        arduinoDelayLabel.setText("delay (ms)");
+
+        arduinoPhotoButton.setText("Photo");
+        arduinoPhotoButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                arduinoPhotoButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout arduinoPanelLayout = new javax.swing.GroupLayout(arduinoPanel);
         arduinoPanel.setLayout(arduinoPanelLayout);
         arduinoPanelLayout.setHorizontalGroup(
             arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(arduinoPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(arduinoConnectButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(arduinoComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(arduinoPanelLayout.createSequentialGroup()
+                        .addComponent(arduinoConnectButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(arduinoDisconnectButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(arduinoRedButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(arduinoGreenButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(arduinoBlueButton))
                     .addGroup(arduinoPanelLayout.createSequentialGroup()
                         .addComponent(arduinoStartButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(arduinoStopButton))
-                    .addComponent(arduinoDisconnectButton))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(arduinoStopButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(arduinoPhotoButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(arduinoComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(arduinoBreakTimeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(arduinoDelayLabel)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         arduinoPanelLayout.setVerticalGroup(
             arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(arduinoPanelLayout.createSequentialGroup()
                 .addGroup(arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(arduinoConnectButton)
-                    .addComponent(arduinoDisconnectButton))
+                    .addComponent(arduinoDisconnectButton)
+                    .addComponent(arduinoBlueButton)
+                    .addComponent(arduinoGreenButton)
+                    .addComponent(arduinoRedButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(arduinoStopButton)
-                    .addComponent(arduinoComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(arduinoStartButton))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(arduinoStartButton)
+                    .addGroup(arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(arduinoComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(arduinoBreakTimeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(arduinoDelayLabel)
+                        .addComponent(arduinoPhotoButton)))
+                .addContainerGap(40, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -552,7 +624,7 @@ public class ClientGui extends javax.swing.JPanel {
                 .addComponent(slmPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(arduinoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(clientServerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
@@ -620,23 +692,83 @@ public class ClientGui extends javax.swing.JPanel {
     }//GEN-LAST:event_arduinoDisconnectButtonActionPerformed
 
     private void arduinoStartButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoStartButtonActionPerformed
-        sendArduinoInstruction((String) arduinoComboBox.getSelectedItem());
-        if (instructionDone) {
-            arduinoStartButton.setEnabled(false);
-            arduinoComboBox.setEnabled(false);
-            arduinoStopButton.setEnabled(true);
+        try {
+            startArduinoProgramm( (String) arduinoComboBox.getSelectedItem() + Integer.parseInt( arduinoBreakTimeTextField.getText() ));
+        } catch (NumberFormatException ex) {
+            startArduinoProgramm( (String) arduinoComboBox.getSelectedItem() );
         }
     }//GEN-LAST:event_arduinoStartButtonActionPerformed
 
     private void arduinoStopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoStopButtonActionPerformed
+        stopArduinoProgramm();
+    }//GEN-LAST:event_arduinoStopButtonActionPerformed
+
+    private void arduinoRedButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoRedButtonActionPerformed
+        if ( arduinoRedButton.isSelected() ) {
+            sendArduinoInstruction("R");
+        } else {
+            sendArduinoInstruction("r");
+        }
+    }//GEN-LAST:event_arduinoRedButtonActionPerformed
+
+    private void arduinoGreenButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoGreenButtonActionPerformed
+        if ( arduinoGreenButton.isSelected() ) {
+            sendArduinoInstruction("G");
+        } else {
+            sendArduinoInstruction("g");
+        }
+    }//GEN-LAST:event_arduinoGreenButtonActionPerformed
+
+    private void arduinoBlueButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoBlueButtonActionPerformed
+        if ( arduinoBlueButton.isSelected() ) {
+            sendArduinoInstruction("B");
+        } else {
+            sendArduinoInstruction("b");
+        }
+    }//GEN-LAST:event_arduinoBlueButtonActionPerformed
+
+    private void arduinoPhotoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoPhotoButtonActionPerformed
+        sendArduinoInstruction( (String) arduinoComboBox.getSelectedItem() + "xx" );
+        if (instructionDone) {
+            setRGBButtonSelected(false);
+        }
+    }//GEN-LAST:event_arduinoPhotoButtonActionPerformed
+
+    private void setRGBButtonSelected(boolean b) {
+        arduinoRedButton.setSelected(b);
+        arduinoGreenButton.setSelected(b);
+        arduinoBlueButton.setSelected(b);
+    }
+    
+    private void stopArduinoProgramm() {
         sendArduinoInstruction("x");
         if (instructionDone) {
             arduinoStartButton.setEnabled(true);
+            arduinoRedButton.setEnabled(true);
+            arduinoGreenButton.setEnabled(true);
+            arduinoBlueButton.setEnabled(true);
             arduinoComboBox.setEnabled(true);
+            arduinoBreakTimeTextField.setEnabled(true);
+            arduinoPhotoButton.setEnabled(true);
             arduinoStopButton.setEnabled(false);
         }
-    }//GEN-LAST:event_arduinoStopButtonActionPerformed
-
+    }
+    
+    private void startArduinoProgramm(String command) {
+        sendArduinoInstruction(command);
+        if (instructionDone) {
+            arduinoStartButton.setEnabled(false);
+            arduinoRedButton.setEnabled(false);
+            arduinoGreenButton.setEnabled(false);
+            arduinoBlueButton.setEnabled(false);
+            arduinoComboBox.setEnabled(false);
+            arduinoBreakTimeTextField.setEnabled(false);
+            arduinoPhotoButton.setEnabled(false);
+            arduinoStopButton.setEnabled(true);
+            setRGBButtonSelected(false);
+        }
+    }
+    
     /**
      * Connects server and SLM
      */
@@ -663,8 +795,9 @@ public class ClientGui extends javax.swing.JPanel {
     private void connectArduino() {
         sendArduinoInstruction("connect");
         if (instructionDone) {
+            setRGBButtonSelected(false);
             arduinoConnectButton.setEnabled(false);
-            int waiting = 4;
+            final int waiting = 3;
             textArea1.append("Gui: Waiting for the arduino: ");
             Thread timer = new Thread(new Runnable() {
                 @Override
@@ -698,16 +831,22 @@ public class ClientGui extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox<String> arduinoComboBox;
+    private javax.swing.JToggleButton arduinoBlueButton;
+    private javax.swing.JTextField arduinoBreakTimeTextField;
+    private org.fairsim.sim_gui.Tiles.TComboBox<String> arduinoComboBox;
     private javax.swing.JButton arduinoConnectButton;
+    private javax.swing.JLabel arduinoDelayLabel;
     private javax.swing.JButton arduinoDisconnectButton;
+    private javax.swing.JToggleButton arduinoGreenButton;
     private javax.swing.JPanel arduinoPanel;
+    private javax.swing.JButton arduinoPhotoButton;
+    private javax.swing.JToggleButton arduinoRedButton;
     private javax.swing.JButton arduinoStartButton;
     private javax.swing.JButton arduinoStopButton;
     private javax.swing.JPanel clientServerPanel;
     private javax.swing.JLabel serverLabel;
     private javax.swing.JButton slmActivateButton;
-    private javax.swing.JComboBox<String> slmComboBox;
+    private org.fairsim.sim_gui.Tiles.TComboBox<String> slmComboBox;
     private javax.swing.JButton slmConnectButton;
     private javax.swing.JButton slmDeactivateButton;
     private javax.swing.JLabel slmDefault;

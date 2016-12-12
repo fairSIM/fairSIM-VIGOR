@@ -49,7 +49,7 @@ public class Registration {
     static private boolean recon;
 
     static {
-        REGISTRATIONS = new ArrayList<>();
+        REGISTRATIONS = new ArrayList<Registration>();
     }
     
     /**
@@ -101,20 +101,23 @@ public class Registration {
      * raw registrations
      * @param channel channel (wavelenght) of the fairsim-software and registration
      */
-    public static void createRegistration(Conf.Folder cfg, String channel) {
+    public static void createRegistration(final Conf.Folder cfg, final String channel) {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                String regFolder = "(not found)";
                 try {
-                    String regFolder = cfg.getStr("RegistrationFolder").val();
-                    Registration reg = new Registration(regFolder + channel + ".txt");
+		    regFolder = cfg.getStr("RegistrationFolder").val();
+		    String filename = Tool.getFile(regFolder + channel + ".txt").getAbsolutePath();
+                    Registration reg = new Registration( filename );
                     reg.channel = channel;
                     REGISTRATIONS.add(reg);
-                } catch (IOException ex) {
-                    System.out.println("[fairSIM] Registration: No registration possible for channel: " + channel);
                 } catch (Conf.EntryNotFoundException ex) {
                     System.out.println("[fairSIM] Registration: No registration folder found");
-                }
+                } catch (IOException ex) {
+                    System.out.println("[fairSIM] Registration: No registration possible for channel: " + channel );
+		    System.out.println("[fairSIM] "+ex);
+		}
             }
 
         }).start();
@@ -169,9 +172,9 @@ public class Registration {
     }
     
     
-    public Vec2d.Real registerImageOld(Vec2d.Real sourceVec, char type) {
-       int width;
-       int height;
+    public Vec2d.Real registerImageOld(final Vec2d.Real sourceVec, final char type) {
+       final int width;
+       final int height;
        
         switch (type) {
             case 'r':
@@ -195,10 +198,10 @@ public class Registration {
                 setWidefield(false);
             }
         }
-        Vec2d.Real regVec = vf.createReal2D(width, height); 
+        final Vec2d.Real regVec = vf.createReal2D(width, height); 
         
         //Multi-Threaded way
-        int blockSize = height / threads;
+        final int blockSize = height / threads;
         Thread[] blocks = new Thread[threads];
 
         for (int threadId = 0; threadId < threads; threadId++) {
@@ -308,13 +311,15 @@ public class Registration {
         return registerImageNew(sourceVec, reconXTransVec, reconYTransVec, reconWidth, reconHeight);
     }
     
-    private Vec2d.Real registerImageNew(Vec2d.Real sourceVec, Vec2d.Real xTransVec, Vec2d.Real yTransVec, int width, int height) {
+    private Vec2d.Real registerImageNew(final Vec2d.Real sourceVec, 
+	final Vec2d.Real xTransVec, final Vec2d.Real yTransVec, 
+	final int width, final int height) {
         
-        Vec2d.Real regVec = vf.createReal2D(width, height); 
+        final Vec2d.Real regVec = vf.createReal2D(width, height); 
         
         //Multi-Threaded way
-        int blockSize = height / threads;
-        Thread[] blocks = new Thread[threads];
+        final int blockSize = height / threads;
+        final Thread[] blocks = new Thread[threads];
 
         for (int threadId = 0; threadId < threads; threadId++) {
             final int tId = threadId;
@@ -422,13 +427,15 @@ public class Registration {
      * @param height height of the Vector
      * @return output vektor from the registration
      */
-    Vec2d.Real registerImageInverse(Vec2d.Real sourceVec, Vec2d.Real xTransVec, Vec2d.Real yTransVec, int width, int height) {
+    Vec2d.Real registerImageInverse(final Vec2d.Real sourceVec, 
+	final Vec2d.Real xTransVec, final Vec2d.Real yTransVec, 
+	final int width, final int height) {
         
-        Vec2d.Real regVec = vf.createReal2D(width, height); 
+        final Vec2d.Real regVec = vf.createReal2D(width, height); 
         
         //Multi-Threaded way
-        int blockSize = height / threads;
-        Thread[] blocks = new Thread[threads];
+        final int blockSize = height / threads;
+        final Thread[] blocks = new Thread[threads];
 
         for (int threadId = 0; threadId < threads; threadId++) {
             final int tId = threadId;

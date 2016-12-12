@@ -14,10 +14,18 @@
 <ReconThreads type="int">2</ReconThreads>
 <NetworkBuffer type="int">600</NetworkBuffer>
 <DiskBuffer type="int">500</DiskBuffer>
-<DiskFolder type="string">d:/vigor-tmp/</DiskFolder>
 
+<!-- This is the windows config 
+<DiskFolder type="string">d:/vigor-tmp/</DiskFolder>
 <ParamFolder type="string">d:/vigor-tmp/</ParamFolder>
 <RegistrationFolder type="string">d:/vigor-registration/</RegistrationFolder>
+-->
+
+<DiskFolder type="string">/vol/ssd-cache/VIGOR-stream</DiskFolder>
+<ParamFolder type="string">~/VIGOR-parameters/</ParamFolder>
+<RegistrationFolder type="string">~/VIGOR-parameters/registration/</RegistrationFolder>
+
+
 
 <SyncFrameFreq type="int">1</SyncFrameFreq>
 <SyncFrameAvr type="int">8000</SyncFrameAvr>

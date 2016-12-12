@@ -4,12 +4,14 @@
  * http://playground.arduino.cc/Interfacing/Java
  * Original code under CC-BY-SA-3.0
  */
+
 package org.fairsim.controller;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import gnu.io.CommPortIdentifier;
+import gnu.io.PortInUseException;
 import gnu.io.SerialPort;
 import gnu.io.SerialPortEvent;
 import gnu.io.SerialPortEventListener;
@@ -47,7 +49,7 @@ public class ArduinoController implements SerialPortEventListener {
      */
     private static final int DATA_RATE = 19200;
 
-    private ArduinoController() {
+    private ArduinoController() throws Exception{
         initialize();
     }
     
@@ -56,7 +58,7 @@ public class ArduinoController implements SerialPortEventListener {
     }
     
 
-    private void initialize() {
+    private void initialize() throws Exception {
         // the next line is for Raspberry Pi and 
         // gets us into the while loop and was suggested here was suggested http://www.raspberrypi.org/phpBB3/viewtopic.php?f=81&t=32186
         //System.setProperty("gnu.io.rxtx.SerialPorts", "/dev/ttyACM0");
@@ -80,7 +82,6 @@ public class ArduinoController implements SerialPortEventListener {
             throw new UnsupportedOperationException(massage);
         }
 
-        try {
             // open serial port, and use class name for the appName.
             serialPort = (SerialPort) portId.open(this.getClass().getName(), TIME_OUT);
 
@@ -94,9 +95,6 @@ public class ArduinoController implements SerialPortEventListener {
             // add event listeners
             serialPort.addEventListener(this);
             serialPort.notifyOnDataAvailable(true);
-        } catch (Exception e) {
-            System.err.println(e.toString());
-        }
     }
 
     /**
@@ -134,7 +132,7 @@ public class ArduinoController implements SerialPortEventListener {
         try {
             output.write(command);
             output.flush();
-            return "Command '" + command.toString() + "' transmitted to the arduino";
+            return "Command '" + new String(command) + "' transmitted to the arduino";
         } catch (NullPointerException ex) {
             return "Error: No Connection to the arduino";
         } catch (Exception ex) {
@@ -161,20 +159,21 @@ public class ArduinoController implements SerialPortEventListener {
     }
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        ArduinoController main = new ArduinoController();
+        try{
+            ArduinoController main = new ArduinoController();
+            while (true) {
+                Thread.sleep(2000);
+                System.out.println("Command for the Microcontroller: ");
+                byte[] b = {'M', '3'};
+                main.output.write(b);
+                main.output.flush();
+                Thread.sleep(3000);
+                byte[] c = {'x'};
+                main.output.write(c);
+                main.output.flush();
+            }
+            //main.close();
+        } catch (Exception e) {}
         System.out.println("Started");
-        
-        while (true) {
-            Thread.sleep(2000);
-            System.out.println("Command for the Microcontroller: ");
-            byte[] b = {'M', '3'};
-            main.output.write(b);
-            main.output.flush();
-            Thread.sleep(3000);
-            byte[] c = {'x'};
-            main.output.write(c);
-            main.output.flush();
-        }
-        //main.close();
     }
 }

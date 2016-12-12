@@ -57,7 +57,7 @@ public class Client {
         slmGui.showText("Client: Connected to: " + adress + ":" + port);
         in = new Scanner(server.getInputStream());
         out = new PrintWriter(server.getOutputStream(), true);
-        instructions = new LinkedBlockingQueue<>();
+        instructions = new LinkedBlockingQueue<Instruction>();
     }
 
     /**
@@ -128,7 +128,7 @@ public class Client {
      * @param serverAdress IP/name of the host-server
      * @param clientGui Gui for the SLM
      */
-    static void startClient(String adress, int port, ClientGui clientGui) {
+    static void startClient(final String adress, final int port, final ClientGui clientGui) {
         clientGui.setConnectionLabel(adress, port);
         Thread connection = new Thread(new Runnable() {
             @Override
