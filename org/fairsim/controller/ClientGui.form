@@ -78,7 +78,7 @@
                       <Component id="slmSelectButton" min="-2" max="-2" attributes="0"/>
                       <Component id="slmRefreshButton" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace min="0" pref="76" max="32767" attributes="0"/>
+                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
               </Group>
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
@@ -343,14 +343,16 @@
                       <Component id="arduinoRedButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="arduinoStopButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="arduinoStartButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Group type="103" alignment="3" groupAlignment="3" attributes="0">
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Group type="103" alignment="0" groupAlignment="3" attributes="0">
                           <Component id="arduinoComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="arduinoBreakTimeTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="arduinoDelayLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="arduinoPhotoButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="arduinoStopButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="arduinoStartButton" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                   <EmptySpace pref="40" max="32767" attributes="0"/>
@@ -365,6 +367,9 @@
               <StringArray count="0"/>
             </Property>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="arduinoComboBoxActionPerformed"/>
+          </Events>
           <AuxValues>
             <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
           </AuxValues>

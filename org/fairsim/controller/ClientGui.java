@@ -80,9 +80,29 @@ public class ClientGui extends javax.swing.JPanel {
 
     private void initArduino() {
         arduinoCommands = new ArrayList<String>();
-        arduinoCommands.add("M3");
-        arduinoCommands.add("M21");
-        arduinoCommands.add("M22");
+        arduinoCommands.add("m3n");
+        arduinoCommands.add("m3o");
+        arduinoCommands.add("m21r");
+        arduinoCommands.add("m21g");
+        arduinoCommands.add("m21b");
+        arduinoCommands.add("m22r");
+        arduinoCommands.add("m22g");
+        arduinoCommands.add("m22b");
+        arduinoCommands.add("m2Xr");
+        arduinoCommands.add("m2Xg");
+        arduinoCommands.add("m2Xb");
+        arduinoCommands.add("m11r");
+        arduinoCommands.add("m11g");
+        arduinoCommands.add("m11b");
+        arduinoCommands.add("m12r");
+        arduinoCommands.add("m12g");
+        arduinoCommands.add("m12b");
+        arduinoCommands.add("m1Vr");
+        arduinoCommands.add("m1Vg");
+        arduinoCommands.add("m1Vb");
+        arduinoCommands.add("m1Xr");
+        arduinoCommands.add("m1Xg");
+        arduinoCommands.add("m1Xb");
         for (String command : arduinoCommands) {
             arduinoComboBox.addItem(command);
         }
@@ -296,7 +316,7 @@ public class ClientGui extends javax.swing.JPanel {
         slmTime = new javax.swing.JLabel();
         slmRepertoir = new javax.swing.JLabel();
         slmConnectButton = new javax.swing.JButton();
-        slmComboBox = new org.fairsim.sim_gui.Tiles.TComboBox<String>();
+        slmComboBox = new javax.swing.JComboBox<>();
         slmDisconnectButton = new javax.swing.JButton();
         slmRebootButton = new javax.swing.JButton();
         slmDefault = new javax.swing.JLabel();
@@ -310,7 +330,7 @@ public class ClientGui extends javax.swing.JPanel {
         serverLabel = new javax.swing.JLabel();
         textArea1 = new java.awt.TextArea();
         arduinoPanel = new javax.swing.JPanel();
-        arduinoComboBox = new org.fairsim.sim_gui.Tiles.TComboBox<String>();
+        arduinoComboBox = new javax.swing.JComboBox<>();
         arduinoConnectButton = new javax.swing.JButton();
         arduinoDisconnectButton = new javax.swing.JButton();
         arduinoStartButton = new javax.swing.JButton();
@@ -415,7 +435,7 @@ public class ClientGui extends javax.swing.JPanel {
                 .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(slmSelectButton)
                     .addComponent(slmRefreshButton))
-                .addGap(0, 76, Short.MAX_VALUE))
+                .addGap(0, 0, Short.MAX_VALUE))
             .addGroup(slmPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -488,6 +508,12 @@ public class ClientGui extends javax.swing.JPanel {
         );
 
         arduinoPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Arduino-Controller"));
+
+        arduinoComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                arduinoComboBoxActionPerformed(evt);
+            }
+        });
 
         arduinoConnectButton.setText("Connect Arduino");
         arduinoConnectButton.addActionListener(new java.awt.event.ActionListener() {
@@ -594,14 +620,15 @@ public class ClientGui extends javax.swing.JPanel {
                     .addComponent(arduinoGreenButton)
                     .addComponent(arduinoRedButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(arduinoStopButton)
-                    .addComponent(arduinoStartButton)
+                .addGroup(arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(arduinoComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(arduinoBreakTimeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(arduinoDelayLabel)
-                        .addComponent(arduinoPhotoButton)))
+                        .addComponent(arduinoPhotoButton))
+                    .addGroup(arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(arduinoStopButton)
+                        .addComponent(arduinoStartButton)))
                 .addContainerGap(40, Short.MAX_VALUE))
         );
 
@@ -734,6 +761,10 @@ public class ClientGui extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_arduinoPhotoButtonActionPerformed
 
+    private void arduinoComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoComboBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_arduinoComboBoxActionPerformed
+
     private void setRGBButtonSelected(boolean b) {
         arduinoRedButton.setSelected(b);
         arduinoGreenButton.setSelected(b);
@@ -833,7 +864,7 @@ public class ClientGui extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JToggleButton arduinoBlueButton;
     private javax.swing.JTextField arduinoBreakTimeTextField;
-    private org.fairsim.sim_gui.Tiles.TComboBox<String> arduinoComboBox;
+    private javax.swing.JComboBox<String> arduinoComboBox;
     private javax.swing.JButton arduinoConnectButton;
     private javax.swing.JLabel arduinoDelayLabel;
     private javax.swing.JButton arduinoDisconnectButton;
@@ -846,7 +877,7 @@ public class ClientGui extends javax.swing.JPanel {
     private javax.swing.JPanel clientServerPanel;
     private javax.swing.JLabel serverLabel;
     private javax.swing.JButton slmActivateButton;
-    private org.fairsim.sim_gui.Tiles.TComboBox<String> slmComboBox;
+    private javax.swing.JComboBox<String> slmComboBox;
     private javax.swing.JButton slmConnectButton;
     private javax.swing.JButton slmDeactivateButton;
     private javax.swing.JLabel slmDefault;
