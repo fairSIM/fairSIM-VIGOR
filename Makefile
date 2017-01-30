@@ -5,7 +5,7 @@
 # compiler (vers. 1.6), or change the line below to
 # 'java' instead of 'java6'
 
-JC = javac
+JC = javac6
 JAR = jar
 
 # Options for the java compiler
@@ -13,7 +13,7 @@ EXTDIR="./external"
 
 JFLAGS = -g  -Xlint:unchecked -Xlint:deprecation -extdirs ${EXTDIR} -d ./
 #JFLAGS = -g -Xlint:unchecked -extdirs ${EXTDIR} -d ./
-#JFLAGS+= -target 1.6 -source 1.6
+JFLAGS+= -target 1.6 -source 1.6
 
 
 # remove command to clean up

@@ -289,7 +289,7 @@ public class ReconstructionRunner {
                     if (Registration.isWidefield()) {
                         try {
                             Registration reg = Registration.getRegistration(channels[c].label);
-                            cpuWidefield[c] = reg.registerWfImageNew(cpuWidefield[c]);
+                            cpuWidefield[c] = reg.registerWfImage(cpuWidefield[c]);
                         } catch (NoSuchFieldException ex) {
                         }
                     }
@@ -347,7 +347,7 @@ public class ReconstructionRunner {
                     if (Registration.isRecon()) {
                         try {
                             Registration reg = Registration.getRegistration(channels[channel].label);
-                            cpuRes[channel] = reg.registerReconImageNew(cpuRes[channel]);
+                            cpuRes[channel] = reg.registerReconImage(cpuRes[channel]);
                         } catch (NoSuchFieldException ex) {
                             //do nothing
                         }

@@ -26,7 +26,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * Class fo the Client in the communikation chain <br>
+ * Class of the Client in the communikation chain <br>
  * SLM - Server - Client - GUI
  *
  * @author m.lachetta

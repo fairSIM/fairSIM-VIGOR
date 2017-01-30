@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.fairsim.livemode.SimSequenceExtractor;
+import org.fairsim.registration.Registration;
 import org.fairsim.utils.Conf;
 
 /**
@@ -39,13 +41,17 @@ public class ClientGui extends javax.swing.JPanel {
     private boolean instructionDone;
     String serverAdress;
     int serverPort;
+    SimSequenceExtractor seqDetection;
 
     /**
-     * Creates new form SlmPanel
+     * Creates the GUI for the Controller
      *
      * @param cfg Configuration settings
+     * @param channels Camera Channels
+     * @param seqDetection The Sim-Sequence-Extractor
      */
-    public ClientGui(Conf.Folder cfg) {
+    public ClientGui(Conf.Folder cfg, String [] channels, SimSequenceExtractor seqDetection) {
+        this.seqDetection = seqDetection;
         initComponents();
 
         try {
@@ -63,8 +69,13 @@ public class ClientGui extends javax.swing.JPanel {
 
         initSlm();
         initArduino();
+        initSync();
+        initReg(cfg, channels);
     }
 
+    /**
+     * Initialises the GUI for the SLM
+     */
     private void initSlm() {
         slmControllers = new ArrayList<Component>();
         slmControllers.add(slmComboBox);
@@ -78,8 +89,12 @@ public class ClientGui extends javax.swing.JPanel {
         slmConnectButton.setEnabled(false);
     }
 
+    /**
+     * Initialises the GUI for the arduino
+     */
     private void initArduino() {
         arduinoCommands = new ArrayList<String>();
+        arduinoCommands.add("m3f");
         arduinoCommands.add("m3n");
         arduinoCommands.add("m3o");
         arduinoCommands.add("m21r");
@@ -120,6 +135,26 @@ public class ClientGui extends javax.swing.JPanel {
         disableArduinoControllers();
         arduinoConnectButton.setEnabled(false);
     }
+    
+    /**
+     * Initialises the GUI for the syncronisation
+     */
+    private void initSync() {
+        syncDelayLabel.setText("Delay: " + seqDetection.getSyncDelay());
+        syncAvrLabel.setText("Average: " + seqDetection.getSyncAvr());
+        syncFreqLabel.setText("Frequency: " + seqDetection.getSyncFreq());
+    }
+    
+    /**
+     * Initialises the GUI for the Registration
+     * @param cfg Configuration
+     * @param channels Camera channels
+     */
+    private void initReg(final Conf.Folder cfg, final String[] channels) {
+        for (String channel : channels) {
+            Registration.createRegistration(cfg, channel);
+        }
+    }
 
     /**
      * Shows a new text-line in the text-field
@@ -131,7 +166,7 @@ public class ClientGui extends javax.swing.JPanel {
     }
 
     /**
-     * Sets lable on top of the gui
+     * Sets server label
      *
      * @param adress server adress
      * @param port server port
@@ -141,7 +176,7 @@ public class ClientGui extends javax.swing.JPanel {
     }
 
     /**
-     * enables buttons of the GUI without connect-button
+     * enables buttons of the SLM without connect-button
      */
     private void enableSlmControllers() {
         for (Component comp : slmControllers) {
@@ -150,7 +185,7 @@ public class ClientGui extends javax.swing.JPanel {
     }
 
     /**
-     * disables buttons of the GUI without connect-button
+     * disables buttons of the SLM without connect-button
      */
     private void disableSlmControllers() {
         for (Component comp : slmControllers) {
@@ -158,18 +193,28 @@ public class ClientGui extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * enables buttons of the arduino without connect-button
+     */
     private void enableArduinoControllers() {
         for (Component comp : arduinoControllers) {
             comp.setEnabled(true);
         }
     }
 
+    /**
+     * disables buttons of the arduino without connect-button
+     */
     private void disableArduinoControllers() {
         for (Component comp : arduinoControllers) {
             comp.setEnabled(false);
         }
     }
 
+    /**
+     * registers the client at the GUI
+     * @param client 
+     */
     void registerClient(Client client) {
         this.client = client;
         //showText("Gui: Client successfully registerd at the ControllerGui");
@@ -177,6 +222,9 @@ public class ClientGui extends javax.swing.JPanel {
         arduinoConnectButton.setEnabled(true);
     }
 
+    /**
+     * unregisters the client at the GUI
+     */
     void unregisterClient() {
         //showText("Gui: Client unregisterd at the ControllerGui");
 
@@ -193,10 +241,18 @@ public class ClientGui extends javax.swing.JPanel {
         disableArduinoControllers();
     }
 
+    /**
+     * Sends a command to the SLM
+     * @param command 
+     */
     void sendSlmInstruction(String command) {
         sendInstruction("slm->" + command);
     }
 
+    /**
+     * Sends a command to the arduino
+     * @param command 
+     */
     void sendArduinoInstruction(String command) {
         sendInstruction("arduino->" + command);
     }
@@ -240,9 +296,8 @@ public class ClientGui extends javax.swing.JPanel {
     }
 
     /**
-     * handles error-massages from the server
-     *
-     * @param error Error-Massage from the server
+     * handles error-massages from the SLM
+     * @param error Error-Massage from the SLM
      */
     private void handleSlmError(String error) {
         int code = Integer.parseInt(error.split("  ;  ")[1].split(": ")[1]);
@@ -259,8 +314,12 @@ public class ClientGui extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * handles an error-massage from the Arduino
+     * @param error 
+     */
     private void handleArduinoError(String error) {
-        if (error.contains("Could not find COM port")) {
+        if (error.contains("Gui: Could not find COM port")) {
             disableArduinoControllers();
             arduinoConnectButton.setEnabled(true);
             showText("Gui: No connection to the arduino");
@@ -341,6 +400,20 @@ public class ClientGui extends javax.swing.JPanel {
         arduinoBreakTimeTextField = new javax.swing.JTextField();
         arduinoDelayLabel = new javax.swing.JLabel();
         arduinoPhotoButton = new javax.swing.JButton();
+        arduinoLasersLabel = new javax.swing.JLabel();
+        softwarePanel = new javax.swing.JPanel();
+        syncDelayButton = new javax.swing.JButton();
+        syncDelayTextField = new javax.swing.JTextField();
+        syncAvrButton = new javax.swing.JButton();
+        syncAvrTextField = new javax.swing.JTextField();
+        syncDelayLabel = new javax.swing.JLabel();
+        syncAvrLabel = new javax.swing.JLabel();
+        syncFreqLabel = new javax.swing.JLabel();
+        syncFreqButton = new javax.swing.JButton();
+        syncFreqTextField = new javax.swing.JTextField();
+        regPanel = new javax.swing.JPanel();
+        regWfButton = new javax.swing.JToggleButton();
+        regReconButton = new javax.swing.JToggleButton();
 
         slmPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("SLM-Controller"));
         slmPanel.setName(""); // NOI18N
@@ -355,12 +428,6 @@ public class ClientGui extends javax.swing.JPanel {
         slmConnectButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 slmConnectButtonActionPerformed(evt);
-            }
-        });
-
-        slmComboBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                slmComboBoxActionPerformed(evt);
             }
         });
 
@@ -432,9 +499,9 @@ public class ClientGui extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(slmComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(slmSelectButton)
-                    .addComponent(slmRefreshButton))
+                .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(slmRefreshButton)
+                    .addComponent(slmSelectButton))
                 .addGap(0, 0, Short.MAX_VALUE))
             .addGroup(slmPanelLayout.createSequentialGroup()
                 .addContainerGap()
@@ -457,13 +524,17 @@ public class ClientGui extends javax.swing.JPanel {
                     .addComponent(slmDisconnectButton)
                     .addComponent(slmRebootButton)
                     .addComponent(slmRefreshButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(slmActivateButton)
-                    .addComponent(slmComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(slmSelectButton))
-                .addGap(3, 3, 3)
-                .addComponent(slmDeactivateButton)
+                .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(slmPanelLayout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(slmActivateButton)
+                        .addGap(3, 3, 3)
+                        .addComponent(slmDeactivateButton))
+                    .addGroup(slmPanelLayout.createSequentialGroup()
+                        .addGap(18, 18, 18)
+                        .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(slmComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(slmSelectButton))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(slmPanelLayout.createSequentialGroup()
@@ -504,16 +575,10 @@ public class ClientGui extends javax.swing.JPanel {
             .addGroup(clientServerPanelLayout.createSequentialGroup()
                 .addComponent(serverLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(textArea1, javax.swing.GroupLayout.DEFAULT_SIZE, 99, Short.MAX_VALUE))
+                .addComponent(textArea1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         arduinoPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Arduino-Controller"));
-
-        arduinoComboBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                arduinoComboBoxActionPerformed(evt);
-            }
-        });
 
         arduinoConnectButton.setText("Connect Arduino");
         arduinoConnectButton.addActionListener(new java.awt.event.ActionListener() {
@@ -578,6 +643,8 @@ public class ClientGui extends javax.swing.JPanel {
             }
         });
 
+        arduinoLasersLabel.setText("Lasers:");
+
         javax.swing.GroupLayout arduinoPanelLayout = new javax.swing.GroupLayout(arduinoPanel);
         arduinoPanel.setLayout(arduinoPanelLayout);
         arduinoPanelLayout.setHorizontalGroup(
@@ -589,7 +656,9 @@ public class ClientGui extends javax.swing.JPanel {
                         .addComponent(arduinoConnectButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(arduinoDisconnectButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(arduinoLasersLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(arduinoRedButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(arduinoGreenButton)
@@ -606,9 +675,8 @@ public class ClientGui extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(arduinoBreakTimeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(arduinoDelayLabel)
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .addComponent(arduinoDelayLabel)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         arduinoPanelLayout.setVerticalGroup(
             arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -618,7 +686,8 @@ public class ClientGui extends javax.swing.JPanel {
                     .addComponent(arduinoDisconnectButton)
                     .addComponent(arduinoBlueButton)
                     .addComponent(arduinoGreenButton)
-                    .addComponent(arduinoRedButton))
+                    .addComponent(arduinoRedButton)
+                    .addComponent(arduinoLasersLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -629,7 +698,113 @@ public class ClientGui extends javax.swing.JPanel {
                     .addGroup(arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(arduinoStopButton)
                         .addComponent(arduinoStartButton)))
-                .addContainerGap(40, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        softwarePanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Sync-Controller"));
+
+        syncDelayButton.setText("Set Delay");
+        syncDelayButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                syncDelayButtonActionPerformed(evt);
+            }
+        });
+
+        syncDelayTextField.setText("0");
+
+        syncAvrButton.setText("Set Average");
+        syncAvrButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                syncAvrButtonActionPerformed(evt);
+            }
+        });
+
+        syncAvrTextField.setText("0");
+
+        syncDelayLabel.setText("Delay: -----");
+
+        syncAvrLabel.setText("Average: -----");
+
+        syncFreqLabel.setText("Frequency: -----");
+
+        syncFreqButton.setText("Set Frequency");
+        syncFreqButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                syncFreqButtonActionPerformed(evt);
+            }
+        });
+
+        syncFreqTextField.setText("0");
+
+        javax.swing.GroupLayout softwarePanelLayout = new javax.swing.GroupLayout(softwarePanel);
+        softwarePanel.setLayout(softwarePanelLayout);
+        softwarePanelLayout.setHorizontalGroup(
+            softwarePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(softwarePanelLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(softwarePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(syncFreqLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(syncDelayLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(syncAvrLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(softwarePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(syncDelayButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(syncAvrButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(syncFreqButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(softwarePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(syncDelayTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 50, Short.MAX_VALUE)
+                    .addComponent(syncAvrTextField)
+                    .addComponent(syncFreqTextField)))
+        );
+        softwarePanelLayout.setVerticalGroup(
+            softwarePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(softwarePanelLayout.createSequentialGroup()
+                .addGroup(softwarePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(syncDelayButton)
+                    .addComponent(syncDelayTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(syncDelayLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(softwarePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(syncAvrButton)
+                    .addComponent(syncAvrTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(syncAvrLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(softwarePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(syncFreqLabel)
+                    .addComponent(syncFreqButton)
+                    .addComponent(syncFreqTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+        );
+
+        regPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Image Registration"));
+
+        regWfButton.setText("Register in widefield");
+        regWfButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                regWfButtonActionPerformed(evt);
+            }
+        });
+
+        regReconButton.setText("Register in reconstruction");
+        regReconButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                regReconButtonActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout regPanelLayout = new javax.swing.GroupLayout(regPanel);
+        regPanel.setLayout(regPanelLayout);
+        regPanelLayout.setHorizontalGroup(
+            regPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(regReconButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(regWfButton, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
+        );
+        regPanelLayout.setVerticalGroup(
+            regPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, regPanelLayout.createSequentialGroup()
+                .addComponent(regWfButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(regReconButton))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -641,7 +816,12 @@ public class ClientGui extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(arduinoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(slmPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(clientServerPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(clientServerPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                        .addComponent(softwarePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(regPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -652,8 +832,11 @@ public class ClientGui extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(arduinoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(clientServerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(softwarePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(regPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(clientServerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -664,10 +847,6 @@ public class ClientGui extends javax.swing.JPanel {
     private void slmActivateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmActivateButtonActionPerformed
         sendSlmInstruction("activate");
     }//GEN-LAST:event_slmActivateButtonActionPerformed
-
-    private void slmComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmComboBoxActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_slmComboBoxActionPerformed
 
     private void slmSelectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmSelectButtonActionPerformed
         sendSlmInstruction(Integer.toString(slmComboBox.getSelectedIndex()));
@@ -761,9 +940,34 @@ public class ClientGui extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_arduinoPhotoButtonActionPerformed
 
-    private void arduinoComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoComboBoxActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_arduinoComboBoxActionPerformed
+    private void syncDelayButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_syncDelayButtonActionPerformed
+        try {
+            seqDetection.setSyncDelay(Integer.parseInt( syncDelayTextField.getText() ));
+        } catch (NumberFormatException e) {}
+        syncDelayLabel.setText("Delay: " + seqDetection.getSyncDelay());
+    }//GEN-LAST:event_syncDelayButtonActionPerformed
+
+    private void syncAvrButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_syncAvrButtonActionPerformed
+        try {
+            seqDetection.setSyncAvr(Integer.parseInt( syncAvrTextField.getText() ));
+        } catch (NumberFormatException e) {}
+        syncAvrLabel.setText("Average: " + seqDetection.getSyncAvr());
+    }//GEN-LAST:event_syncAvrButtonActionPerformed
+
+    private void syncFreqButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_syncFreqButtonActionPerformed
+        try {
+            seqDetection.setSyncFreq(Integer.parseInt( syncFreqTextField.getText() ));
+        } catch (NumberFormatException e) {}
+        syncFreqLabel.setText("Frequency: " + seqDetection.getSyncFreq());
+    }//GEN-LAST:event_syncFreqButtonActionPerformed
+
+    private void regWfButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_regWfButtonActionPerformed
+        Registration.setWidefield(regWfButton.isSelected());
+    }//GEN-LAST:event_regWfButtonActionPerformed
+
+    private void regReconButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_regReconButtonActionPerformed
+        Registration.setRecon(regReconButton.isSelected());
+    }//GEN-LAST:event_regReconButtonActionPerformed
 
     private void setRGBButtonSelected(boolean b) {
         arduinoRedButton.setSelected(b);
@@ -869,12 +1073,16 @@ public class ClientGui extends javax.swing.JPanel {
     private javax.swing.JLabel arduinoDelayLabel;
     private javax.swing.JButton arduinoDisconnectButton;
     private javax.swing.JToggleButton arduinoGreenButton;
+    private javax.swing.JLabel arduinoLasersLabel;
     private javax.swing.JPanel arduinoPanel;
     private javax.swing.JButton arduinoPhotoButton;
     private javax.swing.JToggleButton arduinoRedButton;
     private javax.swing.JButton arduinoStartButton;
     private javax.swing.JButton arduinoStopButton;
     private javax.swing.JPanel clientServerPanel;
+    private javax.swing.JPanel regPanel;
+    public javax.swing.JToggleButton regReconButton;
+    public javax.swing.JToggleButton regWfButton;
     private javax.swing.JLabel serverLabel;
     private javax.swing.JButton slmActivateButton;
     private javax.swing.JComboBox<String> slmComboBox;
@@ -891,6 +1099,16 @@ public class ClientGui extends javax.swing.JPanel {
     private javax.swing.JLabel slmTime;
     private javax.swing.JLabel slmType;
     private javax.swing.JLabel slmVersion;
+    private javax.swing.JPanel softwarePanel;
+    private javax.swing.JButton syncAvrButton;
+    private javax.swing.JLabel syncAvrLabel;
+    private javax.swing.JTextField syncAvrTextField;
+    private javax.swing.JButton syncDelayButton;
+    private javax.swing.JLabel syncDelayLabel;
+    private javax.swing.JTextField syncDelayTextField;
+    private javax.swing.JButton syncFreqButton;
+    private javax.swing.JLabel syncFreqLabel;
+    private javax.swing.JTextField syncFreqTextField;
     private java.awt.TextArea textArea1;
     // End of variables declaration//GEN-END:variables
 }

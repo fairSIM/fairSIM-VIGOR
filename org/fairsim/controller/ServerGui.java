@@ -32,7 +32,7 @@ public class ServerGui extends javax.swing.JFrame {
     ArduinoController arduino;
 
     /**
-     * Creates new form ServerGUI
+     * Creates a new ServerGUI
      */
     public ServerGui() {
         initComponents();
@@ -41,8 +41,12 @@ public class ServerGui extends javax.swing.JFrame {
         server = startServer(this, slm, arduino);
     }
     
+    /**
+     * Shows text in the ServerGui
+     * @param text 
+     */
     void showText(String text) {
-        jTextArea1.append(text + "\n");
+        ServerTrace.append(text + "\n");
     }
 
     /**
@@ -55,14 +59,14 @@ public class ServerGui extends javax.swing.JFrame {
     private void initComponents() {
 
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTextArea1 = new javax.swing.JTextArea();
+        ServerTrace = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("SLM-Server-GUI");
 
-        jTextArea1.setColumns(20);
-        jTextArea1.setRows(5);
-        jScrollPane1.setViewportView(jTextArea1);
+        ServerTrace.setColumns(20);
+        ServerTrace.setRows(5);
+        jScrollPane1.setViewportView(ServerTrace);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -123,7 +127,7 @@ public class ServerGui extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTextArea ServerTrace;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTextArea jTextArea1;
     // End of variables declaration//GEN-END:variables
 }

@@ -30,6 +30,10 @@ public class SlmController {
     
     ServerGui gui;
    
+    /**
+     * Constructor for the SLM-Controller
+     * @param serverGui 
+     */
     SlmController(ServerGui serverGui) {
         this.gui = serverGui;
         

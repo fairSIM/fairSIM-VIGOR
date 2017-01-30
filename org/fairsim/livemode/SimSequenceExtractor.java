@@ -40,9 +40,9 @@ public class SimSequenceExtractor {
     final ReconstructionRunner reconRunner; 
     final int nrChannels;
 
-    final int seqCount;
-    final int syncFrameAvr;
-    final int syncFrameDelay;
+    int seqCount;
+    int syncFrameAvr;
+    int syncFrameDelay;
 
     final PerChannelBuffer [] channels;
     private Map< Integer, PerChannelBuffer > channelMapping;
@@ -91,6 +91,30 @@ public class SimSequenceExtractor {
 	for ( PerChannelBuffer i : channels ) 
 	    i.clearBuffers();
     }   
+    
+    public int getSyncDelay() {
+        return syncFrameDelay;
+    }
+    
+    public int getSyncAvr() {
+        return syncFrameAvr;
+    }
+    
+    public int getSyncFreq() {
+        return seqCount;
+    }
+    
+    public void setSyncDelay(int delay) {
+        syncFrameDelay = delay;
+    }
+    
+    public void setSyncAvr(int avr) {
+        syncFrameAvr = avr;
+    }
+    
+    public void setSyncFreq(int freq) {
+        seqCount = freq;
+    }
 
     /** Take images for the gereral queue, sort them by channel */
     class ImageSorter extends Thread {
@@ -198,7 +222,7 @@ public class SimSequenceExtractor {
 			long curTimeStamp = iwSync.timeCamera();		    
 			
 			// version 1 (for camera with precise time-stamp, like PCO)
-			if ( Math.abs( curTimeStamp - lastTimeStamp - 5000 ) < 50 ) {
+			if ( Math.abs( curTimeStamp - lastTimeStamp - syncFrameDelay ) < 50 ) {
 			    //Tool.tell("SYNC "+chNumber+": via timestamp/PCO");
 			    syncFrameCount++;
 			    long count = syncFrameCount/5;
@@ -211,7 +235,7 @@ public class SimSequenceExtractor {
 
 			// version 2 (for camera w/o timestamp, bright LED):
 			short pxl [] = iwSync.getPixels();
-			if (MTool.avr_ushort( pxl ) > 10000) {
+			if (MTool.avr_ushort( pxl ) > syncFrameAvr) {
 			    syncFrameCount++;
 			    long count = syncFrameCount/5;
 			    Color bg = (count%2==0)?(Color.BLACK):(Color.GREEN);

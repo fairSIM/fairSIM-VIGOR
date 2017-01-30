@@ -4,20 +4,23 @@
  * http://playground.arduino.cc/Interfacing/Java
  * Original code under CC-BY-SA-3.0
  */
-
 package org.fairsim.controller;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import gnu.io.CommPortIdentifier;
-import gnu.io.PortInUseException;
 import gnu.io.SerialPort;
 import gnu.io.SerialPortEvent;
 import gnu.io.SerialPortEventListener;
 import java.io.IOException;
 import java.util.Enumeration;
 
+/**
+ * Class to controll the Arduino.
+ * 
+ * @author m.lachetta
+ */
 public class ArduinoController implements SerialPortEventListener {
 
     SerialPort serialPort;
@@ -59,10 +62,6 @@ public class ArduinoController implements SerialPortEventListener {
     
 
     private void initialize() throws Exception {
-        // the next line is for Raspberry Pi and 
-        // gets us into the while loop and was suggested here was suggested http://www.raspberrypi.org/phpBB3/viewtopic.php?f=81&t=32186
-        //System.setProperty("gnu.io.rxtx.SerialPorts", "/dev/ttyACM0");
-
         CommPortIdentifier portId = null;
         Enumeration portEnum = CommPortIdentifier.getPortIdentifiers();
 
@@ -128,7 +127,7 @@ public class ArduinoController implements SerialPortEventListener {
         // Ignore all the other eventTypes, but you should consider the other ones.
     }
 
-    synchronized String sendCommandToArduino(byte[] command) {
+    synchronized String sendCommand(byte[] command) {
         try {
             output.write(command);
             output.flush();

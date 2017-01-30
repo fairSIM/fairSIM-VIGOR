@@ -58,7 +58,7 @@ public class Registration {
      * @throws IOException is throwen if the inputfile does not exist or not
      * have the cerrect structure/format
      */
-    Registration(String file) throws IOException {
+    public Registration(String file) throws IOException {
         vf = Vec.getBasicVectorFactory();
         reconWidth = -1;
         reconHeight = -1;
@@ -143,7 +143,7 @@ public class Registration {
      * (de)activates the registration in widefield
      * @param b 
      */
-    static void setWidefield(boolean b) {
+    public static void setWidefield(boolean b) {
         widefield = b;
     }
     
@@ -151,7 +151,7 @@ public class Registration {
      * (de)activates the registration in reconstruction
      * @param b 
      */
-    static void setRecon(boolean b) {
+    public static void setRecon(boolean b) {
         recon = b;
     }
     
@@ -171,7 +171,7 @@ public class Registration {
         return recon;
     }
     
-    
+    /*
     public Vec2d.Real registerImageOld(final Vec2d.Real sourceVec, final char type) {
        final int width;
        final int height;
@@ -193,9 +193,9 @@ public class Registration {
         if (sourceVec.vectorWidth() != width || sourceVec.vectorHeight() != height) {
             Tool.trace("Image registration '" + type + "' failed, because of differences in diminsions");
             if (type == 'r') {
-                setRecon(false);
+                //setRecon(false);
             } else if (type == 'w') {
-                setWidefield(false);
+                //setWidefield(false);
             }
         }
         final Vec2d.Real regVec = vf.createReal2D(width, height); 
@@ -296,7 +296,7 @@ public class Registration {
     public Vec2d.Real registerWfImageNew(Vec2d.Real sourceVec) {
         if (sourceVec.vectorWidth() != wfWidth || sourceVec.vectorHeight() != wfHeight) {
             Tool.trace("Image registration failed, because of differences in diminsions");
-            setWidefield(false);
+            //setWidefield(false);
             return sourceVec;
         }
         return registerImageNew(sourceVec, wfXTransVec, wfYTransVec, wfWidth, wfHeight);
@@ -305,7 +305,7 @@ public class Registration {
     public Vec2d.Real registerReconImageNew(Vec2d.Real sourceVec) {
         if (sourceVec.vectorWidth() != reconWidth || sourceVec.vectorHeight() != reconHeight) {
             Tool.trace("Image registration failed, because of differences in diminsions");
-            setRecon(false);
+            //setRecon(false);
             return sourceVec;
         }
         return registerImageNew(sourceVec, reconXTransVec, reconYTransVec, reconWidth, reconHeight);
@@ -389,19 +389,21 @@ public class Registration {
             regVec.set(right, bottom, brValue);
         }
     }
+    */
     
     /**
      * Registers a widefield image
      * @param sourceVec input vektor for the registration
      * @return output vektor from the registration
      */
-    public Vec2d.Real registerWfImageInverse(Vec2d.Real sourceVec) {
+    public Vec2d.Real registerWfImage(Vec2d.Real sourceVec) throws IllegalStateException {
         if (sourceVec.vectorWidth() != wfWidth || sourceVec.vectorHeight() != wfHeight) {
             Tool.trace("Image registration failed, because of differences in diminsions");
             setWidefield(false);
             return sourceVec;
+            //throw new IllegalStateException("Image registration failed, because of differences in diminsions");
         }
-        return registerImageInverse(sourceVec, wfXTransVec, wfYTransVec, wfWidth, wfHeight);
+        return registerImage(sourceVec, wfXTransVec, wfYTransVec, wfWidth, wfHeight);
     }
     
     /**
@@ -409,13 +411,14 @@ public class Registration {
      * @param sourceVec input vektor for the registration
      * @return output vektor from the registration
      */
-    public Vec2d.Real registerReconImageInverse(Vec2d.Real sourceVec) {
+    public Vec2d.Real registerReconImage(Vec2d.Real sourceVec) throws IllegalStateException {
         if (sourceVec.vectorWidth() != reconWidth || sourceVec.vectorHeight() != reconHeight) {
             Tool.trace("Image registration failed, because of differences in diminsions");
             setRecon(false);
-            return sourceVec;
+            //return sourceVec;
+            throw new IllegalStateException("Image registration failed, because of differences in diminsions");
         }
-        return registerImageInverse(sourceVec, reconXTransVec, reconYTransVec, reconWidth, reconHeight);
+        return registerImage(sourceVec, reconXTransVec, reconYTransVec, reconWidth, reconHeight);
     }
     
     /**
@@ -427,7 +430,7 @@ public class Registration {
      * @param height height of the Vector
      * @return output vektor from the registration
      */
-    Vec2d.Real registerImageInverse(final Vec2d.Real sourceVec, 
+    Vec2d.Real registerImage(final Vec2d.Real sourceVec, 
 	final Vec2d.Real xTransVec, final Vec2d.Real yTransVec, 
 	final int width, final int height) {
         
@@ -444,7 +447,7 @@ public class Registration {
                 public void run() {
                     for (int y = blockSize * tId; y < blockSize * (tId + 1); y++) {
                         for (int x = 0; x < width; x++) {
-                            transPixelInverse(regVec, sourceVec, xTransVec, yTransVec, width, height, x, y);
+                            transPixel(regVec, sourceVec, xTransVec, yTransVec, width, height, x, y);
                         }
                     }
                 }
@@ -454,7 +457,7 @@ public class Registration {
 
         for (int y = blockSize * threads; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                transPixelInverse(regVec, sourceVec, xTransVec, yTransVec, width, height, x, y);
+                transPixel(regVec, sourceVec, xTransVec, yTransVec, width, height, x, y);
             }
         } 
         
@@ -481,7 +484,7 @@ public class Registration {
      * @param targetX x value of the target pixel
      * @param targetY y value of the target pixel
      */
-    private void transPixelInverse(Vec2d.Real regVec, Vec2d.Real sourceVec, Vec2d.Real xTransVec, Vec2d.Real yTransVec, int width, int height, int targetX, int targetY) {
+    private void transPixel(Vec2d.Real regVec, Vec2d.Real sourceVec, Vec2d.Real xTransVec, Vec2d.Real yTransVec, int width, int height, int targetX, int targetY) {
         float sourceX = xTransVec.get(targetX, targetY);
         float sourceY = yTransVec.get(targetX, targetY);
 

@@ -51,7 +51,6 @@ import org.fairsim.linalg.Vec;
 import org.fairsim.sim_gui.PlainImageDisplay;
 
 import org.fairsim.linalg.Vec2d;
-import org.fairsim.registration.RegistrationPanel;
 import org.fairsim.controller.ClientGui;
 import org.fairsim.utils.Tool;
 import org.fairsim.utils.SimpleMT;
@@ -167,7 +166,7 @@ public class LiveControlPanel {
 	recorderPanel.add(fileBufferBar);
 	mainPanel.add(recorderPanel);
         
-        mainPanel.add(new RegistrationPanel(avf, cfg, channels));
+        //mainPanel.add(new RegistrationPanel(avf, cfg, channels));
 
 	JButton fitPeakButton = new JButton("run parameter fit");
 	fitPeakButton.addActionListener( new ActionListener() {
@@ -262,7 +261,7 @@ public class LiveControlPanel {
 	JTabbedPane tabbedPane = new JTabbedPane();
     
 	tabbedPane.addTab( "main", mainPanel );
-        tabbedPane.addTab("controller", new ClientGui(cfg) );
+        tabbedPane.addTab("controller", new ClientGui(cfg, channels, seqDetection) );
 
 	for (int ch=0 ; ch<nrCh ; ch++) {
 	    ParameterTab pTab = new ParameterTab( reconRunner, ch, cfg );

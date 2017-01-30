@@ -42,6 +42,13 @@ public class ControllerServer implements Runnable{
     Scanner in;
     PrintWriter out;
 
+    /**
+     * Constructor for the Server
+     * @param gui GUI of the Server
+     * @param slm
+     * @param arduino
+     * @throws IOException throwen if TCP-Connection failed
+     */
     private ControllerServer(ServerGui gui, SlmController slm, ArduinoController arduino) throws IOException {
         this.gui = gui;
         this.slm = slm;
@@ -103,7 +110,7 @@ public class ControllerServer implements Runnable{
                     serverOut = arduino.disconnect();
                 } else {
                     byte[] command = input.getBytes(Charset.forName("UTF-8"));
-                    serverOut = arduino.sendCommandToArduino(command);
+                    serverOut = arduino.sendCommand(command);
                 }
             }
             out.println(serverOut);
@@ -111,16 +118,27 @@ public class ControllerServer implements Runnable{
 
     }
 
+    /**
+     * Creates and starts a new Controller-Server
+     * @param gui
+     * @param slm
+     * @param arduino
+     * @return returns a ControllerServer-Object or a null-pointer if something
+     * went wrong
+     */
     static ControllerServer startServer(ServerGui gui, SlmController slm, ArduinoController arduino) {
         try {
-            ControllerServer serverObjekt = new ControllerServer(gui, slm, arduino);
-            new Thread(serverObjekt).start();
-            return serverObjekt;
+            ControllerServer serverObject = new ControllerServer(gui, slm, arduino);
+            new Thread(serverObject).start();
+            return serverObject;
         } catch (IOException ex) {
             return null;
         }
     }
 
+    /**
+     * Starts and keeps the Server online
+     */
     @Override
     public void run() {
         while (true) {
