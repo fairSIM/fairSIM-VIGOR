@@ -24,6 +24,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.Map;
 import java.util.TreeMap;
 import java.awt.Color;
+import java.util.zip.DataFormatException;
 
 import org.fairsim.transport.ImageReceiver;
 import org.fairsim.transport.ImageWrapper;
@@ -104,16 +105,28 @@ public class SimSequenceExtractor {
         return seqCount;
     }
     
-    public void setSyncDelay(int delay) {
-        syncFrameDelay = delay;
+    public void setSyncDelay(int delay) throws DataFormatException {
+        if (delay > 0) {
+            syncFrameDelay = delay;
+        } else {
+            throw new DataFormatException("syncFrameDelay has to be positive");
+        }
     }
     
-    public void setSyncAvr(int avr) {
-        syncFrameAvr = avr;
+    public void setSyncAvr(int avr) throws DataFormatException {
+        if (syncFrameAvr > 0) {
+            syncFrameAvr = avr;
+        } else {
+            throw new DataFormatException("syncFrameAvr has to be positive");
+        }
     }
     
-    public void setSyncFreq(int freq) {
-        seqCount = freq;
+    public void setSyncFreq(int freq) throws DataFormatException {
+        if (seqCount > 0) {
+            seqCount = freq;
+        } else {
+            throw new DataFormatException("syncFreq has to be positive");
+        }
     }
 
     /** Take images for the gereral queue, sort them by channel */

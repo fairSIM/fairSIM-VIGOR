@@ -261,7 +261,7 @@ public class LiveControlPanel {
 	JTabbedPane tabbedPane = new JTabbedPane();
     
 	tabbedPane.addTab( "main", mainPanel );
-        tabbedPane.addTab("controller", new ClientGui(cfg, channels, seqDetection) );
+        tabbedPane.addTab("controller", new ClientGui(cfg, channels, seqDetection, reconRunner) );
 
 	for (int ch=0 ; ch<nrCh ; ch++) {
 	    ParameterTab pTab = new ParameterTab( reconRunner, ch, cfg );
@@ -271,6 +271,7 @@ public class LiveControlPanel {
 
 	mainFrame.add(tabbedPane);
 	mainFrame.pack();
+        mainFrame.setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 	mainFrame.setVisible(true);
 	
 	// setup the display-update threads

@@ -82,19 +82,19 @@
 <nr-phases type="int"> 5 </nr-phases>
 <img-seq type="string">PZA</img-seq>
 <dir-2>
-<shift type="decimal"> 1.26678e+02 -1.25122e+02 </shift>
-<phase-offset type="decimal"> -2.75350e+00 </phase-offset>
-<modulations type="decimal"> 1.00000e+00 1.30195e-01 1.03830e-01 </modulations>
+<shift type="decimal"> 1.71189e+02 4.85444e+01 </shift>
+<phase-offset type="decimal"> -1.03092e+00 </phase-offset>
+<modulations type="decimal"> 1.00000e+00 1.25913e-01 7.15635e-02 </modulations>
 </dir-2>
 <dir-1>
-<shift type="decimal"> -4.46778e+01 -1.72500e+02 </shift>
-<phase-offset type="decimal"> 9.23754e-01 </phase-offset>
-<modulations type="decimal"> 1.00000e+00 2.01767e-01 1.02040e-01 </modulations>
+<shift type="decimal"> -4.47000e+01 -1.72589e+02 </shift>
+<phase-offset type="decimal"> 8.12321e-01 </phase-offset>
+<modulations type="decimal"> 1.00000e+00 2.10232e-01 9.53352e-02 </modulations>
 </dir-1>
 <dir-0>
-<shift type="decimal"> 1.71167e+02 4.85444e+01 </shift>
-<phase-offset type="decimal"> -8.48221e-01 </phase-offset>
-<modulations type="decimal"> 1.00000e+00 1.15105e-01 9.82556e-02 </modulations>
+<shift type="decimal"> 1.26656e+02 -1.25122e+02 </shift>
+<phase-offset type="decimal"> -2.93317e+00 </phase-offset>
+<modulations type="decimal"> 1.00000e+00 1.69998e-01 8.13554e-02 </modulations>
 </dir-0>
 </sim-param>
 <otf2d>
@@ -104,7 +104,7 @@
 <strength type="decimal"> 9.90000e-01 </strength>
 </attenuation>
 <a-estimate type="decimal"> 3.00000e-01 </a-estimate>
-<emission type="int"> 525 </emission>
+<emission type="int"> 600 </emission>
 </otf2d>
 </channel-569>
 

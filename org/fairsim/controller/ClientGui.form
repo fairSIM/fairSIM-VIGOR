@@ -25,8 +25,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="softwarePanel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="regPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <Component id="regPanel" max="32767" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -41,9 +40,9 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="arduinoPanel" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="softwarePanel" min="-2" max="-2" attributes="0"/>
-                  <Component id="regPanel" min="-2" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                  <Component id="softwarePanel" max="32767" attributes="0"/>
+                  <Component id="regPanel" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="clientServerPanel" max="32767" attributes="0"/>
@@ -604,8 +603,15 @@
       <Layout>
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
-              <Component id="regReconButton" max="32767" attributes="0"/>
-              <Component id="regWfButton" min="-2" pref="155" max="-2" attributes="0"/>
+              <Group type="102" alignment="0" attributes="0">
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Component id="jButton1" max="32767" attributes="0"/>
+                      <Component id="regReconButton" alignment="1" max="32767" attributes="0"/>
+                      <Component id="regWfButton" max="32767" attributes="0"/>
+                  </Group>
+                  <EmptySpace max="-2" attributes="0"/>
+              </Group>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
@@ -614,6 +620,8 @@
                   <Component id="regWfButton" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="regReconButton" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="32767" attributes="0"/>
+                  <Component id="jButton1" min="-2" max="-2" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -621,7 +629,7 @@
       <SubComponents>
         <Component class="javax.swing.JToggleButton" name="regWfButton">
           <Properties>
-            <Property name="text" type="java.lang.String" value="Register in widefield"/>
+            <Property name="text" type="java.lang.String" value="Register In Widefield"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="regWfButtonActionPerformed"/>
@@ -632,7 +640,7 @@
         </Component>
         <Component class="javax.swing.JToggleButton" name="regReconButton">
           <Properties>
-            <Property name="text" type="java.lang.String" value="Register in reconstruction"/>
+            <Property name="text" type="java.lang.String" value="Register In Reconstruction"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="regReconButtonActionPerformed"/>
@@ -640,6 +648,14 @@
           <AuxValues>
             <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
           </AuxValues>
+        </Component>
+        <Component class="javax.swing.JButton" name="jButton1">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Create Registration File"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton1ActionPerformed"/>
+          </Events>
         </Component>
       </SubComponents>
     </Container>

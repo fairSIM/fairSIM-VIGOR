@@ -27,7 +27,8 @@ import org.fairsim.utils.Conf;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.zip.DataFormatException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import org.fairsim.registration.Registration;
 
 /** Manages a collection of reconstruction threads
@@ -39,6 +40,8 @@ public class ReconstructionRunner {
     public final int nrThreads;
     
     private short [][][] latestImage;
+    private Vec2d.Real[] latestReconVec;
+    public Lock[] latestReconLock;
 
     private BlockingQueue<short [][][]> imgsToReconstruct;
     private int missedDueToQueueFull;
@@ -111,9 +114,14 @@ public class ReconstructionRunner {
 
 	// init per-channel information
 	this.nrChannels = whichChannels.length;
+        latestReconVec = new Vec2d.Real[nrChannels];
+        latestReconLock = new ReentrantLock[nrChannels];
 	channels = new PerChannel[nrChannels];
-	for (int c=0; c<nrChannels; c++)
-	    channels[c] = new PerChannel();
+        for (int c = 0; c < nrChannels; c++) {
+            channels[c] = new PerChannel();
+            latestReconVec[c] = avf.createReal2D(width * 2, height *2);
+            latestReconLock[c] = new ReentrantLock();
+        }
 
 	// load initial SIM-param from file
 	for (int i=0; i<nrChannels; i++) {
@@ -342,8 +350,14 @@ public class ReconstructionRunner {
 		    
 		    fullResult[channel].fft2d(true);
 		    cpuRes[channel].copy( fullResult[channel] );
-                    
                     // registers reconstructed images
+                    
+                    latestReconLock[channel].lock();
+                    try {
+                        latestReconVec[channel].copy(cpuRes[channel]);
+                    } finally {
+                        latestReconLock[channel].unlock();
+                    }
                     if (Registration.isRecon()) {
                         try {
                             Registration reg = Registration.getRegistration(channels[channel].label);
@@ -577,7 +591,9 @@ public class ReconstructionRunner {
 	}
     }
     
-
+    public Vec2d.Real getLatestReconVec(int channelId) {
+        return latestReconVec[channelId];
+    }
 
     /** To run the ReconstructionThreads through the NVidia profiler */
     public static void main( String [] args ) throws Exception {

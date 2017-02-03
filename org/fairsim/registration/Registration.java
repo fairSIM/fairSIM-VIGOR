@@ -44,6 +44,7 @@ public class Registration {
     private Vec2d.Real wfXTransVec;
     private Vec2d.Real wfYTransVec;
     static private int threads;
+    static private String regFolder;
     static public final List<Registration> REGISTRATIONS;
     static private boolean widefield;
     static private boolean recon;
@@ -105,15 +106,12 @@ public class Registration {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                String regFolder = "(not found)";
+                String regFolder = getRegFolder(cfg);
                 try {
-		    regFolder = cfg.getStr("RegistrationFolder").val();
 		    String filename = Tool.getFile(regFolder + channel + ".txt").getAbsolutePath();
                     Registration reg = new Registration( filename );
                     reg.channel = channel;
                     REGISTRATIONS.add(reg);
-                } catch (Conf.EntryNotFoundException ex) {
-                    System.out.println("[fairSIM] Registration: No registration folder found");
                 } catch (IOException ex) {
                     System.out.println("[fairSIM] Registration: No registration possible for channel: " + channel );
 		    System.out.println("[fairSIM] "+ex);
@@ -121,6 +119,18 @@ public class Registration {
             }
 
         }).start();
+    }
+    
+    public static String getRegFolder(final Conf.Folder cfg) {
+        String regFolder = "(not found)";
+        try {
+            regFolder = cfg.getStr("RegistrationFolder").val();
+        } catch (Conf.EntryNotFoundException ex) {
+            System.out.println("[fairSIM] Registration: No registration folder found");
+            regFolder = System.getProperty("user.dir");
+            System.out.println("[fairSIM] Registration Folder was set to: " + regFolder);
+        }
+        return regFolder;
     }
     
     /**
