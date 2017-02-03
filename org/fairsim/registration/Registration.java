@@ -33,7 +33,7 @@ import org.fairsim.utils.Tool;
  */
 public class Registration {
 
-    private String channel;
+    private String channelName;
     private final VectorFactory vf;
     private int reconWidth;
     private int reconHeight;
@@ -44,7 +44,7 @@ public class Registration {
     private Vec2d.Real wfXTransVec;
     private Vec2d.Real wfYTransVec;
     static private int threads;
-    static private String regFolder;
+    //static private String regFolder;
     static public final List<Registration> REGISTRATIONS;
     static private boolean widefield;
     static private boolean recon;
@@ -100,25 +100,35 @@ public class Registration {
      * Creates a new Registration and adds it to the list of registrations
      * @param cfg configuration to get the folder for the .txt files with the
      * raw registrations
-     * @param channel channel (wavelenght) of the fairsim-software and registration
+     * @param channelName channel (wavelenght) of the fairsim-software and registration
      */
-    public static void createRegistration(final Conf.Folder cfg, final String channel) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                String regFolder = getRegFolder(cfg);
-                try {
-		    String filename = Tool.getFile(regFolder + channel + ".txt").getAbsolutePath();
-                    Registration reg = new Registration( filename );
-                    reg.channel = channel;
-                    REGISTRATIONS.add(reg);
-                } catch (IOException ex) {
-                    System.out.println("[fairSIM] Registration: No registration possible for channel: " + channel );
-		    System.out.println("[fairSIM] "+ex);
-		}
+    public static void createRegistration(final String regFolder, final String channelName) {
+        try {
+            String filename = Tool.getFile(regFolder + channelName + ".txt").getAbsolutePath();
+            Registration reg = new Registration(filename);
+            reg.channelName = channelName;
+            REGISTRATIONS.add(reg);
+        } catch (IOException ex) {
+            System.out.println("[fairSIM] Registration: No registration possible for channel: " + channelName);
+            System.out.println("[fairSIM] " + ex);
+        }
+    }
+    
+    public static void clearRegistration(String channelName) throws NoSuchFieldException {
+        Registration reg = getRegistration(channelName);
+        int channelId = reg.getRegId();
+        REGISTRATIONS.remove(channelId);
+    }
+    
+    private int getRegId() throws NoSuchFieldException {
+        Registration reg;
+        for (int i = 0; i < REGISTRATIONS.size(); i++) {
+            reg = REGISTRATIONS.get(i);
+            if (reg.channelName.equals(this.channelName)) {
+                return i;
             }
-
-        }).start();
+        }
+        throw new NoSuchFieldException("There is no registration for: " + channelName);
     }
     
     public static String getRegFolder(final Conf.Folder cfg) {
@@ -135,18 +145,18 @@ public class Registration {
     
     /**
      * Finds the required registration of the specific channel
-     * @param channel channel of the required registration
+     * @param channelName channel of the required registration
      * @return registration objekt for a specific channel
      * @throws NoSuchFieldException is thrown if the required registration
      * does not exists
      */
-    public static Registration getRegistration(String channel) throws NoSuchFieldException {
+    public static Registration getRegistration(String channelName) throws NoSuchFieldException {
         for (Registration reg : REGISTRATIONS) {
-            if (reg.channel.equals(channel)) {
+            if (reg.channelName.equals(channelName)) {
                 return reg;
             }
         }
-        throw new NoSuchFieldException();
+        throw new NoSuchFieldException("There is no registration for: " + channelName);
     }
     
     /**

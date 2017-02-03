@@ -18,7 +18,9 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 package org.fairsim.registration;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.util.zip.DataFormatException;
+import javax.swing.JToggleButton;
 import org.fairsim.livemode.ReconstructionRunner;
 
 /**
@@ -30,15 +32,21 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
     RegFileCreator creator;
     ReconstructionRunner recRunner;
     String[] channelNames;
+    final String regFolder;
+    JToggleButton wfButton;
+    JToggleButton reconButton;
     
     /**
      * Creates new form RegFileCreatorGui
      */
-    public RegFileCreatorGui(String regFolder, String[] channelNames, ReconstructionRunner recRunner) {
+    public RegFileCreatorGui(String regFolder, String[] channelNames, ReconstructionRunner recRunner, JToggleButton wfButton, JToggleButton reconButton) {
         initComponents();
+        this.regFolder = regFolder;
         creator = new RegFileCreator(regFolder);
-        this.recRunner = recRunner;
         this.channelNames = channelNames;
+        this.recRunner = recRunner;
+        this.wfButton = wfButton;
+        this.reconButton = reconButton;
         for(String channelName : channelNames) {
             targetComboBox.addItem(channelName);
             sourceComboBox.addItem(channelName);
@@ -365,16 +373,29 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
 
                     int targetId = targetComboBox.getSelectedIndex();
                     int sourceId = sourceComboBox.getSelectedIndex();
-                    setBlackStatus("Creating registration file");
-                    creator.createChannelRegFile(targetId, sourceId, channelNames[targetId], recRunner);
-                    setBlueStatus("Created registration file successfully");
-                    createButton.setEnabled(true);
-                    registerButton.setEnabled(true);
-                } catch (NumberFormatException ex) {
+                    setBlackStatus("Creating registration file...");
+                    creator.createChannelRegFile(targetId, sourceId, channelNames, recRunner);
+                    setBlueStatus("New file created, load new file...");
+                    
+                    wfButton.setEnabled(false);
+                    reconButton.setEnabled(false);
+                    boolean wfTemp = Registration.isWidefield();
+                    boolean reconTemp = Registration.isRecon();
+                    Registration.setWidefield(false);
+                    Registration.setRecon(false);
+                    try{
+                        Registration.clearRegistration(channelNames[targetId]);
+                    } catch (NoSuchFieldException ex) {} 
+                    Registration.createRegistration(regFolder, channelNames[targetId]);
+                    Registration.setWidefield(wfTemp);
+                    Registration.setRecon(reconTemp);
+                    wfButton.setEnabled(true);
+                    reconButton.setEnabled(true);
+                    setBlueStatus("New file loaded");
+                    
+                } catch (Exception ex) {
                     setRedStatus("Error: " + ex.getMessage());
-                    createButton.setEnabled(true);
-                } catch (DataFormatException ex) {
-                    setRedStatus("Error: " + ex.getMessage());
+                } finally {
                     createButton.setEnabled(true);
                 }
             }
@@ -413,7 +434,7 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 String[] testArray = { "red", "green", "blue" };
-                new RegFileCreatorGui("", testArray, null).setVisible(true);
+                new RegFileCreatorGui("", testArray, null, new JToggleButton(), new JToggleButton()).setVisible(true);
             }
         });
     }

@@ -23,10 +23,17 @@ import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.util.zip.DataFormatException;
 import org.fairsim.fiji.Converter;
 import org.fairsim.linalg.Vec2d;
 import org.fairsim.livemode.ReconstructionRunner;
+import org.fairsim.utils.Tool;
 
 /**
  *
@@ -126,21 +133,32 @@ public class RegFileCreator {
         }
     }
     
-    void createChannelRegFile(int targetId, int sourceId, String targetChannelName ,ReconstructionRunner recRunner) throws DataFormatException {
+    void createChannelRegFile(int targetId, int sourceId, String[] channelNames ,ReconstructionRunner recRunner) throws DataFormatException, IOException {
         if (targetId == sourceId) {
             throw new DataFormatException("Target and source can not be equal");
         }
         
+        String targetChannelName = channelNames[targetId];
+        String sourcChannelName = channelNames[sourceId];
+        
+        Vec2d.Real targetVec;
+        Vec2d.Real sourceVec;
+        
         recRunner.latestReconLock[targetId].lock();
         recRunner.latestReconLock[sourceId].lock();
         try {
-            Vec2d.Real targetVec = recRunner.getLatestReconVec(targetId);
-            Vec2d.Real sourceVec = recRunner.getLatestReconVec(sourceId);
-            createRegFile(targetVec, sourceVec, targetChannelName);
+            targetVec = recRunner.getLatestReconVec(targetId);
+            sourceVec = recRunner.getLatestReconVec(sourceId);
         } finally {
             recRunner.latestReconLock[targetId].unlock();
             recRunner.latestReconLock[sourceId].unlock();
         }
+        
+        createRegFile(targetVec, sourceVec, targetChannelName);
+        
+        Path targetPath = Paths.get(regFolder + targetChannelName + ".txt");
+        Path sourcePath = Paths.get(regFolder + targetChannelName + "to" + sourcChannelName + "-" + Tool.readableTimeStampMillis(System.currentTimeMillis(), false) + ".txt");
+        Files.copy(targetPath, sourcePath, REPLACE_EXISTING);
     }
     
     /**

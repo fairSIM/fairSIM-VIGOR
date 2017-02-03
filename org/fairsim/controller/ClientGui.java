@@ -80,7 +80,7 @@ public class ClientGui extends javax.swing.JPanel {
         initSlm();
         initArduino();
         initSync();
-        initReg(cfg, channelNames);
+        initReg();
     }
 
     /**
@@ -160,9 +160,14 @@ public class ClientGui extends javax.swing.JPanel {
      * @param cfg Configuration
      * @param channels Camera channels
      */
-    private void initReg(final Conf.Folder cfg, final String[] channels) {
-        for (String channel : channels) {
-            Registration.createRegistration(cfg, channel);
+    private void initReg() {
+        for (final String channel : channelNames) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Registration.createRegistration(regFolder, channel);
+                }
+            }).start();
         }
     }
 
@@ -1007,7 +1012,7 @@ public class ClientGui extends javax.swing.JPanel {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new RegFileCreatorGui(regFolder, channelNames, recRunner).setVisible(true);
+                new RegFileCreatorGui(regFolder, channelNames, recRunner, regWfButton, regReconButton).setVisible(true);
             }
         });
     }//GEN-LAST:event_jButton1ActionPerformed
