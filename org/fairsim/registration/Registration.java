@@ -108,16 +108,19 @@ public class Registration {
             Registration reg = new Registration(filename);
             reg.channelName = channelName;
             REGISTRATIONS.add(reg);
+            System.out.println("[fairSIM] Registration: Registrering channel: " + channelName);
         } catch (IOException ex) {
-            System.out.println("[fairSIM] Registration: No registration possible for channel: " + channelName);
-            System.out.println("[fairSIM] " + ex);
+            System.out.println("[fairSIM] Registration: No registration for channel: " + channelName);
+            //System.out.println("[fairSIM] " + ex);
         }
     }
     
-    public static void clearRegistration(String channelName) throws NoSuchFieldException {
-        Registration reg = getRegistration(channelName);
-        int channelId = reg.getRegId();
-        REGISTRATIONS.remove(channelId);
+    public static void clearRegistration(String channelName) {
+        try {
+            Registration reg = getRegistration(channelName);
+            int channelId = reg.getRegId();
+            REGISTRATIONS.remove(channelId);
+        } catch (NoSuchFieldException ex) {}
     }
     
     private int getRegId() throws NoSuchFieldException {
@@ -131,16 +134,21 @@ public class Registration {
         throw new NoSuchFieldException("There is no registration for: " + channelName);
     }
     
-    public static String getRegFolder(final Conf.Folder cfg) {
-        String regFolder = "(not found)";
+    public static String getRegFolder(final Conf.Folder cfg) throws FileNotFoundException {
+        String regFolder;// = "(not found)";
         try {
             regFolder = cfg.getStr("RegistrationFolder").val();
         } catch (Conf.EntryNotFoundException ex) {
             System.out.println("[fairSIM] Registration: No registration folder found");
             regFolder = System.getProperty("user.dir");
-            System.out.println("[fairSIM] Registration Folder was set to: " + regFolder);
+            System.out.println("[fairSIM] Registration: Registration Folder was set to: " + regFolder);
         }
-        return regFolder;
+        File file = new File(regFolder);
+        if (file.exists()) {
+            return regFolder;
+        } else {
+            throw new FileNotFoundException("[fairSIM] Registration: Error: Registration folder does not exists");
+        }
     }
     
     /**

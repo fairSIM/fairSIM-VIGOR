@@ -21,13 +21,10 @@ import bunwarpj.Transformation;
 import bunwarpj.bUnwarpJ_;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.util.zip.DataFormatException;
 import org.fairsim.fiji.Converter;
@@ -77,36 +74,36 @@ public class RegFileCreator {
         ImagePlus sourceImg = Converter.converteVecImg(sourceVec, "sourceVec");
         ImageProcessor sourceProcessor = sourceImg.getProcessor();
         
-        System.out.println("[RegFileCreator]: Starting transformation");
+        //System.out.println("[RegFileCreator]: Starting transformation");
         
         Transformation elasticTransf = bUnwarpJ_.computeTransformationBatch(targetImg, sourceImg, targetProcessor,
                 sourceProcessor, mode, img_subsamp_fact, min_scale_deformation,
                 max_scale_deformation, divWeight, curlWeight, landmarkWeight,
                 imageWeight, consistencyWeight, stopThreshold);
         
-        System.out.println("[RegFileCreator]: Transformation finished, try to save elastic transformation");
+        //System.out.println("[RegFileCreator]: Transformation finished, try to save elastic transformation");
         
-        elasticTransf.saveDirectTransformation(regFolder + targetChannelName + "Elastic.txt");
+        elasticTransf.saveDirectTransformation(Tool.getFile(regFolder + targetChannelName + "Elastic.txt").getAbsolutePath());
         
-        System.out.println("[RegFileCreator]: Elastic Transformation saved, try to save Images");
+        //System.out.println("[RegFileCreator]: Elastic Transformation saved, try to save Images");
         
-        Converter.saveImage(targetImg, regFolder + "targetImg.tif");
-        Converter.saveImage(sourceImg, regFolder + "sourceImg.tif");
+        Converter.saveImage(targetImg, Tool.getFile(regFolder + "targetImg.tif").getAbsolutePath());
+        Converter.saveImage(sourceImg, Tool.getFile(regFolder + "sourceImg.tif").getAbsolutePath());
         
-        System.out.println("[RegFileCreator]: Images saved, try to converte elastic transformation to raw");
+        //System.out.println("[RegFileCreator]: Images saved, try to converte elastic transformation to raw");
         
-        new File(regFolder + targetChannelName + ".txt").delete();
-        bUnwarpJ_.convertToRawTransformationMacro(regFolder + "targetImg.tif",
-                regFolder + "sourceImg.tif", regFolder + targetChannelName + "Elastic.txt",
-                regFolder + targetChannelName + ".txt");
+        Tool.getFile(regFolder + targetChannelName + ".txt").delete();
+        bUnwarpJ_.convertToRawTransformationMacro(Tool.getFile(regFolder + "targetImg.tif").getAbsolutePath(),
+                Tool.getFile(regFolder + "sourceImg.tif").getAbsolutePath(), Tool.getFile(regFolder + targetChannelName + "Elastic.txt").getAbsolutePath(),
+                Tool.getFile(regFolder + targetChannelName + ".txt").getAbsolutePath());
         
-        System.out.println("[RegFileCreator]: Saved raw transformation, try to delete uselessfiles");
+        //System.out.println("[RegFileCreator]: Saved raw transformation, try to delete uselessfiles");
         
-        new File(regFolder + targetChannelName + "Elastic.txt").delete();
-        new File(regFolder + "targetImg.tif").delete();
-        new File(regFolder + "sourceImg.tif").delete();
+        Tool.getFile(regFolder + targetChannelName + "Elastic.txt").delete();
+        Tool.getFile(regFolder + "targetImg.tif").delete();
+        Tool.getFile(regFolder + "sourceImg.tif").delete();
         
-        System.out.println("[RegFileCreator]: Finished all");
+        //System.out.println("[RegFileCreator]: Finished all");
     }
     
     void setOptions(int mode, int img_subsamp_fact, int min_scale_deformation,
@@ -156,8 +153,8 @@ public class RegFileCreator {
         
         createRegFile(targetVec, sourceVec, targetChannelName);
         
-        Path targetPath = Paths.get(regFolder + targetChannelName + ".txt");
-        Path sourcePath = Paths.get(regFolder + targetChannelName + "to" + sourcChannelName + "-" + Tool.readableTimeStampMillis(System.currentTimeMillis(), false) + ".txt");
+        Path targetPath = Paths.get(Tool.getFile(regFolder + targetChannelName + ".txt").getAbsolutePath());
+        Path sourcePath = Paths.get(Tool.getFile(regFolder + targetChannelName + "to" + sourcChannelName + "-" + Tool.readableTimeStampMillis(System.currentTimeMillis(), false) + ".txt").getAbsolutePath());
         Files.copy(targetPath, sourcePath, REPLACE_EXISTING);
     }
     

@@ -18,7 +18,9 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 package org.fairsim.registration;
 
 import java.awt.Color;
-import java.awt.Component;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.DataFormatException;
 import javax.swing.JToggleButton;
 import org.fairsim.livemode.ReconstructionRunner;
@@ -375,7 +377,7 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
                     int sourceId = sourceComboBox.getSelectedIndex();
                     setBlackStatus("Creating registration file...");
                     creator.createChannelRegFile(targetId, sourceId, channelNames, recRunner);
-                    setBlueStatus("New file created, load new file...");
+                    setBlackStatus("New file created, load new file...");
                     
                     wfButton.setEnabled(false);
                     reconButton.setEnabled(false);
@@ -383,9 +385,7 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
                     boolean reconTemp = Registration.isRecon();
                     Registration.setWidefield(false);
                     Registration.setRecon(false);
-                    try{
-                        Registration.clearRegistration(channelNames[targetId]);
-                    } catch (NoSuchFieldException ex) {} 
+                    Registration.clearRegistration(channelNames[targetId]);
                     Registration.createRegistration(regFolder, channelNames[targetId]);
                     Registration.setWidefield(wfTemp);
                     Registration.setRecon(reconTemp);
@@ -393,9 +393,13 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
                     reconButton.setEnabled(true);
                     setBlueStatus("New file loaded");
                     
-                } catch (Exception ex) {
+                } catch (DataFormatException ex) {
+                    Logger.getLogger(RegFileCreatorGui.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (IOException ex) {
+                    Logger.getLogger(RegFileCreatorGui.class.getName()).log(Level.SEVERE, null, ex);
+                } /*catch (Exception ex) {
                     setRedStatus("Error: " + ex.getMessage());
-                } finally {
+                }*/ finally {
                     createButton.setEnabled(true);
                 }
             }

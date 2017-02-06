@@ -19,6 +19,7 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 package org.fairsim.controller;
 
 import java.awt.Component;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -65,14 +66,15 @@ public class ClientGui extends javax.swing.JPanel {
             serverAdress = cfg.getStr("SlmServerAdress").val();
         } catch (Conf.EntryNotFoundException ex) {
             serverAdress = "localhost";
-            System.err.println("");
+            System.err.println("[fairSIM]: Error: no SlmServerAdress found. SLMServerAdress set to 'localhost'");
         }
         try {
             serverPort = cfg.getInt("SlmServerPort").val();
         } catch (Conf.EntryNotFoundException ex) {
             serverPort = 32322;
+            System.err.println("[fairSIM]: Error: no SlmServerPort found. SLMServerPort set to '32322'");
         }
-        regFolder = Registration.getRegFolder(cfg);
+        
         this.channelNames = channelNames;
 
         Client.startClient(serverAdress, serverPort, this);
@@ -80,7 +82,7 @@ public class ClientGui extends javax.swing.JPanel {
         initSlm();
         initArduino();
         initSync();
-        initReg();
+        initReg(cfg);
     }
 
     /**
@@ -160,7 +162,23 @@ public class ClientGui extends javax.swing.JPanel {
      * @param cfg Configuration
      * @param channels Camera channels
      */
-    private void initReg() {
+    private void initReg(Conf.Folder cfg) {
+        try {
+            regFolder = Registration.getRegFolder(cfg);
+            Class.forName("ij.ImagePlus");
+            Class.forName("ij.process.ImageProcessor");
+            Class.forName("bunwarpj.Transformation");
+            Class.forName("bunwarpj.bUnwarpJ_");
+        } catch (FileNotFoundException ex) {
+            regPanel.setEnabled(false);
+            regReconButton.setEnabled(false);
+            regWfButton.setEnabled(false);
+            regCreatorButton.setEnabled(false);
+            System.err.println(ex.getMessage());
+        } catch (ClassNotFoundException ex) {
+            regCreatorButton.setEnabled(false);
+            System.err.println("[fairSIM]: Error: jar files for bunwarpj and/or imagej are missing. Deaktived registration-creator.");
+        }
         for (final String channel : channelNames) {
             new Thread(new Runnable() {
                 @Override
@@ -429,7 +447,7 @@ public class ClientGui extends javax.swing.JPanel {
         regPanel = new javax.swing.JPanel();
         regWfButton = new javax.swing.JToggleButton();
         regReconButton = new javax.swing.JToggleButton();
-        jButton1 = new javax.swing.JButton();
+        regCreatorButton = new javax.swing.JButton();
 
         slmPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("SLM-Controller"));
         slmPanel.setName(""); // NOI18N
@@ -808,10 +826,10 @@ public class ClientGui extends javax.swing.JPanel {
             }
         });
 
-        jButton1.setText("Create Registration File");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        regCreatorButton.setText("Create Registration File");
+        regCreatorButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                regCreatorButtonActionPerformed(evt);
             }
         });
 
@@ -822,7 +840,7 @@ public class ClientGui extends javax.swing.JPanel {
             .addGroup(regPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(regPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(regCreatorButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(regReconButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(regWfButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
@@ -834,7 +852,7 @@ public class ClientGui extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(regReconButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jButton1))
+                .addComponent(regCreatorButton))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -1009,13 +1027,13 @@ public class ClientGui extends javax.swing.JPanel {
         Registration.setRecon(regReconButton.isSelected());
     }//GEN-LAST:event_regReconButtonActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void regCreatorButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_regCreatorButtonActionPerformed
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new RegFileCreatorGui(regFolder, channelNames, recRunner, regWfButton, regReconButton).setVisible(true);
             }
         });
-    }//GEN-LAST:event_jButton1ActionPerformed
+    }//GEN-LAST:event_regCreatorButtonActionPerformed
 
     private void setRGBButtonSelected(boolean b) {
         arduinoRedButton.setSelected(b);
@@ -1128,7 +1146,7 @@ public class ClientGui extends javax.swing.JPanel {
     private javax.swing.JButton arduinoStartButton;
     private javax.swing.JButton arduinoStopButton;
     private javax.swing.JPanel clientServerPanel;
-    private javax.swing.JButton jButton1;
+    private javax.swing.JButton regCreatorButton;
     private javax.swing.JPanel regPanel;
     public javax.swing.JToggleButton regReconButton;
     public javax.swing.JToggleButton regWfButton;

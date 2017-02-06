@@ -606,7 +606,7 @@
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="jButton1" max="32767" attributes="0"/>
+                      <Component id="regCreatorButton" max="32767" attributes="0"/>
                       <Component id="regReconButton" alignment="1" max="32767" attributes="0"/>
                       <Component id="regWfButton" max="32767" attributes="0"/>
                   </Group>
@@ -621,7 +621,7 @@
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="regReconButton" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="32767" attributes="0"/>
-                  <Component id="jButton1" min="-2" max="-2" attributes="0"/>
+                  <Component id="regCreatorButton" min="-2" max="-2" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -649,12 +649,12 @@
             <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
           </AuxValues>
         </Component>
-        <Component class="javax.swing.JButton" name="jButton1">
+        <Component class="javax.swing.JButton" name="regCreatorButton">
           <Properties>
             <Property name="text" type="java.lang.String" value="Create Registration File"/>
           </Properties>
           <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton1ActionPerformed"/>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="regCreatorButtonActionPerformed"/>
           </Events>
         </Component>
       </SubComponents>
