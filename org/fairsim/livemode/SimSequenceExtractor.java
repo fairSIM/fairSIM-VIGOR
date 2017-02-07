@@ -24,6 +24,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.Map;
 import java.util.TreeMap;
 import java.awt.Color;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.DataFormatException;
 
 import org.fairsim.transport.ImageReceiver;
@@ -48,6 +50,8 @@ public class SimSequenceExtractor {
     final PerChannelBuffer [] channels;
     private Map< Integer, PerChannelBuffer > channelMapping;
     final private LiveControlPanel livePanel;
+    
+    private boolean creatingRegFile;
 
     /** Links ir to rr */
     public SimSequenceExtractor( Conf.Folder cfg, 
@@ -61,6 +65,8 @@ public class SimSequenceExtractor {
 	this.seqCount = cfg.getInt("SyncFrameFreq").val();
 	this.syncFrameAvr = cfg.getInt("SyncFrameAvr").val();
 	this.syncFrameDelay = cfg.getInt("SyncFrameDelay").val();
+        
+        creatingRegFile = false;
 
 	channelMapping = new TreeMap<Integer, PerChannelBuffer >() ;
 	channels = new PerChannelBuffer[ nrChannels ];
@@ -128,6 +134,10 @@ public class SimSequenceExtractor {
             throw new DataFormatException("syncFreq has to be positive");
         }
     }
+    
+    public void setCreatingRegFile(boolean b) {
+        creatingRegFile = b;
+    }
 
     /** Take images for the gereral queue, sort them by channel */
     class ImageSorter extends Thread {
@@ -135,15 +145,19 @@ public class SimSequenceExtractor {
 	public void run() {
 	    
 	    while (true) {
-		ImageWrapper iw = imgRecv.takeImage();
+                if (!creatingRegFile) {
+                    ImageWrapper iw = imgRecv.takeImage();
 
-		int chNr = iw.pos1();	// pos1 holds the data packets image channel
-		PerChannelBuffer pc = channelMapping.get(chNr);
-		if (pc==null) {
-		    Tool.trace("ImgSort: received data packet w/o channel: "+chNr);
-		} else {
-		    pc.pushImg( iw );
-		}
+                    int chNr = iw.pos1();	// pos1 holds the data packets image channel
+                    PerChannelBuffer pc = channelMapping.get(chNr);
+                    if (pc==null) {
+                        Tool.trace("ImgSort: received data packet w/o channel: "+chNr);
+                    } else {
+                        pc.pushImg( iw );
+                    }
+                } else try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ex) {}
 	    }
 	}
     }

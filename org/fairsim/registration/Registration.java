@@ -71,7 +71,7 @@ public class Registration {
         wfYTransVec = null;
 
         BufferedReader br = new BufferedReader(new FileReader(file));
-        System.out.println("[fairSIM] Registration: Readin registration file: " + file);
+        Tool.trace("Registration: readin file: " + file);
 
         reconWidth = Integer.parseInt(br.readLine().split("=")[1]);
         reconHeight = Integer.parseInt(br.readLine().split("=")[1]);
@@ -85,7 +85,7 @@ public class Registration {
         readInTransVector(br);
 
         br.close();
-        System.out.println("[fairSIM] Registration: Readin done for: " + file);
+        Tool.trace("Registration: readin done for: " + file);
 
         threads = Runtime.getRuntime().availableProcessors();
         if (threads > wfHeight) {
@@ -108,9 +108,9 @@ public class Registration {
             Registration reg = new Registration(filename);
             reg.channelName = channelName;
             REGISTRATIONS.add(reg);
-            System.out.println("[fairSIM] Registration: Registrering channel: " + channelName);
+            Tool.trace("Registration: Registrering channel: " + channelName);
         } catch (IOException ex) {
-            System.out.println("[fairSIM] Registration: No registration for channel: " + channelName);
+            Tool.trace("Registration: No registration for channel: " + channelName);
             //System.out.println("[fairSIM] " + ex);
         }
     }
@@ -139,9 +139,8 @@ public class Registration {
         try {
             regFolder = cfg.getStr("RegistrationFolder").val();
         } catch (Conf.EntryNotFoundException ex) {
-            System.out.println("[fairSIM] Registration: No registration folder found");
             regFolder = System.getProperty("user.dir");
-            System.out.println("[fairSIM] Registration: Registration Folder was set to: " + regFolder);
+            System.out.println("[fairSIM] Registration: No registration folder found. Registration Folder was set to: " + regFolder);
         }
         File file = new File(regFolder);
         if (file.exists()) {

@@ -20,13 +20,13 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="1" attributes="0">
                   <Component id="arduinoPanel" alignment="1" max="32767" attributes="0"/>
-                  <Component id="slmPanel" alignment="0" max="32767" attributes="0"/>
                   <Component id="clientServerPanel" alignment="0" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="softwarePanel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="regPanel" max="32767" attributes="0"/>
                   </Group>
+                  <Component id="slmPanel" alignment="0" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -42,10 +42,11 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                   <Component id="softwarePanel" max="32767" attributes="0"/>
-                  <Component id="regPanel" max="32767" attributes="0"/>
+                  <Component id="regPanel" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="clientServerPanel" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -64,45 +65,35 @@
       <Layout>
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="102" attributes="0">
-                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                      <Group type="102" alignment="0" attributes="0">
-                          <Component id="slmConnectButton" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="slmDisconnectButton" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="slmRebootButton" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <Group type="102" alignment="0" attributes="0">
-                          <Group type="103" groupAlignment="1" attributes="0">
-                              <Component id="slmActivateButton" alignment="1" min="-2" pref="85" max="-2" attributes="0"/>
-                              <Component id="slmDeactivateButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="slmComboBox" max="32767" attributes="0"/>
-                      </Group>
-                  </Group>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="1" attributes="0">
-                      <Component id="slmRefreshButton" min="-2" max="-2" attributes="0"/>
-                      <Component id="slmSelectButton" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-              </Group>
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="slmRepertoir" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="slmTime" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="slmVersion" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Group type="102" attributes="0">
+                          <Component id="slmComboBox" max="32767" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="slmSelectButton" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="slmActivateButton" min="-2" pref="85" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="slmDeactivateButton" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <Group type="102" attributes="0">
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Component id="slmConnectButton" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="slmDisconnectButton" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="slmRebootButton" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="slmRefreshButton" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <Component id="slmSelect" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      </Group>
                   </Group>
-                  <EmptySpace min="-2" pref="114" max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="slmDefault" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="slmSelect" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="slmType" alignment="0" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <EmptySpace max="32767" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -115,59 +106,21 @@
                       <Component id="slmRebootButton" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="slmRefreshButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="102" attributes="0">
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="slmActivateButton" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
-                          <Component id="slmDeactivateButton" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <Group type="102" alignment="0" attributes="0">
-                          <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="slmComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="slmSelectButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                      </Group>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="slmComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="slmSelectButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="slmActivateButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="slmDeactivateButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="1" attributes="0">
-                      <Group type="102" attributes="0">
-                          <Component id="slmVersion" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="slmTime" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="slmRepertoir" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <Group type="102" attributes="0">
-                          <Component id="slmDefault" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="slmSelect" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="slmType" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                  </Group>
+                  <Component id="slmSelect" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
       </Layout>
       <SubComponents>
-        <Component class="javax.swing.JLabel" name="slmVersion">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="SLM-API-Version: -"/>
-          </Properties>
-        </Component>
-        <Component class="javax.swing.JLabel" name="slmTime">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Timestamp: -"/>
-          </Properties>
-        </Component>
-        <Component class="javax.swing.JLabel" name="slmRepertoir">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Repertoir name: -"/>
-          </Properties>
-        </Component>
         <Component class="javax.swing.JButton" name="slmConnectButton">
           <Properties>
             <Property name="text" type="java.lang.String" value="Connect SLM"/>
@@ -203,19 +156,9 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="slmRebootButtonActionPerformed"/>
           </Events>
         </Component>
-        <Component class="javax.swing.JLabel" name="slmDefault">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Default running order: -"/>
-          </Properties>
-        </Component>
         <Component class="javax.swing.JLabel" name="slmSelect">
           <Properties>
             <Property name="text" type="java.lang.String" value="Selected running order: -"/>
-          </Properties>
-        </Component>
-        <Component class="javax.swing.JLabel" name="slmType">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Activation type: -"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JButton" name="slmActivateButton">
@@ -606,9 +549,9 @@
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="regCreatorButton" max="32767" attributes="0"/>
-                      <Component id="regReconButton" alignment="1" max="32767" attributes="0"/>
                       <Component id="regWfButton" max="32767" attributes="0"/>
+                      <Component id="regReconButton" max="32767" attributes="0"/>
+                      <Component id="regCreatorButton" alignment="0" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>

@@ -30,6 +30,7 @@ import java.util.zip.DataFormatException;
 import org.fairsim.fiji.Converter;
 import org.fairsim.linalg.Vec2d;
 import org.fairsim.livemode.ReconstructionRunner;
+import org.fairsim.livemode.SimSequenceExtractor;
 import org.fairsim.utils.Tool;
 
 /**
@@ -38,11 +39,8 @@ import org.fairsim.utils.Tool;
  */
 public class RegFileCreator {
     
-    String regFolder;
-    ImagePlus targetImp;
-    ImagePlus sourceImp;
-    ImageProcessor targetMskIP;
-    ImageProcessor sourceMskIP;
+    final String regFolder;
+    final String[] channelNames;
     int mode;
     int img_subsamp_fact;
     int min_scale_deformation;
@@ -54,8 +52,9 @@ public class RegFileCreator {
     double consistencyWeight;
     double stopThreshold;
     
-    RegFileCreator(String regFolder) {
+    RegFileCreator(String regFolder, String[] channelNames) {
         this.regFolder = regFolder;
+        this.channelNames = channelNames;
         mode = 2;
         img_subsamp_fact = 0;
         min_scale_deformation = 0;
@@ -130,7 +129,7 @@ public class RegFileCreator {
         }
     }
     
-    void createChannelRegFile(int targetId, int sourceId, String[] channelNames ,ReconstructionRunner recRunner) throws DataFormatException, IOException {
+    void createChannelRegFile(int targetId, int sourceId, ReconstructionRunner recRunner) throws DataFormatException, IOException {
         if (targetId == sourceId) {
             throw new DataFormatException("Target and source can not be equal");
         }
@@ -152,27 +151,13 @@ public class RegFileCreator {
         }
         
         createRegFile(targetVec, sourceVec, targetChannelName);
-        
+
         Path targetPath = Paths.get(Tool.getFile(regFolder + targetChannelName + ".txt").getAbsolutePath());
         Path sourcePath = Paths.get(Tool.getFile(regFolder + targetChannelName + "to" + sourcChannelName + "-" + Tool.readableTimeStampMillis(System.currentTimeMillis(), false) + ".txt").getAbsolutePath());
         Files.copy(targetPath, sourcePath, REPLACE_EXISTING);
     }
     
-    /**
-     * for testing
-     * @param arg
-     * @throws IOException 
-     */
-    public static void main( String [] arg ) throws IOException {
-        //testing creation of registrationFile
-        Vec2d.Real targetVec = Converter.loadVec("D:/vigor-registration/testReg.tif");
-        Vec2d.Real sourceVec = Converter.loadVec("D:/vigor-registration/testRegShifted.tif");
-        RegFileCreator creator = new RegFileCreator("D:/vigor-registration/");
-        creator.createRegFile(sourceVec, targetVec, "1234");
-        
-        //testing registration of registrationFile
-        Registration reg = new Registration("D:/vigor-registration/1234.txt");
-        Vec2d.Real registeredSourceVec = reg.registerReconImage(sourceVec);
-        Converter.saveVec(registeredSourceVec, "D:/vigor-registration/registeredTestRegShifted.tif");
+    void deleteRegFile(String channelName) {
+        Tool.getFile(regFolder + channelName + ".txt").delete();
     }
 }

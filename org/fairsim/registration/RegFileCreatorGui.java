@@ -18,12 +18,10 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 package org.fairsim.registration;
 
 import java.awt.Color;
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.DataFormatException;
 import javax.swing.JToggleButton;
 import org.fairsim.livemode.ReconstructionRunner;
+import org.fairsim.livemode.SimSequenceExtractor;
 
 /**
  *
@@ -31,21 +29,25 @@ import org.fairsim.livemode.ReconstructionRunner;
  */
 public class RegFileCreatorGui extends javax.swing.JFrame {
     
-    RegFileCreator creator;
-    ReconstructionRunner recRunner;
-    String[] channelNames;
+    final RegFileCreator creator;
+    final SimSequenceExtractor seqDetection;
+    final ReconstructionRunner recRunner;
+    final String[] channelNames;
     final String regFolder;
-    JToggleButton wfButton;
-    JToggleButton reconButton;
+    final JToggleButton wfButton;
+    final JToggleButton reconButton;
     
     /**
      * Creates new form RegFileCreatorGui
      */
-    public RegFileCreatorGui(String regFolder, String[] channelNames, ReconstructionRunner recRunner, JToggleButton wfButton, JToggleButton reconButton) {
+    public RegFileCreatorGui(String regFolder, String[] channelNames,
+            SimSequenceExtractor seqDetection, ReconstructionRunner recRunner,
+            JToggleButton wfButton, JToggleButton reconButton) {
         initComponents();
         this.regFolder = regFolder;
-        creator = new RegFileCreator(regFolder);
+        creator = new RegFileCreator(regFolder, channelNames);
         this.channelNames = channelNames;
+        this.seqDetection = seqDetection;
         this.recRunner = recRunner;
         this.wfButton = wfButton;
         this.reconButton = reconButton;
@@ -65,9 +67,6 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel7 = new javax.swing.JLabel();
-        jTextField7 = new javax.swing.JTextField();
-        jLabel15 = new javax.swing.JLabel();
         targetLabel = new javax.swing.JLabel();
         sourceLabel = new javax.swing.JLabel();
         targetComboBox = new javax.swing.JComboBox<>();
@@ -105,12 +104,7 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
         createButton = new javax.swing.JButton();
         registerButton = new javax.swing.JButton();
         statusLabel = new javax.swing.JLabel();
-
-        jLabel7.setText("Curl Weight");
-
-        jTextField7.setText("0");
-
-        jLabel15.setText("jLabel12");
+        deleteButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Registration-File-Creator");
@@ -194,6 +188,13 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
         statusLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         statusLabel.setText("---------");
 
+        deleteButton.setText("Delete Registration");
+        deleteButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -260,8 +261,8 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
                             .addComponent(landmarkType)
                             .addComponent(imageType)
                             .addComponent(consistencyType)
-                            .addComponent(thresholdType))
-                        .addGap(0, 2, Short.MAX_VALUE))
+                            .addComponent(thresholdType)
+                            .addComponent(deleteButton)))
                     .addComponent(statusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -271,7 +272,8 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(targetLabel)
-                    .addComponent(targetComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(targetComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(deleteButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(sourceLabel)
@@ -353,30 +355,38 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
         statusLabel.setForeground(Color.BLUE);
     }
     
+    private void setCreatorOptions() throws DataFormatException {
+        int mode = Integer.parseInt(modeField.getText());
+        int img_subsamp_fact = Integer.parseInt(subsampleField.getText());
+        int min_scale_deformation = Integer.parseInt(iDefField.getText());
+        int max_scale_deformation = Integer.parseInt(fDefField.getText());
+        double divWeight = Double.parseDouble(divergenceField.getText());
+        double curlWeight = Double.parseDouble(curlField.getText());
+        double landmarkWeight = Double.parseDouble(landmarkField.getText());
+        double imageWeight = Double.parseDouble(imageField.getText());
+        double consistencyWeight = Double.parseDouble(consistencyField.getText());
+        double stopThreshold = Double.parseDouble(thresholdField.getText());
+        creator.setOptions(mode, img_subsamp_fact, min_scale_deformation,
+                max_scale_deformation, divWeight, curlWeight, landmarkWeight,
+                imageWeight, consistencyWeight, stopThreshold);
+    }
+    
+    
+    
     private void createButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createButtonActionPerformed
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     createButton.setEnabled(false);
-                    int mode = Integer.parseInt(modeField.getText());
-                    int img_subsamp_fact = Integer.parseInt(subsampleField.getText());
-                    int min_scale_deformation = Integer.parseInt(iDefField.getText());
-                    int max_scale_deformation = Integer.parseInt(fDefField.getText());
-                    double divWeight = Double.parseDouble(divergenceField.getText());
-                    double curlWeight = Double.parseDouble(curlField.getText());
-                    double landmarkWeight = Double.parseDouble(landmarkField.getText());
-                    double imageWeight = Double.parseDouble(imageField.getText());
-                    double consistencyWeight = Double.parseDouble(consistencyField.getText());
-                    double stopThreshold = Double.parseDouble(thresholdField.getText());
-                    creator.setOptions(mode, img_subsamp_fact, min_scale_deformation,
-                            max_scale_deformation, divWeight, curlWeight, landmarkWeight,
-                            imageWeight, consistencyWeight, stopThreshold);
+                    setCreatorOptions();
 
                     int targetId = targetComboBox.getSelectedIndex();
                     int sourceId = sourceComboBox.getSelectedIndex();
                     setBlackStatus("Creating registration file...");
-                    creator.createChannelRegFile(targetId, sourceId, channelNames, recRunner);
+                    seqDetection.setCreatingRegFile(true);
+                    
+                    creator.createChannelRegFile(targetId, sourceId, recRunner);
                     setBlackStatus("New file created, load new file...");
                     
                     wfButton.setEnabled(false);
@@ -391,15 +401,12 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
                     Registration.setRecon(reconTemp);
                     wfButton.setEnabled(true);
                     reconButton.setEnabled(true);
+                    seqDetection.setCreatingRegFile(false);
                     setBlueStatus("New file loaded");
                     
-                } catch (DataFormatException ex) {
-                    Logger.getLogger(RegFileCreatorGui.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (IOException ex) {
-                    Logger.getLogger(RegFileCreatorGui.class.getName()).log(Level.SEVERE, null, ex);
-                } /*catch (Exception ex) {
+                } catch (Exception ex) {
                     setRedStatus("Error: " + ex.getMessage());
-                }*/ finally {
+                } finally {
                     createButton.setEnabled(true);
                 }
             }
@@ -407,42 +414,25 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
         
     }//GEN-LAST:event_createButtonActionPerformed
 
+    private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
+            new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String deleteChannelName = channelNames[targetComboBox.getSelectedIndex()];
+                    Registration.clearRegistration(deleteChannelName);
+                    creator.deleteRegFile(deleteChannelName);
+                    setBlueStatus("Registration for '" + deleteChannelName + "' deleted");
+                } catch (Exception ex) {
+                    setRedStatus("Error: " + ex.getMessage());
+                }
+            }
+        }).start();
+    }//GEN-LAST:event_deleteButtonActionPerformed
+
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(RegFileCreatorGui.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(RegFileCreatorGui.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(RegFileCreatorGui.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(RegFileCreatorGui.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                String[] testArray = { "red", "green", "blue" };
-                new RegFileCreatorGui("", testArray, null, new JToggleButton(), new JToggleButton()).setVisible(true);
-            }
-        });
-    }
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField consistencyField;
     private javax.swing.JLabel consistencyLabel;
@@ -451,6 +441,7 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
     private javax.swing.JTextField curlField;
     private javax.swing.JLabel curlLabel;
     private javax.swing.JLabel curlType;
+    private javax.swing.JButton deleteButton;
     private javax.swing.JTextField divergenceField;
     private javax.swing.JLabel divergenceLabel;
     private javax.swing.JLabel divergenceType;
@@ -463,9 +454,6 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
     private javax.swing.JTextField imageField;
     private javax.swing.JLabel imageLabel;
     private javax.swing.JLabel imageType;
-    private javax.swing.JLabel jLabel15;
-    private javax.swing.JLabel jLabel7;
-    private javax.swing.JTextField jTextField7;
     private javax.swing.JTextField landmarkField;
     private javax.swing.JLabel landmarkLabel;
     private javax.swing.JLabel landmarkType;

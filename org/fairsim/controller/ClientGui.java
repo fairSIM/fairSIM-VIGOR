@@ -153,8 +153,11 @@ public class ClientGui extends javax.swing.JPanel {
      */
     private void initSync() {
         syncDelayLabel.setText("Delay: " + seqDetection.getSyncDelay());
+        syncDelayTextField.setText(Integer.toString(seqDetection.getSyncDelay()));
         syncAvrLabel.setText("Average: " + seqDetection.getSyncAvr());
+        syncAvrTextField.setText(Integer.toString(seqDetection.getSyncAvr()));
         syncFreqLabel.setText("Frequency: " + seqDetection.getSyncFreq());
+        syncFreqTextField.setText(Integer.toString(seqDetection.getSyncFreq()));
     }
     
     /**
@@ -262,12 +265,12 @@ public class ClientGui extends javax.swing.JPanel {
         //showText("Gui: Client unregisterd at the ControllerGui");
 
         disableSlmControllers();
-        slmVersion.setText("SLM-API-Version -: ");
-        slmTime.setText("Timestamp: -: ");
-        slmType.setText("Activation type: -");
-        slmDefault.setText("Default running order: -");
+        //slmVersion.setText("SLM-API-Version -: ");
+        //slmTime.setText("Timestamp: -: ");
+        //slmType.setText("Activation type: -");
+        //slmDefault.setText("Default running order: -");
         slmSelect.setText("Selected running order: -");
-        slmRepertoir.setText("Repertoir name: -");
+        //slmRepertoir.setText("Repertoir name: -");
         slmComboBox.removeAllItems();
         slmConnectButton.setEnabled(false);
 
@@ -381,12 +384,12 @@ public class ClientGui extends javax.swing.JPanel {
             }
             sendSlmInstruction("info");
             if (instructionDone) {
-                slmVersion.setText("SLM-API-Version: " + client.info[0]);
-                slmTime.setText("Timestamp: " + client.info[1]);
-                slmType.setText("Activation type: " + client.info[2]);
-                slmDefault.setText("Default running order: " + slmComboBox.getItemAt(Integer.parseInt(client.info[3])));
+                //slmVersion.setText("SLM-API-Version: " + client.info[0]);
+                //slmTime.setText("Timestamp: " + client.info[1]);
+                //slmType.setText("Activation type: " + client.info[2]);
+                //slmDefault.setText("Default running order: " + slmComboBox.getItemAt(Integer.parseInt(client.info[3])));
                 slmSelect.setText("Selected running order: " + slmComboBox.getItemAt(Integer.parseInt(client.info[4])));
-                slmRepertoir.setText("Repertoir name: " + client.info[5]);
+                //slmRepertoir.setText("Repertoir name: " + client.info[5]);
             }
         } catch (NullPointerException ex) {
             System.err.println("Error while refreshing SLM-GUI");
@@ -404,16 +407,11 @@ public class ClientGui extends javax.swing.JPanel {
     private void initComponents() {
 
         slmPanel = new javax.swing.JPanel();
-        slmVersion = new javax.swing.JLabel();
-        slmTime = new javax.swing.JLabel();
-        slmRepertoir = new javax.swing.JLabel();
         slmConnectButton = new javax.swing.JButton();
         slmComboBox = new javax.swing.JComboBox<>();
         slmDisconnectButton = new javax.swing.JButton();
         slmRebootButton = new javax.swing.JButton();
-        slmDefault = new javax.swing.JLabel();
         slmSelect = new javax.swing.JLabel();
-        slmType = new javax.swing.JLabel();
         slmActivateButton = new javax.swing.JButton();
         slmDeactivateButton = new javax.swing.JButton();
         slmSelectButton = new javax.swing.JButton();
@@ -452,12 +450,6 @@ public class ClientGui extends javax.swing.JPanel {
         slmPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("SLM-Controller"));
         slmPanel.setName(""); // NOI18N
 
-        slmVersion.setText("SLM-API-Version: -");
-
-        slmTime.setText("Timestamp: -");
-
-        slmRepertoir.setText("Repertoir name: -");
-
         slmConnectButton.setText("Connect SLM");
         slmConnectButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -480,11 +472,7 @@ public class ClientGui extends javax.swing.JPanel {
             }
         });
 
-        slmDefault.setText("Default running order: -");
-
         slmSelect.setText("Selected running order: -");
-
-        slmType.setText("Activation type: -");
 
         slmActivateButton.setText("Aktivate");
         slmActivateButton.addActionListener(new java.awt.event.ActionListener() {
@@ -519,36 +507,29 @@ public class ClientGui extends javax.swing.JPanel {
         slmPanelLayout.setHorizontalGroup(
             slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(slmPanelLayout.createSequentialGroup()
-                .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(slmPanelLayout.createSequentialGroup()
-                        .addComponent(slmConnectButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(slmDisconnectButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(slmRebootButton))
-                    .addGroup(slmPanelLayout.createSequentialGroup()
-                        .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(slmActivateButton, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(slmDeactivateButton, javax.swing.GroupLayout.Alignment.LEADING))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(slmComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(slmRefreshButton)
-                    .addComponent(slmSelectButton))
-                .addGap(0, 0, Short.MAX_VALUE))
-            .addGroup(slmPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(slmRepertoir)
-                    .addComponent(slmTime)
-                    .addComponent(slmVersion))
-                .addGap(114, 114, 114)
-                .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(slmDefault)
-                    .addComponent(slmSelect)
-                    .addComponent(slmType))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(slmPanelLayout.createSequentialGroup()
+                        .addComponent(slmComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(slmSelectButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(slmActivateButton, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(slmDeactivateButton))
+                    .addGroup(slmPanelLayout.createSequentialGroup()
+                        .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(slmPanelLayout.createSequentialGroup()
+                                .addComponent(slmConnectButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(slmDisconnectButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(slmRebootButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(slmRefreshButton))
+                            .addComponent(slmSelect))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         slmPanelLayout.setVerticalGroup(
             slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -558,31 +539,14 @@ public class ClientGui extends javax.swing.JPanel {
                     .addComponent(slmDisconnectButton)
                     .addComponent(slmRebootButton)
                     .addComponent(slmRefreshButton))
-                .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(slmPanelLayout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(slmActivateButton)
-                        .addGap(3, 3, 3)
-                        .addComponent(slmDeactivateButton))
-                    .addGroup(slmPanelLayout.createSequentialGroup()
-                        .addGap(18, 18, 18)
-                        .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(slmComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(slmSelectButton))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(slmPanelLayout.createSequentialGroup()
-                        .addComponent(slmVersion)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(slmTime)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(slmRepertoir))
-                    .addGroup(slmPanelLayout.createSequentialGroup()
-                        .addComponent(slmDefault)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(slmSelect)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(slmType)))
+                .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(slmComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(slmSelectButton)
+                    .addComponent(slmActivateButton)
+                    .addComponent(slmDeactivateButton))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(slmSelect)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -840,9 +804,9 @@ public class ClientGui extends javax.swing.JPanel {
             .addGroup(regPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(regPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(regCreatorButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(regReconButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(regWfButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(regWfButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(regReconButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(regCreatorButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         regPanelLayout.setVerticalGroup(
@@ -863,12 +827,12 @@ public class ClientGui extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(arduinoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(slmPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(clientServerPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(softwarePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(regPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(regPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(slmPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -881,9 +845,10 @@ public class ClientGui extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(softwarePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(regPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(regPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(clientServerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(clientServerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -1030,7 +995,7 @@ public class ClientGui extends javax.swing.JPanel {
     private void regCreatorButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_regCreatorButtonActionPerformed
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new RegFileCreatorGui(regFolder, channelNames, recRunner, regWfButton, regReconButton).setVisible(true);
+                new RegFileCreatorGui(regFolder, channelNames, seqDetection, recRunner, regWfButton, regReconButton).setVisible(true);
             }
         });
     }//GEN-LAST:event_regCreatorButtonActionPerformed
@@ -1155,17 +1120,12 @@ public class ClientGui extends javax.swing.JPanel {
     private javax.swing.JComboBox<String> slmComboBox;
     private javax.swing.JButton slmConnectButton;
     private javax.swing.JButton slmDeactivateButton;
-    private javax.swing.JLabel slmDefault;
     private javax.swing.JButton slmDisconnectButton;
     private javax.swing.JPanel slmPanel;
     private javax.swing.JButton slmRebootButton;
     private javax.swing.JButton slmRefreshButton;
-    private javax.swing.JLabel slmRepertoir;
     private javax.swing.JLabel slmSelect;
     private javax.swing.JButton slmSelectButton;
-    private javax.swing.JLabel slmTime;
-    private javax.swing.JLabel slmType;
-    private javax.swing.JLabel slmVersion;
     private javax.swing.JPanel softwarePanel;
     private javax.swing.JButton syncAvrButton;
     private javax.swing.JLabel syncAvrLabel;
