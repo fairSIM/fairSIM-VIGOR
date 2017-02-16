@@ -208,7 +208,7 @@ public abstract class AbstractVectorReal implements  Vec.Real {
 	return ret;
     }
     
-    /** Compute the elemnt-wise multiplication this = this.*x */
+    /** Compute the element-wise multiplication this = this.*x */
     @Override
     public void times(Vec.Real x) {
 	Vec.failSize(this, x);
@@ -216,6 +216,17 @@ public abstract class AbstractVectorReal implements  Vec.Real {
 	float [] id = x.vectorData();
 	for (int i=0;i<elemCount;i++) 
 	    data[i] = data[i] * id[i];
+	this.syncBuffer();
+    }
+    
+    /** Compute the element-wise division this = this./x */
+    @Override
+    public void elementwiseDivision(Vec.Real x) {
+        Vec.failSize(this, x);
+	this.readyBuffer();
+	float [] id = x.vectorData();
+	for (int i=0;i<elemCount;i++) 
+	    data[i] = data[i] / id[i];
 	this.syncBuffer();
     }
 

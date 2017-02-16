@@ -317,6 +317,38 @@ public abstract class AbstractVectorCplx implements Vec.Cplx {
     }
 
 
+    /** Compute element-wise multiplication this = this.*in, 
+     *  conjugated 'in' if 'conj' is true */
+    public void elementwiseDivision(Vec.Real in) {
+	
+	Vec.failSize( this, in );
+	this.readyBuffer();
+	float [] x = in.vectorData(), y = data;
+	for (int i=0;i<elemCount;i++) {
+	    float y1R = y[Rl(i)];
+		y[Rl(i)] = x[Rl(i)] / y1R  ;
+		y[Ig(i)] = 0  ;
+	}
+	this.syncBuffer();
+    }
+
+
+    /** Compute element-wise multiplication this = this.*in, 
+     *  conjugated 'in' if 'conj' is true */
+    public void elementwiseDivision(Vec.Cplx in) {
+	
+	Vec.failSize( this, in );
+	this.readyBuffer();
+	float [] x = in.vectorData(), y = data;
+	for (int i=0;i<elemCount;i++) {
+	    float y1R = y[Rl(i)], y1I = y[Ig(i)];
+		y[Rl(i)] = divReal( x[Rl(i)], x[Ig(i)], y1R, y1I )  ;
+		y[Ig(i)] = divImag( x[Rl(i)], x[Ig(i)], y1R, y1I )  ;
+	}
+	this.syncBuffer();
+    }
+
+
     /** Return the sum of all vector elements */
     public org.fairsim.linalg.Cplx.Double sumElements( ) {
 	double re=0,im=0;
@@ -373,6 +405,15 @@ public abstract class AbstractVectorCplx implements Vec.Cplx {
     /** imag part of complex mult */
     static float multImag( float Xr, float Xi, float Yr, float Yi ) {
 	    return ((Xi * Yr ) + (Xr*Yi));
+    }
+    
+    /** real part of complex division */
+    static float divReal( float Xr, float Xi, float Yr, float Yi ) {
+	    return ((Xr * Yr ) + (Xi * Yi)) / ((Yr * Yr) + (Yi * Yi));
+    }
+    /** imag part of complex division */
+    static float divImag( float Xr, float Xi, float Yr, float Yi ) {
+	    return ((Xi * Yr) - (Xr * Yi)) / ((Yr * Yr) + (Yi * Yi));
     }
 
     /** real part at a given index */

@@ -1,6 +1,9 @@
 <fairsim>
 <vigor-settings>
 
+<SlmServerAdress type="string">Atana</SlmServerAdress>
+<SlmServerPort type="int">32322</SlmServerPort>
+
 <RawPxlCount type="int">512</RawPxlCount>
 <RawPxlSize type="decimal">0.08</RawPxlSize>
 
@@ -11,9 +14,10 @@
 <ReconThreads type="int">2</ReconThreads>
 <NetworkBuffer type="int">600</NetworkBuffer>
 <DiskBuffer type="int">2500</DiskBuffer>
-<DiskFolder type="string">/vol/ssd-cache/VIGOR-stream</DiskFolder>
 
+<DiskFolder type="string">/vol/ssd-cache/VIGOR-stream</DiskFolder>
 <ParamFolder type="string">~/VIGOR-parameters/</ParamFolder>
+<RegistrationFolder type="string">~/VIGOR-parameters/registration/</RegistrationFolder>
 
 <SyncFrameFreq type="int">1</SyncFrameFreq>
 <SyncFrameAvr type="int">7000</SyncFrameAvr>
@@ -26,31 +30,30 @@
 <offset type="decimal">140</offset>
 <ChannelNumber type="int">488</ChannelNumber>
 
-
 <sim-param>
 <nr-angles type="int"> 3 </nr-angles>
-<microns-per-pxl type="decimal"> 8.00000e-02 </microns-per-pxl>
+<microns-per-pxl type="decimal"> 7.80000e-02 </microns-per-pxl>
 <wiener-parameter type="decimal"> 5.00000e-02 </wiener-parameter>
 <nr-bands type="int"> 2 </nr-bands>
 <img-size-pxl type="int"> 512 </img-size-pxl>
 <apodization-cutoff type="decimal"> 2.00000e+00 </apodization-cutoff>
 <nr-phases type="int"> 3 </nr-phases>
 <img-seq type="string">PZA</img-seq>
-<timestamp type="timepoint"> 1473254591167 </timestamp>
+<timestamp type="timepoint"> 1481205767740 </timestamp>
 <dir-2>
-<shift type="decimal"> -3.07667e+01 -1.71922e+02 </shift>
-<phase-offset type="decimal"> 1.36519e+00 </phase-offset>
-<modulations type="decimal"> 1.00000e+00 6.30685e-01 </modulations>
+<shift type="decimal"> -2.37889e+01 -1.72878e+02 </shift>
+<phase-offset type="decimal"> -9.78978e-01 </phase-offset>
+<modulations type="decimal"> 1.00000e+00 4.93085e-01 </modulations>
 </dir-2>
 <dir-1>
-<shift type="decimal"> -1.70433e+02 -6.15222e+01 </shift>
-<phase-offset type="decimal"> -2.92104e+00 </phase-offset>
-<modulations type="decimal"> 1.00000e+00 6.79997e-01 </modulations>
+<shift type="decimal"> -1.67856e+02 -6.87222e+01 </shift>
+<phase-offset type="decimal"> 8.33830e-01 </phase-offset>
+<modulations type="decimal"> 1.00000e+00 4.59405e-01 </modulations>
 </dir-1>
 <dir-0>
-<shift type="decimal"> 1.32922e+02 -1.12233e+02 </shift>
-<phase-offset type="decimal"> 3.79020e-01 </phase-offset>
-<modulations type="decimal"> 1.00000e+00 6.81232e-01 </modulations>
+<shift type="decimal"> 1.37478e+02 -1.06278e+02 </shift>
+<phase-offset type="decimal"> -3.07837e-01 </phase-offset>
+<modulations type="decimal"> 1.00000e+00 6.39470e-01 </modulations>
 </dir-0>
 </sim-param>
 <otf2d>
@@ -119,35 +122,40 @@
 
 <sim-param>
 <nr-angles type="int"> 3 </nr-angles>
-<microns-per-pxl type="decimal"> 8.00000e-02 </microns-per-pxl>
+<microns-per-pxl type="decimal"> 7.80000e-02 </microns-per-pxl>
 <wiener-parameter type="decimal"> 5.00000e-02 </wiener-parameter>
 <nr-bands type="int"> 2 </nr-bands>
 <img-size-pxl type="int"> 512 </img-size-pxl>
 <apodization-cutoff type="decimal"> 2.00000e+00 </apodization-cutoff>
 <nr-phases type="int"> 3 </nr-phases>
 <img-seq type="string">PZA</img-seq>
-<timestamp type="timepoint"> 1473254591167 </timestamp>
+<timestamp type="timepoint"> 1480080197542 </timestamp>
 <dir-2>
-<shift type="decimal"> -2.27667e+01 -1.29767e+02 </shift>
-<phase-offset type="decimal"> -1.84038e-01 </phase-offset>
-<modulations type="decimal"> 1.00000e+00 3.23045e-01 </modulations>
+<shift type="decimal"> -1.96111e+01 -1.30144e+02 </shift>
+<phase-offset type="decimal"> 1.58066e+00 </phase-offset>
+<modulations type="decimal"> 1.00000e+00 6.50508e-01 </modulations>
 </dir-2>
 <dir-1>
-<shift type="decimal"> -1.28278e+02 -4.74333e+01 </shift>
-<phase-offset type="decimal"> -5.51177e-01 </phase-offset>
-<modulations type="decimal"> 1.00000e+00 3.17892e-01 </modulations>
+<shift type="decimal"> -1.27056e+02 -5.07889e+01 </shift>
+<phase-offset type="decimal"> 2.78293e+00 </phase-offset>
+<modulations type="decimal"> 1.00000e+00 5.70818e-01 </modulations>
 </dir-1>
 <dir-0>
-<shift type="decimal"> 1.00478e+02 -8.42778e+01 </shift>
-<phase-offset type="decimal"> -8.79697e-01 </phase-offset>
-<modulations type="decimal"> 1.00000e+00 2.38286e-01 </modulations>
+<shift type="decimal"> 1.02567e+02 -8.13222e+01 </shift>
+<phase-offset type="decimal"> -1.94172e+00 </phase-offset>
+<modulations type="decimal"> 1.00000e+00 5.08682e-01 </modulations>
 </dir-0>
 </sim-param>
 <otf2d>
 <NA type="decimal"> 1.40000e+00 </NA>
+<attenuation>
+<FWHM type="decimal"> 1.20000e+00 </FWHM>
+<strength type="decimal"> 9.90000e-01 </strength>
+</attenuation>
 <a-estimate type="decimal"> 3.00000e-01 </a-estimate>
 <emission type="int"> 680 </emission>
 </otf2d>
+
 
 </channel-647>
 

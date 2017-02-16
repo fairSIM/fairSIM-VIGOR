@@ -246,6 +246,20 @@ class AccelVectorCplx extends AbstractVectorCplx {
 	deviceNew = true;
     }
    
+    @Override 
+    public void elementwiseDivision( Vec.Real x ) {
+        /*
+	if ( callSuper(x) ) {	
+	    super.times(x);
+	    return;
+	}
+	readyDevice();
+	((AccelVectorReal)x).readyDevice();
+	nativeTIMESREAL( this.natData, ((AccelVectorReal)x).natData, elemCount );
+	deviceNew = true;
+        */
+    }
+   
     @Override
     public double norm2() {
 	readyDevice();

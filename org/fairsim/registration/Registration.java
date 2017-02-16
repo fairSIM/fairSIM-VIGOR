@@ -45,7 +45,7 @@ public class Registration {
     private Vec2d.Real wfYTransVec;
     static private int threads;
     //static private String regFolder;
-    static public final List<Registration> REGISTRATIONS;
+    static private final List<Registration> REGISTRATIONS;
     static private boolean widefield;
     static private boolean recon;
 

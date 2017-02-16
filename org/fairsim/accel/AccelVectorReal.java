@@ -180,6 +180,18 @@ class AccelVectorReal extends AbstractVectorReal {
 	nativeTIMES( this.natData, ((AccelVectorReal)x).natData, elemCount );
 	deviceNew = true;
     }
+    
+    @Override
+    public void elementwiseDivision(Vec.Real x) {
+	/*
+        Vec.failSize(this, x);
+	this.readyBuffer();
+	float [] id = x.vectorData();
+	for (int i=0;i<elemCount;i++) 
+	    data[i] = data[i] / id[i];
+	this.syncBuffer();
+        */
+    }
   
     @Override
     public double norm2() {

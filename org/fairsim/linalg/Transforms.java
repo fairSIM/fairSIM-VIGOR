@@ -241,7 +241,7 @@ public abstract class Transforms {
 
     }
 
-    /** Swap quadrands. */
+    /** Swap quadrants. */
     static public void swapQuadrant(Vec2d.Cplx in) {
 	final int w = in.vectorWidth();
 	final int h = in.vectorHeight();
@@ -252,7 +252,7 @@ public abstract class Transforms {
 	    Cplx.Float tmp3 = in.get(x+w/2,y+h/2);
 	    in.set(x,y,tmp3);
 	    in.set(x+w/2,y+h/2,tmp1);
-	    // 2 <-> 3
+	    // 2 <-> 4
 	    Cplx.Float tmp2 = in.get(x,y+h/2);
 	    Cplx.Float tmp4 = in.get(x+w/2,y);
 	    in.set(x,y+h/2,tmp4);
@@ -260,7 +260,7 @@ public abstract class Transforms {
 	}
     }
     
-    /** Swap quadrands. */
+    /** Swap quadrants. */
     static public void swapQuadrant(Vec2d.Real in) {
 	final int w = in.vectorWidth();
 	final int h = in.vectorHeight();
@@ -279,7 +279,7 @@ public abstract class Transforms {
 	}
     }
     
-    /** Swap quadrands. */
+    /** Swap quadrants. */
     static public void swapQuadrant(Vec3d.Cplx in) {
 	final int w = in.vectorWidth();
 	final int h = in.vectorHeight();
@@ -312,7 +312,7 @@ public abstract class Transforms {
 	}
     }
     
-    /** Swap quadrands. */
+    /** Swap quadrants. */
     static public void swapQuadrant(Vec3d.Real in) {
 	final int w = in.vectorWidth();
 	final int h = in.vectorHeight();

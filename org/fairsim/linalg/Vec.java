@@ -231,9 +231,12 @@ public final class Vec {
 	/** Return the squared norm <this, this> */
 	public double norm2();
 
-	/** Compute the elemnt-wise multiplication this = this.*x */
+	/** Compute the element-wise multiplication this = this.*x */
 	public void times(Vec.Real x);
-	
+
+	/** Compute the element-wise division this = this./x */
+	public void elementwiseDivision(Vec.Real x);
+        
 	/** Return the sum of all vector elements */
 	public double sumElements();
 
@@ -364,6 +367,12 @@ public final class Vec {
 
 	/** Compute element-wise multiplication this = this.*in */ 
 	public void times(Real in);
+
+	/** Compute element-wise division this = this./in. */
+	public void elementwiseDivision(Cplx in);
+
+	/** Compute element-wise division this = this./in. */
+	public void elementwiseDivision(Real in);
 
 	/** Return the sum of all vector elements */
 	public org.fairsim.linalg.Cplx.Double sumElements( );
