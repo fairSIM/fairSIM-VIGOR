@@ -362,9 +362,8 @@ public class LiveControlPanel {
 	// load the CUDA library
         String OS = System.getProperty("os.name").toLowerCase();
         VectorFactory avf;
-        // following Factory for Linux-GPU-Reconstruction
         
-        /*
+        // following Factory for Linux-GPU-Reconstruction
         if ( OS.contains("nix") || OS.contains("nux") || OS.contains("aix") ) {
             String wd = System.getProperty("user.dir")+"/accel/";
             Tool.trace("loading library from: "+wd);
@@ -384,10 +383,6 @@ public class LiveControlPanel {
         else {
             avf = Vec.getBasicVectorFactory();
         }
-*/
-        
-        // auf cpu statt gpu laufen lassen
-            avf = Vec.getBasicVectorFactory();
         
         if (arg.length<2) {
 	    System.out.println("Start with: config-file.xml [488] [568] [647] ...");
