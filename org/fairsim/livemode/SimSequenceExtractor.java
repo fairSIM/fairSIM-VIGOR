@@ -94,6 +94,14 @@ public class SimSequenceExtractor {
 
     
     /** Clears all receive and sort buffers for resyncing to the stream */
+    
+    public void resetChannelBuffers() {
+        for (int i=0; i<nrChannels; i++) {
+            channels[i].restartThread = true;
+            channels[i].interrupt();
+        }
+    }
+    
     public void clearBuffers() {
 	for ( PerChannelBuffer i : channels ) 
 	    i.clearBuffers();
@@ -200,6 +208,7 @@ public class SimSequenceExtractor {
 	BlockingQueue<ImageWrapper> rawImgs;
 	BlockingQueue<short [][]>     simSeq;
 	final int queueSize, chNumber, chIndex;
+        boolean restartThread;
 
 	int missedRaw =0;
 	int missedSim =0;
@@ -215,6 +224,7 @@ public class SimSequenceExtractor {
 	    this.chIndex   = chIndex;
 	    rawImgs = new ArrayBlockingQueue<ImageWrapper>( queueSize );
 	    simSeq  = new ArrayBlockingQueue<short [][]>( queueSize );
+            restartThread = false;
 	}
    
 	void pushImg( ImageWrapper iw ) {
@@ -290,7 +300,11 @@ public class SimSequenceExtractor {
 		
 
 		} catch ( InterruptedException e ){
-		    Tool.trace("Image sorting thread interupted, why?");
+                    if (restartThread) {
+                        restartThread = false;
+                    } else {
+                        Tool.trace("Image sorting thread [" + this.chIndex + "] interupted, why?");
+                    }
 		}
 	    
 	    }

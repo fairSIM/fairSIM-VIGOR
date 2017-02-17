@@ -951,6 +951,7 @@ public class ClientGui extends javax.swing.JPanel {
     }//GEN-LAST:event_arduinoBlueButtonActionPerformed
 
     private void arduinoPhotoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoPhotoButtonActionPerformed
+        seqDetection.resetChannelBuffers();
         sendArduinoInstruction( (String) arduinoComboBox.getSelectedItem() + "xx" );
         if (instructionDone) {
             setRGBButtonSelected(false);
@@ -1021,6 +1022,7 @@ public class ClientGui extends javax.swing.JPanel {
     }
     
     private void startArduinoProgramm(String command) {
+        seqDetection.resetChannelBuffers();
         sendArduinoInstruction(command);
         if (instructionDone) {
             arduinoStartButton.setEnabled(false);
