@@ -1,7 +1,7 @@
 <fairsim>
 <vigor-settings>
 
-<SlmServerAdress type="string">Atana</SlmServerAdress>
+<SlmServerAdress type="string">localhost</SlmServerAdress>
 <SlmServerPort type="int">32322</SlmServerPort>
 
 <RawPxlCount type="int">512</RawPxlCount>

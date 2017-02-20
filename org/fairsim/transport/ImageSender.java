@@ -76,7 +76,12 @@ public class ImageSender {
 	connection.add(s);
     }
 
-
+    public void shutdownThreads() {
+        for (SendingThread s : connection) {
+            s.closeDown = true;
+            s.interrupt();
+        }
+    }
 
     /** Non-blocking image send. Returns if the image was sucessfully
      * queued for sending. */
@@ -140,7 +145,7 @@ public class ImageSender {
 	    canSend = true;
 
 	    // wait for images in the queue, if present send them
-	    while (true) {
+	    while (!closeDown) {
 		// get an image
 		ImageWrapper iw;
 		try {

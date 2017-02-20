@@ -18,61 +18,67 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 
 package org.fairsim.controller;
 
-import java.net.*;
-import java.io.*;
-import java.util.NoSuchElementException;
-import java.util.Scanner;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-
 /**
  * Class of the Client in the communikation chain <br>
  * SLM - Server - Client - GUI
  *
  * @author m.lachetta
  */
-public class Client {
-
+public class ControllerClient extends AbstractClient {
+    /*
+    String serverAdress;
+    int serverPort;
     private final ClientGui clientGui;
-    private final Socket server;
-    private final Scanner in;
-    private final PrintWriter out;
-    String[] info;
-    String[] roList;
+    private Socket serverSocket;
+    private Scanner in;
+    private PrintWriter out;
     String output;
     BlockingQueue<Instruction> instructions;
+    */
+    String[] slmInfo;
+    String[] slmList;
 
     /**
      * Constructor for the Client
      *
-     * @param adress IP/Name of the host-server
-     * @param port for the Connection
-     * @param slmGui Gui for the SLM
-     * @throws IOException
+     * @param serverAdress IP/Name of the host-server
+     * @param serverPort for the Connection
+     * @param clientGui Gui for the SLM
      */
-    private Client(String adress, int port, ClientGui slmGui) throws IOException {
-        this.clientGui = slmGui;
-        slmGui.showText("Client: Trying to connect to: " + adress + ":" + port);
-        server = new Socket(adress, port);
-        slmGui.showText("Client: Connected to: " + adress + ":" + port);
-        in = new Scanner(server.getInputStream());
-        out = new PrintWriter(server.getOutputStream(), true);
-        instructions = new LinkedBlockingQueue<Instruction>();
+    protected ControllerClient(String serverAdress, int serverPort, ControllerClientGui clientGui) {
+        super(serverAdress, serverPort, clientGui);
+        /*
+        clientGui.showText("Client: Trying to connect to: " + serverAdress + ":" + serverPort);
+        serverSocket = new Socket(serverAdress, serverPort);
+        clientGui.showText("Client: Connected to: " + serverAdress + ":" + serverPort);
+        in = new Scanner(serverSocket.getInputStream());
+        out = new PrintWriter(serverSocket.getOutputStream(), true);
+        */
+        
     }
-
+    /*
+    protected void connectToServer() throws IOException  {
+        clientGui.showText("Client: Trying to connect to: " + serverAdress + ":" + serverPort);
+        serverSocket = new Socket(serverAdress, serverPort);
+        clientGui.showText("Client: Connected to: " + serverAdress + ":" + serverPort);
+        in = new Scanner(serverSocket.getInputStream());
+        out = new PrintWriter(serverSocket.getOutputStream(), true);
+    }
+    */
     /**
      * closes the Connection to the host-server
      */
-    private void disconnect() {
-        if (server != null) {
+    /*
+    protected void disconnect() {
+        if (serverSocket != null) {
             try {
-                server.close();
+                serverSocket.close();
             } catch (IOException e) {
             }
         }
 
     }
-
+    */
     /**
      * Reciving an array from the host-server
      *
@@ -80,19 +86,6 @@ public class Client {
      * @return the recived array
      */
     private String[] receivingData(String output) {
-        /*
-        String temp = output.split(": ")[1];
-        int len = Integer.parseInt(temp);
-        String[] data = new String[len];
-        for (int i = 0; i < len; i++) {
-        data[i] = in.nextLine();
-        if (data[i].startsWith("Timestamp")) { //correct empty line after Timestamp
-        in.nextLine();
-        }
-        }
-        return data;
-         */
-        //new
         String[] split = output.split(";");
         String[] data = new String[split.length - 1];
         for (int i = 0; i < data.length; i++) {
@@ -106,7 +99,8 @@ public class Client {
      *
      * @param input first answer from the server
      */
-    private void handleAction(String input) {
+    @Override
+    protected void handleAction(String input) {
 
         out.println(input);
         output = in.nextLine();
@@ -114,32 +108,34 @@ public class Client {
         output = in.nextLine();
         //clientGui.showText(output);
         if (output.startsWith("Slm: Transfering info")) {
-            info = receivingData(output);
+            slmInfo = receivingData(output);
         } else if (output.startsWith("Slm: Transfering rolist")) {
-            roList = receivingData(output);
+            slmList = receivingData(output);
         } else {
             clientGui.showText(output);
         }
     }
-
+    
     /**
      * Starts the Client, used from the SlmPanel.java
      *
      * @param serverAdress IP/name of the host-server
      * @param clientGui Gui for the SLM
      */
+    /*
     static void startClient(final String adress, final int port, final ClientGui clientGui) {
         clientGui.setConnectionLabel(adress, port);
+        ControllerClient client = new ControllerClient(adress, port, clientGui);
         Thread connection = new Thread(new Runnable() {
             @Override
             public void run() {
-                Client client = null;
                 while (true) {
                     try {
-                        client = new Client(adress, port, clientGui);
+                        client.connectToServer();
                         clientGui.registerClient(client);
                         Instruction input;
                         while (true) {
+                            System.out.println(client.serverAdress);
                             input = client.instructions.take();
                             input.lock.lock();
                             try {
@@ -173,8 +169,7 @@ public class Client {
                 }
             }
         });
-
         connection.start();
     }
-
+    */
 }
