@@ -31,30 +31,31 @@ import java.util.Scanner;
  *
  * @author m.lachetta
  */
-public class ControllerServer implements Runnable{
+public class ControllerServer extends AbstractServer {
 
+    /*
     ServerGui gui;
-    SlmController slm;
-    ArduinoController arduino;
     int port;
     ServerSocket server;
     Socket client;
     Scanner in;
     PrintWriter out;
+     */
+    SlmController slm;
+    ArduinoController arduino;
 
     /**
      * Constructor for the Server
+     *
      * @param gui GUI of the Server
      * @param slm
      * @param arduino
      * @throws IOException throwen if TCP-Connection failed
      */
     private ControllerServer(ServerGui gui, SlmController slm, ArduinoController arduino) throws IOException {
-        this.gui = gui;
+        super(gui);
         this.slm = slm;
         this.arduino = arduino;
-        port = 32322;
-        server = new ServerSocket(port);
     }
 
     /**
@@ -64,9 +65,10 @@ public class ControllerServer implements Runnable{
      * SLM - Server - Client - GUI
      * @throws IOException
      */
-    private void handleConnection() throws IOException {
+    /*
+    protected void handleConnection() throws IOException {
         String input;
-        int ro;
+        //int ro;
         while (true) {
             try {
                 input = in.nextLine();
@@ -74,6 +76,7 @@ public class ControllerServer implements Runnable{
             } catch (NoSuchElementException e) {
                 break;
             }
+            
             String serverOut = "---";
             if (input.startsWith("slm->")) {
                 input = input.split("->")[1];
@@ -113,23 +116,67 @@ public class ControllerServer implements Runnable{
                     serverOut = arduino.sendCommand(command);
                 }
             }
+            
             out.println(serverOut);
         }
 
     }
+    */
+    protected String handleCommand(String input) {
+        String serverOut = "---";
+        if (input.startsWith("slm->")) {
+            input = input.split("->")[1];
+            out.print("Slm: ");
+            try {
+                serverOut = slm.setRo(Integer.parseInt(input));
+
+            } catch (NumberFormatException e) {
+                if (input.equals("activate")) {
+                    serverOut = slm.activateRo();
+                } else if (input.equals("deactivate")) {
+                    serverOut = slm.deactivateRo();
+                } else if (input.equals("info")) {
+                    serverOut = slm.getSlmInfo();
+                } else if (input.equals("rolist")) {
+                    serverOut = slm.getRoList();
+                } else if (input.equals("reboot")) {
+                    serverOut = slm.rebootSlm();
+                } else if (input.equals("connect")) {
+                    serverOut = slm.connectSlm();
+                } else if (input.equals("disconnect")) {
+                    serverOut = slm.disconnectSlm();
+                } else {
+                    serverOut = "Slm-Server do not know what to do with '" + input + "'";
+                }
+            }
+        } else if (input.startsWith("arduino->")) {
+            input = input.split("->")[1];
+            out.print("Arduino: ");
+            if (input.equals("connect")) {
+                serverOut = arduino.connect();
+            } else if (input.equals("disconnect")) {
+                serverOut = arduino.disconnect();
+            } else {
+                byte[] command = input.getBytes(Charset.forName("UTF-8"));
+                serverOut = arduino.sendCommand(command);
+            }
+        }
+        return serverOut;
+    }
 
     /**
      * Creates and starts a new Controller-Server
+     *
      * @param gui
      * @param slm
      * @param arduino
      * @return returns a ControllerServer-Object or a null-pointer if something
      * went wrong
      */
-    static ControllerServer startServer(ServerGui gui, SlmController slm, ArduinoController arduino) {
+    static ControllerServer startServer(ControllerServerGui gui, SlmController slm, ArduinoController arduino) {
         try {
             ControllerServer serverObject = new ControllerServer(gui, slm, arduino);
-            new Thread(serverObject).start();
+            serverObject.start();
             return serverObject;
         } catch (IOException ex) {
             return null;
@@ -139,6 +186,7 @@ public class ControllerServer implements Runnable{
     /**
      * Starts and keeps the Server online
      */
+    /*
     @Override
     public void run() {
         while (true) {
@@ -152,8 +200,8 @@ public class ControllerServer implements Runnable{
                 in = new Scanner(client.getInputStream());
                 out = new PrintWriter(client.getOutputStream(), true);
                 handleConnection();
-            } catch (IOException e) {
-                gui.showText("This should not have happened 1");
+            } catch (IOException ex) {
+                gui.showText(ex.toString());
             } finally {
                 if (client != null) {
                     gui.showText(slm.deactivateRo());
@@ -162,12 +210,23 @@ public class ControllerServer implements Runnable{
                     try {
                         client.close();
                     } catch (IOException ex) {
-                        gui.showText("This should not have happened 2");
+                        gui.showText(ex.toString());
                     }
                     gui.showText("Connection closed");
                 }
             }
         }
+    }
+     */
+    @Override
+    protected void buildUpConnection() {
+    }
+
+    @Override
+    protected void buildDownConnection() {
+        gui.showText(slm.deactivateRo());
+        gui.showText(slm.disconnectSlm());
+        gui.showText(arduino.disconnect());
     }
 
 }

@@ -315,16 +315,16 @@ public class ControllerClientGui extends javax.swing.JPanel implements ClientGui
      * @param command command for the server
      */
     void sendInstruction(String command) {
-        Instruction slmInstruction = new Instruction(command);
-        slmInstruction.lock.lock();
+        Instruction instruction = new Instruction(command);
+        instruction.lock.lock();
         try {
             //disableSlmControllers();
-            controllerClient.instructions.add(slmInstruction);
-            slmInstruction.condition.await(5, TimeUnit.SECONDS);
+            controllerClient.instructions.add(instruction);
+            instruction.condition.await(5, TimeUnit.SECONDS);
         } catch (InterruptedException ex) {
             showText("Gui: Error: Instruction timed out: " + ex.toString());
         } finally {
-            slmInstruction.lock.unlock();
+            instruction.lock.unlock();
             //enableSlmControllers();
             try {
                 if (controllerClient.output.startsWith("Slm: Error: ")) {

@@ -24,7 +24,7 @@ import java.util.Enumeration;
 public class ArduinoController implements SerialPortEventListener {
 
     SerialPort serialPort;
-    ServerGui serverGui;
+    ControllerServerGui serverGui;
     /**
      * The port we're normally going to use.
      */
@@ -56,7 +56,7 @@ public class ArduinoController implements SerialPortEventListener {
         initialize();
     }
     
-    ArduinoController(ServerGui serverGui) {
+    ArduinoController(ControllerServerGui serverGui) {
         this.serverGui = serverGui;
     }
     

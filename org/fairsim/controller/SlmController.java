@@ -28,13 +28,13 @@ import com.forthdd.commlib.r4.R4CommLib;
  */
 public class SlmController {
     
-    ServerGui gui;
+    ControllerServerGui gui;
    
     /**
      * Constructor for the SLM-Controller
      * @param serverGui 
      */
-    SlmController(ServerGui serverGui) {
+    SlmController(ControllerServerGui serverGui) {
         this.gui = serverGui;
         
         // Loding SLM-API-Library

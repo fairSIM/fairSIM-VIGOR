@@ -97,15 +97,10 @@ public class ControllerClient extends AbstractClient {
     /**
      * handle the answers of the host-server
      *
-     * @param input first answer from the server
+     * @param answer The answer from the server
      */
     @Override
-    protected void handleAction(String input) {
-
-        out.println(input);
-        output = in.nextLine();
-        //clientGui.showText(output); //Command 'input' successfully transmitted to the server
-        output = in.nextLine();
+    protected void handleServerAnswer(String answer) {
         //clientGui.showText(output);
         if (output.startsWith("Slm: Transfering info")) {
             slmInfo = receivingData(output);

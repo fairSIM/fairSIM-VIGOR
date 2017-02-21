@@ -66,7 +66,7 @@ public abstract class AbstractClient extends Thread {
         }
     }
 
-    protected abstract void handleAction(String input);
+    protected abstract void handleServerAnswer(String answer);
 
     @Override
     public void run() {
@@ -79,7 +79,11 @@ public abstract class AbstractClient extends Thread {
                     input = instructions.take();
                     input.lock.lock();
                     try {
-                        handleAction(input.command);
+                        out.println(input.command);
+                        output = in.nextLine();
+                        //clientGui.showText(output); //Command 'input' successfully transmitted to the server
+                        output = in.nextLine();
+                        handleServerAnswer(output);
                     } finally {
                         input.condition.signal();
                         input.lock.unlock();
