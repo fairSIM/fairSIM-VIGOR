@@ -33,14 +33,6 @@ import java.util.Scanner;
  */
 public class ControllerServer extends AbstractServer {
 
-    /*
-    ServerGui gui;
-    int port;
-    ServerSocket server;
-    Socket client;
-    Scanner in;
-    PrintWriter out;
-     */
     SlmController slm;
     ArduinoController arduino;
 
@@ -58,70 +50,6 @@ public class ControllerServer extends AbstractServer {
         this.arduino = arduino;
     }
 
-    /**
-     * Handle what the do while Server and Client are connected to eachother
-     *
-     * @param client Client in the communikation chain <br>
-     * SLM - Server - Client - GUI
-     * @throws IOException
-     */
-    /*
-    protected void handleConnection() throws IOException {
-        String input;
-        //int ro;
-        while (true) {
-            try {
-                input = in.nextLine();
-                out.println("Server: Command '" + input + "' successfully transmitted to the server.");
-            } catch (NoSuchElementException e) {
-                break;
-            }
-            
-            String serverOut = "---";
-            if (input.startsWith("slm->")) {
-                input = input.split("->")[1];
-                out.print("Slm: ");
-                try {
-                    ro = Integer.parseInt(input);
-                    serverOut = slm.setRo(ro);
-
-                } catch (NumberFormatException e) {
-                    if (input.equals("activate")) {
-                        serverOut = slm.activateRo();
-                    } else if (input.equals("deactivate")) {
-                        serverOut = slm.deactivateRo();
-                    } else if (input.equals("info")) {
-                        serverOut = slm.getSlmInfo();
-                    } else if (input.equals("rolist")) {
-                        serverOut = slm.getRoList();
-                    } else if (input.equals("reboot")) {
-                        serverOut = slm.rebootSlm();
-                    } else if (input.equals("connect")) {
-                        serverOut = slm.connectSlm();
-                    } else if (input.equals("disconnect")) {
-                        serverOut = slm.disconnectSlm();
-                    } else {
-                        serverOut = "Slm-Server do not know what to do with '" + input + "'";
-                    }
-                }
-            } else if (input.startsWith("arduino->")) {
-                input = input.split("->")[1];
-                out.print("Arduino: ");
-                if (input.equals("connect")) {
-                    serverOut = arduino.connect();
-                } else if (input.equals("disconnect")) {
-                    serverOut = arduino.disconnect();
-                } else {
-                    byte[] command = input.getBytes(Charset.forName("UTF-8"));
-                    serverOut = arduino.sendCommand(command);
-                }
-            }
-            
-            out.println(serverOut);
-        }
-
-    }
-    */
     protected String handleCommand(String input) {
         String serverOut = "---";
         if (input.startsWith("slm->")) {
@@ -157,8 +85,7 @@ public class ControllerServer extends AbstractServer {
             } else if (input.equals("disconnect")) {
                 serverOut = arduino.disconnect();
             } else {
-                byte[] command = input.getBytes(Charset.forName("UTF-8"));
-                serverOut = arduino.sendCommand(command);
+                serverOut = arduino.sendCommand(input);
             }
         }
         return serverOut;
@@ -173,7 +100,7 @@ public class ControllerServer extends AbstractServer {
      * @return returns a ControllerServer-Object or a null-pointer if something
      * went wrong
      */
-    static ControllerServer startServer(ControllerServerGui gui, SlmController slm, ArduinoController arduino) {
+    static ControllerServer startControllerServer(ControllerServerGui gui, SlmController slm, ArduinoController arduino) {
         try {
             ControllerServer serverObject = new ControllerServer(gui, slm, arduino);
             serverObject.start();
@@ -183,41 +110,6 @@ public class ControllerServer extends AbstractServer {
         }
     }
 
-    /**
-     * Starts and keeps the Server online
-     */
-    /*
-    @Override
-    public void run() {
-        while (true) {
-            client = null;
-            in = null;
-            out = null;
-            try {
-                gui.showText("Waiting for connection from client...");
-                client = server.accept();
-                gui.showText("Connected with: " + client.getInetAddress() + ":" + client.getLocalPort());
-                in = new Scanner(client.getInputStream());
-                out = new PrintWriter(client.getOutputStream(), true);
-                handleConnection();
-            } catch (IOException ex) {
-                gui.showText(ex.toString());
-            } finally {
-                if (client != null) {
-                    gui.showText(slm.deactivateRo());
-                    gui.showText(slm.disconnectSlm());
-                    gui.showText(arduino.disconnect());
-                    try {
-                        client.close();
-                    } catch (IOException ex) {
-                        gui.showText(ex.toString());
-                    }
-                    gui.showText("Connection closed");
-                }
-            }
-        }
-    }
-     */
     @Override
     protected void buildUpConnection() {
     }

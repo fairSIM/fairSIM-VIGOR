@@ -58,7 +58,7 @@ public abstract class AbstractServer extends Thread{
             out.println( handleCommand(input) );
         }
     }
-
+    
     @Override
     public void run() {
         while (true) {

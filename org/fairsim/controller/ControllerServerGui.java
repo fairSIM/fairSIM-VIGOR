@@ -18,7 +18,7 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 
 package org.fairsim.controller;
 
-import static org.fairsim.controller.ControllerServer.startServer;
+import static org.fairsim.controller.ControllerServer.startControllerServer;
 
 /**
  *
@@ -38,7 +38,7 @@ public class ControllerServerGui extends javax.swing.JFrame implements ServerGui
         initComponents();
         slm = new SlmController(this);
         arduino = new ArduinoController(this);
-        server = startServer(this, slm, arduino);
+        server = startControllerServer(this, slm, arduino);
     }
     
     /**

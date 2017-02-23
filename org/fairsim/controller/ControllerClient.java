@@ -35,6 +35,7 @@ public class ControllerClient extends AbstractClient {
     String output;
     BlockingQueue<Instruction> instructions;
     */
+    ControllerClientGui clientGui;
     String[] slmInfo;
     String[] slmList;
 
@@ -47,6 +48,7 @@ public class ControllerClient extends AbstractClient {
      */
     protected ControllerClient(String serverAdress, int serverPort, ControllerClientGui clientGui) {
         super(serverAdress, serverPort, clientGui);
+        this.clientGui = clientGui;
         /*
         clientGui.showText("Client: Trying to connect to: " + serverAdress + ":" + serverPort);
         serverSocket = new Socket(serverAdress, serverPort);
@@ -85,6 +87,7 @@ public class ControllerClient extends AbstractClient {
      * @param output optput from the server
      * @return the recived array
      */
+    /*
     private String[] receivingData(String output) {
         String[] split = output.split(";");
         String[] data = new String[split.length - 1];
@@ -93,6 +96,7 @@ public class ControllerClient extends AbstractClient {
         }
         return data;
     }
+    */
 
     /**
      * handle the answers of the host-server
@@ -102,12 +106,16 @@ public class ControllerClient extends AbstractClient {
     @Override
     protected void handleServerAnswer(String answer) {
         //clientGui.showText(output);
-        if (output.startsWith("Slm: Transfering info")) {
-            slmInfo = receivingData(output);
-        } else if (output.startsWith("Slm: Transfering rolist")) {
-            slmList = receivingData(output);
+        if (answer.startsWith("Slm: Transfering info")) {
+            slmInfo = Utilities.decodeArray(answer);
+        } else if (answer.startsWith("Slm: Transfering rolist")) {
+            slmList = Utilities.decodeArray(answer);
+        } else if (answer.startsWith("Slm: Error: ")) {
+            clientGui.handleSlmError(answer);
+        } else if (answer.startsWith("Arduino: Error: ")) {
+            clientGui.handleArduinoError(answer);
         } else {
-            clientGui.showText(output);
+            clientGui.showText(answer);
         }
     }
     

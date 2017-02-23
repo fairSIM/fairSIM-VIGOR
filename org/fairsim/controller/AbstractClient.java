@@ -26,6 +26,7 @@ import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -39,7 +40,7 @@ public abstract class AbstractClient extends Thread {
     protected Socket serverSocket;
     protected Scanner in;
     protected PrintWriter out;
-    protected String output;
+    private String output;
     protected BlockingQueue<Instruction> instructions;
 
     protected AbstractClient(String serverAdress, int serverPort, ClientGui clientGui) {
@@ -63,6 +64,20 @@ public abstract class AbstractClient extends Thread {
                 serverSocket.close();
             } catch (IOException e) {
             }
+        }
+    }
+    
+    protected void addInstruction(String command) {
+        Instruction instruction = new Instruction(command);
+        instruction.lock.lock();
+        try {
+            //disableSlmControllers();
+            instructions.add(instruction);
+            instruction.condition.await(5, TimeUnit.SECONDS);
+        } catch (InterruptedException ex) {
+            clientGui.showText("Gui: Error: Instruction timed out: " + ex.toString());
+        } finally {
+            instruction.lock.unlock();
         }
     }
 

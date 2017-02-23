@@ -315,36 +315,29 @@ public class ControllerClientGui extends javax.swing.JPanel implements ClientGui
      * @param command command for the server
      */
     void sendInstruction(String command) {
-        Instruction instruction = new Instruction(command);
-        instruction.lock.lock();
+        instructionDone = true;
+        controllerClient.addInstruction(command);
+        //enableSlmControllers();
+        /*
         try {
-            //disableSlmControllers();
-            controllerClient.instructions.add(instruction);
-            instruction.condition.await(5, TimeUnit.SECONDS);
-        } catch (InterruptedException ex) {
-            showText("Gui: Error: Instruction timed out: " + ex.toString());
-        } finally {
-            instruction.lock.unlock();
-            //enableSlmControllers();
-            try {
-                if (controllerClient.output.startsWith("Slm: Error: ")) {
-                    handleSlmError(controllerClient.output);
-                    instructionDone = false;
-                } else if (controllerClient.output.startsWith("Arduino: Error: ")) {
-                    handleArduinoError(controllerClient.output);
-                    instructionDone = false;
-                } else {
-                    instructionDone = true;
-                }
-            } catch (NullPointerException ex) {
-                showText("Gui: Error: " + ex.toString());
-                disableSlmControllers();
-                slmConnectButton.setEnabled(false);
-                disableArduinoControllers();
-                arduinoConnectButton.setEnabled(false);
+            if (controllerClient.output.startsWith("Slm: Error: ")) {
+                handleSlmError(controllerClient.output);
                 instructionDone = false;
+            } else if (controllerClient.output.startsWith("Arduino: Error: ")) {
+                handleArduinoError(controllerClient.output);
+                instructionDone = false;
+            } else {
+                
             }
+        } catch (NullPointerException ex) {
+            showText("Gui: Error: " + ex.toString());
+            disableSlmControllers();
+            slmConnectButton.setEnabled(false);
+            disableArduinoControllers();
+            arduinoConnectButton.setEnabled(false);
+            instructionDone = false;
         }
+        */
     }
 
     /**
@@ -352,7 +345,7 @@ public class ControllerClientGui extends javax.swing.JPanel implements ClientGui
      *
      * @param error Error-Massage from the SLM
      */
-    private void handleSlmError(String error) {
+    void handleSlmError(String error) {
         int code = Integer.parseInt(error.split("  ;  ")[1].split(": ")[1]);
         if (code == 12) {
             disconnectSLM();
@@ -365,6 +358,7 @@ public class ControllerClientGui extends javax.swing.JPanel implements ClientGui
             disconnectSLM();
             connectSLM();
         }
+        instructionDone = false;
     }
 
     /**
@@ -372,7 +366,7 @@ public class ControllerClientGui extends javax.swing.JPanel implements ClientGui
      *
      * @param error
      */
-    private void handleArduinoError(String error) {
+    void handleArduinoError(String error) {
         if (error.contains("Gui: Could not find COM port")) {
             disableArduinoControllers();
             arduinoConnectButton.setEnabled(true);
@@ -386,6 +380,7 @@ public class ControllerClientGui extends javax.swing.JPanel implements ClientGui
             arduinoConnectButton.setEnabled(true);
             showText("Gui: Arduino connection already in use");
         }
+        instructionDone = false;
     }
 
     /**
@@ -464,6 +459,7 @@ public class ControllerClientGui extends javax.swing.JPanel implements ClientGui
         regWfButton = new javax.swing.JToggleButton();
         regReconButton = new javax.swing.JToggleButton();
         regCreatorButton = new javax.swing.JButton();
+        camPanel = new javax.swing.JPanel();
 
         slmPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("SLM-Controller"));
         slmPanel.setName(""); // NOI18N
@@ -591,7 +587,7 @@ public class ControllerClientGui extends javax.swing.JPanel implements ClientGui
             .addGroup(clientServerPanelLayout.createSequentialGroup()
                 .addComponent(serverLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(textArea1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(textArea1, javax.swing.GroupLayout.DEFAULT_SIZE, 156, Short.MAX_VALUE))
         );
 
         arduinoPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Arduino-Controller"));
@@ -837,20 +833,34 @@ public class ControllerClientGui extends javax.swing.JPanel implements ClientGui
                 .addComponent(regCreatorButton))
         );
 
+        camPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Camera-Controller"));
+
+        javax.swing.GroupLayout camPanelLayout = new javax.swing.GroupLayout(camPanel);
+        camPanel.setLayout(camPanelLayout);
+        camPanelLayout.setHorizontalGroup(
+            camPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+        camPanelLayout.setVerticalGroup(
+            camPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 41, Short.MAX_VALUE)
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(arduinoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(clientServerPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(camPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(arduinoPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(clientServerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
                         .addComponent(softwarePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(regPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(slmPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(slmPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -860,6 +870,8 @@ public class ControllerClientGui extends javax.swing.JPanel implements ClientGui
                 .addComponent(slmPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(arduinoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(camPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(softwarePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -1130,6 +1142,7 @@ public class ControllerClientGui extends javax.swing.JPanel implements ClientGui
     private javax.swing.JToggleButton arduinoRedButton;
     private javax.swing.JButton arduinoStartButton;
     private javax.swing.JButton arduinoStopButton;
+    private javax.swing.JPanel camPanel;
     private javax.swing.JPanel clientServerPanel;
     private javax.swing.JButton regCreatorButton;
     private javax.swing.JPanel regPanel;

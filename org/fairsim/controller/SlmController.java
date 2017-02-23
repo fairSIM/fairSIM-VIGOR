@@ -154,11 +154,13 @@ public class SlmController {
                 ros[i] = R4CommLib.rpcRoGetName(i);
             }
             gui.showText("RoList-Array constructed");
+            /*
             String serverOut = "Transfering rolist";
             for (String output : ros) {
                 serverOut += ";" + output;
             }
-            return serverOut;
+            */
+            return Utilities.encodeArray("Transfering rolist", ros);
         } catch (AbstractException ex) {
             return catchedAbstractException(ex);
         }

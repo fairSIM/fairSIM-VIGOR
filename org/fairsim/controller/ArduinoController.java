@@ -14,6 +14,7 @@ import gnu.io.SerialPort;
 import gnu.io.SerialPortEvent;
 import gnu.io.SerialPortEventListener;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Enumeration;
 
 /**
@@ -121,13 +122,17 @@ public class ArduinoController implements SerialPortEventListener {
                 }
             } catch (Exception e) {
                 System.err.println("Arduino: " + e.toString());
-                close();
+                //close();
+                try {
+                    serverGui.showText("Arduino: Error: " + e.toString());
+                } catch (NullPointerException ex) {}
             }
         }
         // Ignore all the other eventTypes, but you should consider the other ones.
     }
 
-    synchronized String sendCommand(byte[] command) {
+    synchronized String sendCommand(String input) {
+        byte[] command = input.getBytes(Charset.forName("UTF-8"));
         try {
             output.write(command);
             output.flush();
@@ -159,20 +164,18 @@ public class ArduinoController implements SerialPortEventListener {
 
     public static void main(String[] args) throws IOException, InterruptedException {
         try{
-            ArduinoController main = new ArduinoController();
+            ArduinoController main = new ArduinoController(null);
+            main.connect();
+            BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+            String input;
             while (true) {
-                Thread.sleep(2000);
                 System.out.println("Command for the Microcontroller: ");
-                byte[] b = {'M', '3'};
-                main.output.write(b);
-                main.output.flush();
-                Thread.sleep(3000);
-                byte[] c = {'x'};
-                main.output.write(c);
-                main.output.flush();
+                input = in.readLine();
+                main.sendCommand(input);
             }
             //main.close();
-        } catch (Exception e) {}
-        System.out.println("Started");
+        } catch (Exception ex) {
+            System.err.println(ex);
+        }
     }
 }
