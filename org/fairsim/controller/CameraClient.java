@@ -25,24 +25,50 @@ import org.fairsim.utils.Tool;
  * @author m.lachetta
  */
 public class CameraClient extends AbstractClient {
-    private String channelName;
+    String channelName;
+    int[] rois;
+    double exposure;
     private CameraGroup[] groups;
 
     public CameraClient(String serverAdress, int serverPort, ClientGui clientGui, String channelName) {
         super(serverAdress, serverPort, clientGui);
         this.channelName = channelName;
     }
+    
+    String[] getGroupArray() {
+        int len = groups.length;
+        String[] s = new String[len];
+        for (int i = 0; i < len; i++) {
+            s[i] = groups[i].getNmae();
+        }
+        return s;
+    }
+    
+    String[] getConfigArray(int groupId) {
+        return groups[groupId].getConfigArray();
+    }
 
     @Override
     protected void handleServerAnswer(String answer) {
-        if (answer.startsWith("Transfering groups")) {
+        if (answer.startsWith("Transfering roi")) {
+            String[] sRois = Tool.decodeArray(answer);
+            int len = sRois.length;
+            rois = new int[len];
+            for (int i = 0; i < len; i++) {
+                rois[i] = Integer.parseInt(sRois[i]);
+            }
+        }
+        else if (answer.startsWith("Transfering groups")) {
             String[] groupStrings = Tool.decodeArray(answer);
             int len = groupStrings.length;
             groups = new CameraGroup[len];
             for (int i = 0; i < len; i++) {
                 groups[i] = new CameraGroup(groupStrings[i]);
             }
-        } else if (answer.startsWith("Error: ")) {
+        } else if (answer.startsWith("Exposure time: ")) {
+            exposure = Double.parseDouble(answer.split(": ")[1]);
+        }
+        else if (answer.startsWith("Error: ")) {
             //TODO
             clientGui.showText(answer);
         } else {

@@ -29,7 +29,6 @@
                   </Group>
                   <Component id="slmPanel" alignment="0" max="32767" attributes="0"/>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -42,7 +41,7 @@
               <Component id="arduinoPanel" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="camPanel" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="19" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                   <Component id="softwarePanel" max="32767" attributes="0"/>
                   <Component id="regPanel" min="-2" max="-2" attributes="0"/>
@@ -228,7 +227,7 @@
               <Group type="102" alignment="0" attributes="0">
                   <Component id="serverLabel" min="-2" pref="25" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="textArea1" pref="156" max="32767" attributes="0"/>
+                  <Component id="textArea1" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -617,15 +616,485 @@
       <Layout>
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
-              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+              <Group type="102" attributes="0">
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Group type="102" alignment="0" attributes="0">
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Component id="cam2RoiXField" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam2RoiYField" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam2RoiWField" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <Component id="cam2ChannelLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                              <Group type="102" attributes="0">
+                                  <Component id="cam2RoiLabel" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="89" max="-2" attributes="0"/>
+                                  <Component id="cam2ExposureLabel" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="32767" attributes="0"/>
+                                  <Component id="cam2StartButoon" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam2StopButoon" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <Group type="102" attributes="0">
+                                  <Component id="cam2RoiHField" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam2RoiButton" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                                  <Component id="cam2ExposureField" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam2MsLabel" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam2ExposureButton" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                                  <Component id="cam2GroupBox" min="-2" pref="75" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam2ConfigBox" min="-2" pref="75" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam2ConfigButton" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                          </Group>
+                      </Group>
+                      <Group type="102" alignment="0" attributes="0">
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Component id="cam1RoiXField" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam1RoiYField" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam1RoiWField" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <Component id="cam1ChannelLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                              <Group type="102" attributes="0">
+                                  <Component id="cam1RoiLabel" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="89" max="-2" attributes="0"/>
+                                  <Component id="cam1ExposureLabel" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="32767" attributes="0"/>
+                                  <Component id="cam1StartButoon" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam1StopButoon" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <Group type="102" attributes="0">
+                                  <Component id="cam1RoiHField" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam1RoiButton" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                                  <Component id="cam1ExposureField" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam1MsLabel" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam1ExposureButton" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                                  <Component id="cam1GroupBox" min="-2" pref="75" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam1ConfigBox" min="-2" pref="75" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam1ConfigButton" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                          </Group>
+                      </Group>
+                      <Group type="102" attributes="0">
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Component id="cam0RoiXField" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam0RoiYField" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam0RoiWField" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <Component id="cam0ChannelLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                              <Group type="102" attributes="0">
+                                  <Component id="cam0RoiLabel" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="89" max="-2" attributes="0"/>
+                                  <Component id="cam0ExposureLabel" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="32767" attributes="0"/>
+                                  <Component id="cam0StartButoon" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam0StopButoon" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <Group type="102" attributes="0">
+                                  <Component id="cam0RoiHField" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam0RoiButton" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                                  <Component id="cam0ExposureField" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam0MsLabel" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam0ExposureButton" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                                  <Component id="cam0GroupBox" min="-2" pref="75" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam0ConfigBox" min="-2" pref="75" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cam0ConfigButton" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                          </Group>
+                      </Group>
+                  </Group>
+                  <EmptySpace max="32767" attributes="0"/>
+              </Group>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
-              <EmptySpace min="0" pref="41" max="32767" attributes="0"/>
+              <Group type="102" alignment="0" attributes="0">
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="cam0ChannelLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam0RoiLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam0ExposureLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam0StopButoon" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam0StartButoon" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="cam0RoiButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam0RoiXField" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam0RoiYField" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam0RoiWField" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam0RoiHField" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam0ExposureButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam0ExposureField" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam0MsLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam0GroupBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam0ConfigBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam0ConfigButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="cam1ChannelLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam1RoiLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam1ExposureLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam1StopButoon" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam1StartButoon" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="cam1RoiButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam1RoiXField" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam1RoiYField" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam1RoiWField" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam1RoiHField" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam1ExposureButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam1ExposureField" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam1MsLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam1GroupBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam1ConfigBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam1ConfigButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="cam2ChannelLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam2RoiLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam2ExposureLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam2StopButoon" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam2StartButoon" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="cam2RoiButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam2RoiXField" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam2RoiYField" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam2RoiWField" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam2RoiHField" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam2ExposureButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam2ExposureField" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam2MsLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam2GroupBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam2ConfigBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cam2ConfigButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <EmptySpace max="32767" attributes="0"/>
+              </Group>
           </Group>
         </DimensionLayout>
       </Layout>
+      <SubComponents>
+        <Component class="javax.swing.JLabel" name="cam0ChannelLabel">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Channel: - "/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JButton" name="cam0RoiButton">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Set ROI"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JTextField" name="cam0RoiXField">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="751"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JTextField" name="cam0RoiYField">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="765"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JTextField" name="cam0RoiWField">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="520"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JTextField" name="cam0RoiHField">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="520"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JButton" name="cam0ExposureButton">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Set Exposure"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JTextField" name="cam0ExposureField">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="2500"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="cam0MsLabel">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="ms"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JComboBox" name="cam0GroupBox">
+          <Properties>
+            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+              <StringArray count="0"/>
+            </Property>
+          </Properties>
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+          </AuxValues>
+        </Component>
+        <Component class="javax.swing.JComboBox" name="cam0ConfigBox">
+          <Properties>
+            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+              <StringArray count="0"/>
+            </Property>
+          </Properties>
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+          </AuxValues>
+        </Component>
+        <Component class="javax.swing.JButton" name="cam0ConfigButton">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Set Config"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="cam0RoiLabel">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="ROI: -"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="cam0ExposureLabel">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Exposure Time: - "/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="cam1ChannelLabel">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Channel: - "/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="cam1RoiLabel">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="ROI: -"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="cam1ExposureLabel">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Exposure Time: - "/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JTextField" name="cam1RoiXField">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="751"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JTextField" name="cam1RoiYField">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="765"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JTextField" name="cam1RoiWField">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="520"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JTextField" name="cam1RoiHField">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="520"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JButton" name="cam1RoiButton">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Set ROI"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JTextField" name="cam1ExposureField">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="2500"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="cam1MsLabel">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="ms"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JButton" name="cam1ExposureButton">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Set Exposure"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JComboBox" name="cam1GroupBox">
+          <Properties>
+            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+              <StringArray count="0"/>
+            </Property>
+          </Properties>
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+          </AuxValues>
+        </Component>
+        <Component class="javax.swing.JComboBox" name="cam1ConfigBox">
+          <Properties>
+            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+              <StringArray count="0"/>
+            </Property>
+          </Properties>
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+          </AuxValues>
+        </Component>
+        <Component class="javax.swing.JButton" name="cam1ConfigButton">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Set Config"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="cam2ChannelLabel">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Channel: - "/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JTextField" name="cam2RoiXField">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="751"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JTextField" name="cam2RoiYField">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="765"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JTextField" name="cam2RoiWField">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="520"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JTextField" name="cam2RoiHField">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="520"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="cam2RoiLabel">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="ROI: -"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JButton" name="cam2RoiButton">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Set ROI"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JTextField" name="cam2ExposureField">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="2500"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="cam2ExposureLabel">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Exposure Time: - "/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="cam2MsLabel">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="ms"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JButton" name="cam2ExposureButton">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Set Exposure"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JComboBox" name="cam2GroupBox">
+          <Properties>
+            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+              <StringArray count="0"/>
+            </Property>
+          </Properties>
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+          </AuxValues>
+        </Component>
+        <Component class="javax.swing.JComboBox" name="cam2ConfigBox">
+          <Properties>
+            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+              <StringArray count="0"/>
+            </Property>
+          </Properties>
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+          </AuxValues>
+        </Component>
+        <Component class="javax.swing.JButton" name="cam2ConfigButton">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Set Config"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JButton" name="cam0StopButoon">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Stop Acquisition"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JButton" name="cam0StartButoon">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Start Acquisition"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cam0StartButoonActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JButton" name="cam1StopButoon">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Stop Acquisition"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JButton" name="cam1StartButoon">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Start Acquisition"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JButton" name="cam2StopButoon">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Stop Acquisition"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JButton" name="cam2StartButoon">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Start Acquisition"/>
+          </Properties>
+        </Component>
+      </SubComponents>
     </Container>
   </SubComponents>
 </Form>

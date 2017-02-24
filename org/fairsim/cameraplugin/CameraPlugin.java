@@ -24,8 +24,6 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import org.fairsim.sim_gui.PlainImageDisplay;
 import org.fairsim.transport.ImageSender;
@@ -49,10 +47,10 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
     CameraGroup[] groups;
     int camBuffer;
     ImageWrapper iw;
-    int rioX;
-    int rioY;
-    int rioWidth;
-    int rioHeight;
+    int roiX;
+    int roiY;
+    int roiWidth;
+    int roiHeight;
     int camWidth;
     int camHeight;
     int sendWidth;
@@ -84,7 +82,7 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         camBuffer = bufferSize;
         try {
             mmc.stopSequenceAcquisition();
-            setROI(xROI, yROI, wROI, hROI);
+            setRoi(xROI, yROI, wROI, hROI);
             mmc.setCircularBufferMemoryFootprint(camBuffer);
             mmc.initializeCircularBuffer();
             camWidth = (int) mmc.getImageWidth();
@@ -118,7 +116,7 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
 
     void shutdownThreads() {
         acquisition = false;
-        acquisitionThread.interrupt();
+        if (acquisitionThread != null) acquisitionThread.interrupt();
         isend.shutdownThreads();
     }
 
@@ -164,7 +162,7 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
                             t1.start();
                         }
                         // display image all 56 images
-                        if (count % 5 == 0) {
+                        if (count % 56 == 0) {
                             view.newImage(0, imgData);
                             view.refresh();
                         }
@@ -217,41 +215,41 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         }
     }
 
-    void setROI(int x, int y, int width, int height) throws CameraException {
+    void setRoi(int x, int y, int width, int height) throws CameraException {
         try {
             mmc.clearROI();
             mmc.setROI(x, y, width, height);
         } catch (Exception ex) {
             throw new CameraException("unable to set ROI");
         }
-        updateRIO();
-        if (rioX != x || rioY != y || rioWidth != width || rioHeight != height) {
+        updateRoi();
+        if (roiX != x || roiY != y || roiWidth != width || roiHeight != height) {
             displayMessage("ROI was set wrong \n"
-                    + "x = " + rioX + "; y = " + rioY + "; width = " + rioWidth + "; height = " + rioHeight);
+                    + "x = " + roiX + "; y = " + roiY + "; width = " + roiWidth + "; height = " + roiHeight);
         }
     }
 
-    int[] getRIO() throws CameraException {
-        updateRIO();
-        int[] rio = new int[4];
-        rio[0] = rioX;
-        rio[1] = rioY;
-        rio[2] = rioWidth;
-        rio[3] = rioHeight;
-        return rio;
+    int[] getRoi() throws CameraException {
+        updateRoi();
+        int[] roi = new int[4];
+        roi[0] = roiX;
+        roi[1] = roiY;
+        roi[2] = roiWidth;
+        roi[3] = roiHeight;
+        return roi;
     }
 
-    private void updateRIO() throws CameraException {
+    private void updateRoi() throws CameraException {
         int[] x1 = new int[1];
         int[] y1 = new int[1];
         int[] w1 = new int[1];
         int[] h1 = new int[1];
         try {
             mmc.getROI(x1, y1, w1, h1);
-            rioX = x1[0];
-            rioY = y1[0];
-            rioWidth = w1[0];
-            rioHeight = h1[0];
+            roiX = x1[0];
+            roiY = y1[0];
+            roiWidth = w1[0];
+            roiHeight = h1[0];
         } catch (Exception ex) {
             throw new CameraException("unable to update ROI");
         }
@@ -337,9 +335,11 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
     @Override
     public void setApp(ScriptInterface si) {
         try {
+            System.out.println("sicherheits nachricht");
             initPlugin(si);
             prepareAcquisition(751, 765, 520, 520, 1000, 512, 512);
-            startAcquisition();
+            guiFrame.startButton.setEnabled(true);
+            guiFrame.stopButton.setEnabled(false);
         } catch (CameraException | IOException ex) {
             System.out.println(ex);
         }

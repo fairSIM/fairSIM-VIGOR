@@ -40,6 +40,7 @@ public abstract class AbstractClient extends Thread {
     protected Socket serverSocket;
     protected Scanner in;
     protected PrintWriter out;
+    protected final int TIMEOUT = 5;
     private String output;
     protected BlockingQueue<Instruction> instructions;
 
@@ -71,9 +72,8 @@ public abstract class AbstractClient extends Thread {
         Instruction instruction = new Instruction(command);
         instruction.lock.lock();
         try {
-            //disableSlmControllers();
             instructions.add(instruction);
-            instruction.condition.await(5, TimeUnit.SECONDS);
+            instruction.condition.await(TIMEOUT, TimeUnit.SECONDS);
         } catch (InterruptedException ex) {
             clientGui.showText("Gui: Error: Instruction timed out: " + ex.toString());
         } finally {
@@ -88,8 +88,13 @@ public abstract class AbstractClient extends Thread {
         while (!isInterrupted()) {
             try {
                 connectToServer();
-                clientGui.registerClient(this);
                 Instruction input;
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        clientGui.registerClient(AbstractClient.this);
+                    }
+                }).start();
                 while (!isInterrupted()) {
                     input = instructions.take();
                     input.lock.lock();

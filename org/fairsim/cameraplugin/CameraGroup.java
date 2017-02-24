@@ -34,15 +34,24 @@ public class CameraGroup {
     }
     
     public CameraGroup(String encodedCameraGroup) {
-        group = encodedCameraGroup.split(";");
+        group = encodedCameraGroup.split(",");
     }
     
-    String getNmae() {
+    public String getNmae() {
         return group[0];
     }
     
-    String getConfig(int configId) {
+    public String getConfig(int configId) {
         return group[configId+1];
+    }
+    
+    public String[] getConfigArray() {
+        int len = group.length - 1;
+        String[] s = new String[len];
+        for (int i = 0; i < len; i++) {
+            s[i] = group[i+1];
+        }
+        return s;
     }
     
     String encode() {

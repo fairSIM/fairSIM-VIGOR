@@ -232,7 +232,7 @@ public final class Tool {
         return data;
     }
 
-    public static String encodeArray(String prefix, String[] array) {
+    private static String encodeArray(String prefix, String[] array) {
         int len = array.length;
         String output = prefix;
         if (len == 0) {
@@ -242,6 +242,28 @@ public final class Tool {
                 output += ";" + array[i];
             }
             return output;
+        }
+    }
+    
+    public static String encodeArray(String prefix, int[] array) {
+        int len = array.length;
+        String[] sArray = new String[len];
+        for (int i = 0; i < len; i++) {
+            sArray[i] = Integer.toString(array[i]);
+        }
+        return encodeArray(prefix, sArray);
+    }
+    
+    public static <T> String encodeArray(String prefix, T[] array) {
+        if (array instanceof String[]) {
+            return encodeArray(prefix, (String[])array);
+        } else {
+            int len = array.length;
+            String[] sArray = new String[len];
+            for (int i = 0; i < len; i++) {
+                sArray[i] = array[i].toString();
+            }
+            return encodeArray(prefix, sArray);
         }
     }
 

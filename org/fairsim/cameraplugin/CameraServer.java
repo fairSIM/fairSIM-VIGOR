@@ -27,37 +27,35 @@ import org.fairsim.utils.Tool;
  * @author m.lachetta
  */
 public class CameraServer extends AbstractServer {
+
     CameraPlugin cp;
+
     private CameraServer(CameraServerGui cameraGui, CameraPlugin cp) throws IOException {
         super(cameraGui);
         this.cp = cp;
     }
-    
-    private String setRIO(int x, int y, int width, int height) {
+
+    private String setRoi(int x, int y, int width, int height) {
         try {
             cp.stopAcquisition();
-            cp.setROI(x, y, width, height);
-            int[] rio = cp.getRIO();
-            return "RIO was set to: (" + rio[0] + ", " + rio[1] + ", " + rio[2] + ", " + rio[3] + ")";
+            cp.setRoi(x, y, width, height);
+            int[] roi = cp.getRoi();
+            return "ROI was set to: (" + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ")";
         } catch (CameraPlugin.CameraException ex) {
             return ex.toString();
         }
     }
-    
-    private String getRIO() {
+
+    private String getRoi() {
         try {
-            int[] rio = cp.getRIO();
-            String serverOut = "Transfering RIO";
-            for (int output : rio) {
-                serverOut += ";" + output;
-            }
-            return serverOut;
+            int[] roi = cp.getRoi();
+            return Tool.encodeArray("Transfering roi", roi);
         } catch (CameraPlugin.CameraException ex) {
             return ex.toString();
         }
     }
-    
-        private String setExposureTime(double time) {
+
+    private String setExposureTime(double time) {
         try {
             cp.setExposureTime(time);
             return "Exposure time was set to: " + cp.getExposureTime() + "ms";
@@ -65,15 +63,15 @@ public class CameraServer extends AbstractServer {
             return ex.toString();
         }
     }
-    
+
     private String getExposureTime() {
         try {
-            return Double.toString(cp.getExposureTime());
+            return "Exposure time: " + cp.getExposureTime();
         } catch (CameraPlugin.CameraException ex) {
             return ex.toString();
         }
     }
-    
+
     private String getGroups() {
         try {
             CameraGroup[] groups = cp.getGroups();
@@ -87,8 +85,8 @@ public class CameraServer extends AbstractServer {
             return ex.toString();
         }
     }
-    
-    private String setConfig(int groupId, int configId){
+
+    private String setConfig(int groupId, int configId) {
         try {
             cp.setConfig(groupId, configId);
             return "Config has been set";
@@ -98,16 +96,28 @@ public class CameraServer extends AbstractServer {
     }
 
     @Override
-    protected void buildUpConnection() {}
-
-    @Override
-    protected void buildDownConnection() {}
-
-    @Override
-    protected String handleCommand(String string) throws IOException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    protected void buildUpConnection() {
     }
-    
+
+    @Override
+    protected void buildDownConnection() {
+    }
+
+    @Override
+    protected String handleCommand(String input) {
+        System.out.println("Recived command: " + input);
+        String serverOut = "---";
+        if (input.equals("get roi")) {
+            return this.getRoi();
+        } else if (input.equals("get exposure")) {
+            return this.getExposureTime();
+        } else if (input.equals("get groups")) {
+            return this.getGroups();
+        } else {
+            return "Camera server do not know what to do with '" + input + "'";
+        }
+    }
+
     static CameraServer startCameraServer(CameraServerGui gui, CameraPlugin cp) {
         try {
             CameraServer serverObject = new CameraServer(gui, cp);

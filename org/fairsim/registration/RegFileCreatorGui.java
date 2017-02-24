@@ -128,7 +128,7 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
 
         fDefLabel.setText("Final Deformation");
 
-        fDefField.setText("2");
+        fDefField.setText("0");
 
         divergenceLabel.setText("Divergence Weight");
 

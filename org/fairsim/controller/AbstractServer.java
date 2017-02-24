@@ -44,7 +44,7 @@ public abstract class AbstractServer extends Thread{
 
     protected abstract void buildUpConnection();
     protected abstract void buildDownConnection();
-    protected abstract String handleCommand(String input) throws IOException;
+    protected abstract String handleCommand(String input);
     
     private void handleConnection() throws IOException {
         String input;
