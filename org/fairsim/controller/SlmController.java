@@ -21,6 +21,7 @@ package org.fairsim.controller;
 import com.forthdd.commlib.exceptions.AbstractException;
 import com.forthdd.commlib.exceptions.CommException;
 import com.forthdd.commlib.r4.R4CommLib;
+import org.fairsim.utils.Tool;
 
 /**
  *
@@ -160,7 +161,7 @@ public class SlmController {
                 serverOut += ";" + output;
             }
             */
-            return Utilities.encodeArray("Transfering rolist", ros);
+            return Tool.encodeArray("Transfering rolist", ros);
         } catch (AbstractException ex) {
             return catchedAbstractException(ex);
         }

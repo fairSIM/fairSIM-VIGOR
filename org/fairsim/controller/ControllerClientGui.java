@@ -22,7 +22,6 @@ import java.awt.Component;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.DataFormatException;
@@ -31,6 +30,7 @@ import org.fairsim.livemode.SimSequenceExtractor;
 import org.fairsim.registration.RegFileCreatorGui;
 import org.fairsim.registration.Registration;
 import org.fairsim.utils.Conf;
+import org.fairsim.utils.Tool;
 
 /**
  *
@@ -38,14 +38,13 @@ import org.fairsim.utils.Conf;
  */
 public class ControllerClientGui extends javax.swing.JPanel implements ClientGui {
 
-    ControllerClient controllerClient;
-    private List<Component> slmControllers;
-    private List<Component> arduinoControllers;
+    private ControllerClient controllerClient;
+    private List<CameraClient> camClients;
+    private List<Component> slmControllers, arduinoControllers;
     private List<String> arduinoCommands;
     private boolean instructionDone;
-    String serverAdress;
-    int serverPort;
-    String regFolder;
+    String controllerAdress, redCamAdress, greenCamAdress, blueCamAdress, regFolder;
+    int TCPPort;
     String[] channelNames;
     SimSequenceExtractor seqDetection;
     ReconstructionRunner recRunner;
@@ -60,35 +59,31 @@ public class ControllerClientGui extends javax.swing.JPanel implements ClientGui
     public ControllerClientGui(Conf.Folder cfg, String[] channelNames, SimSequenceExtractor seqDetection, ReconstructionRunner recRunner) {
         this.seqDetection = seqDetection;
         this.recRunner = recRunner;
-
-        initComponents();
-
-        try {
-            serverAdress = cfg.getStr("SlmServerAdress").val();
-        } catch (Conf.EntryNotFoundException ex) {
-            serverAdress = "localhost";
-            System.err.println("[fairSIM]: Error: no SlmServerAdress found. SLMServerAdress set to 'localhost'");
-        }
-        try {
-            serverPort = cfg.getInt("SlmServerPort").val();
-        } catch (Conf.EntryNotFoundException ex) {
-            serverPort = 32322;
-            System.err.println("[fairSIM]: Error: no SlmServerPort found. SLMServerPort set to '32322'");
-        }
-
         this.channelNames = channelNames;
-
+        try {
+            controllerAdress = cfg.getStr("ControllerAdress").val();
+        } catch (Conf.EntryNotFoundException ex) {
+            controllerAdress = "localhost";
+            Tool.error("[fairSIM] No ControllerAdress found. ControllerAdress set to 'localhost'", false);
+        }
+        try {
+            TCPPort = cfg.getInt("TCPPort").val();
+        } catch (Conf.EntryNotFoundException ex) {
+            TCPPort = 32322;
+            Tool.error("[fairSIM] No TCPPort found. TCPPort set to '32322'", false);
+        }
+        initComponents();
         //ControllerClient.startClient(serverAdress, serverPort, this);
-        controllerClient = new ControllerClient(serverAdress, serverPort, this);
+        controllerClient = new ControllerClient(controllerAdress, TCPPort, this);
         controllerClient.start();
-        setConnectionLabel(serverAdress, serverPort);
-
+        setConnectionLabel(controllerAdress, TCPPort);
+        initCams(cfg);
         initSlm();
         initArduino();
         initSync();
         initReg(cfg);
     }
-
+    
     /**
      * Initialises the GUI for the SLM
      */
@@ -182,10 +177,10 @@ public class ControllerClientGui extends javax.swing.JPanel implements ClientGui
             regReconButton.setEnabled(false);
             regWfButton.setEnabled(false);
             regCreatorButton.setEnabled(false);
-            System.err.println(ex.getMessage());
+            Tool.error("[fairSIM] " + ex.getMessage(), false);
         } catch (ClassNotFoundException ex) {
             regCreatorButton.setEnabled(false);
-            System.err.println("[fairSIM]: Error: jar files for bunwarpj and/or imagej are missing. Deaktived registration-creator.");
+            Tool.error("[fairSIM] Jar files for bunwarpj and/or imagej are missing. Deaktived registration-creator.", false);
         }
         for (final String channel : channelNames) {
             new Thread(new Runnable() {
@@ -194,6 +189,46 @@ public class ControllerClientGui extends javax.swing.JPanel implements ClientGui
                     Registration.createRegistration(regFolder, channel);
                 }
             }).start();
+        }
+    }
+    
+    private void initCams(Conf.Folder cfg) {
+        int len = channelNames.length;
+        //readin cam adresses
+        String[] adresses = new String[len];
+        for (int i = 0; i < len; i++) {
+            try {
+                Conf.Folder fld = cfg.cd("channel-" + channelNames[i]);
+                adresses[i] = fld.getStr("CamAdress").val();
+            } catch (Conf.EntryNotFoundException ex) {
+                adresses[i] = null;
+                Tool.error("[fairSIM] No camera adress found for channel " + channelNames[i], false);
+            }
+        }
+        //check for doublicates
+        for (int i = 0; i < len; i++) {
+            if (adresses[i] != null) {
+                if (adresses[i].equals(controllerAdress)) {
+                    adresses[i] = null;
+                    Tool.error("[fairSIM] Camera adress of channel '" + channelNames[i] + "' equals controller adress", false);
+                } else {
+                    for (int j = 0; j < len; j++) {
+                        if (i != j && adresses[i].equals(adresses[j])) {
+                            adresses[j] = null;
+                            Tool.error("[fairSIM] Camera adress of channel '" + channelNames[j] + "' equals camera adress of channel " + channelNames[i], false);
+                        }
+                    }
+                }
+            }
+        }
+        //start camera clients
+        camClients = new ArrayList<>();
+        for (int i = 0; i < len; i++) {
+            if (adresses[i] != null) {
+                CameraClient c = new CameraClient(controllerAdress, TCPPort, this, channelNames[i]);
+                c.start();
+                camClients.add(c);
+            }
         }
     }
 
@@ -212,7 +247,7 @@ public class ControllerClientGui extends javax.swing.JPanel implements ClientGui
      * @param adress server adress
      * @param port server port
      */
-    void setConnectionLabel(String adress, int port) {
+    private void setConnectionLabel(String adress, int port) {
         serverLabel.setText("Server: " + adress + ":" + port);
     }
 
@@ -406,7 +441,7 @@ public class ControllerClientGui extends javax.swing.JPanel implements ClientGui
             }
         } catch (NullPointerException ex) {
             System.err.println("Error while refreshing SLM-GUI");
-            showText("Gui: Error: while refreshing SLM-GUI");
+            showText("[fairSIM] Error while refreshing SLM-GUI");
         }
     }
 

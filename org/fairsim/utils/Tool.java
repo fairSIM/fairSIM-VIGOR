@@ -222,7 +222,28 @@ public final class Tool {
 	    return String.format("%10.3f ms",(outtime/1000000.));
 	}
     }
+    
+    public static String[] decodeArray(String encodedArray) {
+        String[] split = encodedArray.split(";");
+        String[] data = new String[split.length - 1];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = split[i + 1];
+        }
+        return data;
+    }
 
+    public static String encodeArray(String prefix, String[] array) {
+        int len = array.length;
+        String output = prefix;
+        if (len == 0) {
+            return output;
+        } else {
+            for (int i = 0; i < len; i++) {
+                output += ";" + array[i];
+            }
+            return output;
+        }
+    }
 
     /** A generic callback interface */
     public static interface Callback<T> {

@@ -1,8 +1,8 @@
 <fairsim>
 <vigor-settings>
 
-<SlmServerAdress type="string">Atana</SlmServerAdress>
-<SlmServerPort type="int">32322</SlmServerPort>
+<ControllerAdress type="string">Atana</ControllerAdress>
+<TCPPort type="int">32322</TCPPort>
 
 <RawPxlCount type="int">512</RawPxlCount>
 <RawPxlSize type="decimal">0.08</RawPxlSize>
@@ -29,6 +29,7 @@
 
 <offset type="decimal">140</offset>
 <ChannelNumber type="int">488</ChannelNumber>
+<CamAdress type="string">localhost</CamAdress>
 
 <sim-param>
 <nr-angles type="int"> 3 </nr-angles>
@@ -71,7 +72,7 @@
 
 <offset type="decimal">140</offset>
 <ChannelNumber type="int">568</ChannelNumber>
-
+<CamAdress type="string">localhost</CamAdress>
 
 <sim-param>
 <nr-angles type="int"> 3 </nr-angles>
@@ -119,6 +120,7 @@
 
 <offset type="decimal">140</offset>
 <ChannelNumber type="int">647</ChannelNumber>
+<CamAdress type="string">localhost</CamAdress>
 
 <sim-param>
 <nr-angles type="int"> 3 </nr-angles>

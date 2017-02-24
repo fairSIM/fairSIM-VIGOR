@@ -85,12 +85,12 @@ public abstract class AbstractClient extends Thread {
 
     @Override
     public void run() {
-        while (true) {
+        while (!isInterrupted()) {
             try {
                 connectToServer();
                 clientGui.registerClient(this);
                 Instruction input;
-                while (true) {
+                while (!isInterrupted()) {
                     input = instructions.take();
                     input.lock.lock();
                     try {
@@ -111,6 +111,7 @@ public abstract class AbstractClient extends Thread {
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException ex) {
+                    interrupt();
                     clientGui.showText("Client: Error: InterruptedException 1");
                 }
             } catch (IOException e) {

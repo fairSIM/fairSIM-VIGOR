@@ -17,19 +17,37 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
  */
 package org.fairsim.controller;
 
+import org.fairsim.cameraplugin.CameraGroup;
+import org.fairsim.utils.Tool;
+
 /**
  *
  * @author m.lachetta
  */
 public class CameraClient extends AbstractClient {
+    private String channelName;
+    private CameraGroup[] groups;
 
-    public CameraClient(String serverAdress, int serverPort, ClientGui clientGui) {
+    public CameraClient(String serverAdress, int serverPort, ClientGui clientGui, String channelName) {
         super(serverAdress, serverPort, clientGui);
+        this.channelName = channelName;
     }
 
     @Override
     protected void handleServerAnswer(String answer) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (answer.startsWith("Transfering groups")) {
+            String[] groupStrings = Tool.decodeArray(answer);
+            int len = groupStrings.length;
+            groups = new CameraGroup[len];
+            for (int i = 0; i < len; i++) {
+                groups[i] = new CameraGroup(groupStrings[i]);
+            }
+        } else if (answer.startsWith("Error: ")) {
+            //TODO
+            clientGui.showText(answer);
+        } else {
+            clientGui.showText(answer);
+        }
     }
     
 }

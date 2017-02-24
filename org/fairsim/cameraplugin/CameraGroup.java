@@ -33,7 +33,7 @@ public class CameraGroup {
         }
     }
     
-    CameraGroup(String encodedCameraGroup) {
+    public CameraGroup(String encodedCameraGroup) {
         group = encodedCameraGroup.split(";");
     }
     

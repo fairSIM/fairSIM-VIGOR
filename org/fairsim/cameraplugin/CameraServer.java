@@ -20,7 +20,7 @@ package org.fairsim.cameraplugin;
 
 import java.io.IOException;
 import org.fairsim.controller.AbstractServer;
-import org.fairsim.controller.Utilities;
+import org.fairsim.utils.Tool;
 
 /**
  *
@@ -82,7 +82,7 @@ public class CameraServer extends AbstractServer {
             for (int i = 0; i < len; i++) {
                 groupStrings[i] = groups[i].encode();
             }
-            return Utilities.encodeArray("Transfering groups", groupStrings);
+            return Tool.encodeArray("Transfering groups", groupStrings);
         } catch (CameraPlugin.CameraException ex) {
             return ex.toString();
         }

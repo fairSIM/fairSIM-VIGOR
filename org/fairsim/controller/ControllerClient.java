@@ -18,6 +18,8 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 
 package org.fairsim.controller;
 
+import org.fairsim.utils.Tool;
+
 /**
  * Class of the Client in the communikation chain <br>
  * SLM - Server - Client - GUI
@@ -107,9 +109,9 @@ public class ControllerClient extends AbstractClient {
     protected void handleServerAnswer(String answer) {
         //clientGui.showText(output);
         if (answer.startsWith("Slm: Transfering info")) {
-            slmInfo = Utilities.decodeArray(answer);
+            slmInfo = Tool.decodeArray(answer);
         } else if (answer.startsWith("Slm: Transfering rolist")) {
-            slmList = Utilities.decodeArray(answer);
+            slmList = Tool.decodeArray(answer);
         } else if (answer.startsWith("Slm: Error: ")) {
             clientGui.handleSlmError(answer);
         } else if (answer.startsWith("Arduino: Error: ")) {
