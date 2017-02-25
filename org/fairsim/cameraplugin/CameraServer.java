@@ -40,7 +40,9 @@ public class CameraServer extends AbstractServer {
             cp.stopAcquisition();
             cp.setRoi(x, y, width, height);
             int[] roi = cp.getRoi();
-            return "ROI was set to: (" + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ")";
+            String output = "ROI was set to: (" + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ")";
+            gui.showText(output);
+            return output;
         } catch (CameraPlugin.CameraException ex) {
             return ex.toString();
         }
@@ -49,6 +51,7 @@ public class CameraServer extends AbstractServer {
     private String getRoi() {
         try {
             int[] roi = cp.getRoi();
+            gui.showText("Transfering roi");
             return Tool.encodeArray("Transfering roi", roi);
         } catch (CameraPlugin.CameraException ex) {
             return ex.toString();
@@ -58,7 +61,9 @@ public class CameraServer extends AbstractServer {
     private String setExposureTime(double time) {
         try {
             cp.setExposureTime(time);
-            return "Exposure time was set to: " + cp.getExposureTime() + "ms";
+            String output = "Exposure time was set to: " + cp.getExposureTime() + "ms";
+            gui.showText(output);
+            return output;
         } catch (CameraPlugin.CameraException ex) {
             return ex.toString();
         }
@@ -66,7 +71,9 @@ public class CameraServer extends AbstractServer {
 
     private String getExposureTime() {
         try {
-            return "Exposure time: " + cp.getExposureTime();
+            String output = "Transfering exposure time;" + cp.getExposureTime();
+            gui.showText(output);
+            return output;
         } catch (CameraPlugin.CameraException ex) {
             return ex.toString();
         }
@@ -80,6 +87,7 @@ public class CameraServer extends AbstractServer {
             for (int i = 0; i < len; i++) {
                 groupStrings[i] = groups[i].encode();
             }
+            gui.showText("Transfering groups");
             return Tool.encodeArray("Transfering groups", groupStrings);
         } catch (CameraPlugin.CameraException ex) {
             return ex.toString();
@@ -89,10 +97,26 @@ public class CameraServer extends AbstractServer {
     private String setConfig(int groupId, int configId) {
         try {
             cp.setConfig(groupId, configId);
-            return "Config has been set";
+            String output = "New config has been set";
+            gui.showText(output);
+            return output;
         } catch (CameraPlugin.CameraException ex) {
             return ex.toString();
         }
+    }
+    
+    private String startAcquisition() {
+        cp.startAcquisition();
+        String output = "Acquisition started";
+        gui.showText(output);
+        return output;
+    }
+    
+    private String stopAcquisition() {
+        cp.stopAcquisition();
+        String output = "Acquisition stopped";
+        gui.showText(output);
+        return output;
     }
 
     @Override
@@ -105,14 +129,32 @@ public class CameraServer extends AbstractServer {
 
     @Override
     protected String handleCommand(String input) {
-        System.out.println("Recived command: " + input);
-        String serverOut = "---";
         if (input.equals("get roi")) {
-            return this.getRoi();
+            return getRoi();
         } else if (input.equals("get exposure")) {
-            return this.getExposureTime();
+            return getExposureTime();
         } else if (input.equals("get groups")) {
-            return this.getGroups();
+            return getGroups();
+        } else if (input.startsWith("set roi")) {
+            String[] sRoi = Tool.decodeArray(input);
+            int x = Integer.parseInt(sRoi[0]);
+            int y = Integer.parseInt(sRoi[1]);
+            int w = Integer.parseInt(sRoi[2]);
+            int h = Integer.parseInt(sRoi[3]);
+            return setRoi(x, y, w, h);
+        } else if (input.startsWith("set exposure")) {
+            String exposureString = input.split(";")[1];
+            double exposureDouble = Double.parseDouble(exposureString);
+            return setExposureTime(exposureDouble);
+        } else if (input.startsWith("set config")) {
+            String[] stringIds = Tool.decodeArray(input);
+            int groupId = Integer.parseInt(stringIds[0]);
+            int configId = Integer.parseInt(stringIds[1]);
+            return setConfig(groupId, configId);
+        } else if (input.equals("start")) {
+            return startAcquisition();
+        } else if (input.equals("stop")) {
+            return stopAcquisition();
         } else {
             return "Camera server do not know what to do with '" + input + "'";
         }

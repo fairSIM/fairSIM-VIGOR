@@ -26,13 +26,15 @@ import org.fairsim.utils.Tool;
  */
 public class CameraClient extends AbstractClient {
     String channelName;
+    ControllerClientGui clientGui;
     int[] rois;
     double exposure;
     private CameraGroup[] groups;
 
-    public CameraClient(String serverAdress, int serverPort, ClientGui clientGui, String channelName) {
+    public CameraClient(String serverAdress, int serverPort, ControllerClientGui clientGui, String channelName) {
         super(serverAdress, serverPort, clientGui);
         this.channelName = channelName;
+        this.clientGui = clientGui;
     }
     
     String[] getGroupArray() {
@@ -65,12 +67,12 @@ public class CameraClient extends AbstractClient {
             for (int i = 0; i < len; i++) {
                 groups[i] = new CameraGroup(groupStrings[i]);
             }
-        } else if (answer.startsWith("Exposure time: ")) {
-            exposure = Double.parseDouble(answer.split(": ")[1]);
-        }
-        else if (answer.startsWith("Error: ")) {
-            //TODO
-            clientGui.showText(answer);
+        } else if (answer.startsWith("Transfering exposure time")) {
+            exposure = Double.parseDouble(answer.split(";")[1]);
+        } else if (answer.startsWith("Acquisition")) {
+            //do nothing
+        } else if (answer.startsWith("Error: ")) {
+            clientGui.handleCamError(answer, this);
         } else {
             clientGui.showText(answer);
         }

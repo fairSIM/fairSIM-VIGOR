@@ -45,8 +45,9 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
     int channel;
     List<String> sendIps;
     CameraGroup[] groups;
-    int camBuffer;
+    private final int CAMBUFFER = 1000;
     ImageWrapper iw;
+    private final int ROILENGTH = 4;
     int roiX;
     int roiY;
     int roiWidth;
@@ -78,17 +79,12 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         readinInfo();
     }
 
-    void prepareAcquisition(int xROI, int yROI, int wROI, int hROI, int bufferSize, int sendWidth, int sendHeight) throws CameraException {
-        camBuffer = bufferSize;
+    void prepareAcquisition(int xROI, int yROI, int wROI, int hROI) throws CameraException {
         try {
             mmc.stopSequenceAcquisition();
             setRoi(xROI, yROI, wROI, hROI);
-            mmc.setCircularBufferMemoryFootprint(camBuffer);
+            mmc.setCircularBufferMemoryFootprint(CAMBUFFER);
             mmc.initializeCircularBuffer();
-            camWidth = (int) mmc.getImageWidth();
-            camHeight = (int) mmc.getImageHeight();
-            this.sendWidth = sendWidth;
-            this.sendHeight = sendHeight;
             guiFrame = new CameraServerGui(camWidth, camHeight, this);
             guiFrame.setVisible(true);
             view = guiFrame.getView();
@@ -101,17 +97,17 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
     }
 
     void startAcquisition() {
-        this.guiFrame.startButton.setEnabled(false);
-        this.guiFrame.stopButton.setEnabled(true);
+        guiFrame.startButton.setEnabled(false);
+        guiFrame.stopButton.setEnabled(true);
         acquisitionThread = new AcquisitionThread();
         acquisitionThread.start();
     }
 
     void stopAcquisition() {
-        this.guiFrame.startButton.setEnabled(true);
-        this.guiFrame.stopButton.setEnabled(false);
+        guiFrame.startButton.setEnabled(true);
+        guiFrame.stopButton.setEnabled(false);
         acquisition = false;
-        acquisitionThread.interrupt();
+        if (acquisitionThread != null) acquisitionThread.interrupt();
     }
 
     void shutdownThreads() {
@@ -227,11 +223,19 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
             displayMessage("ROI was set wrong \n"
                     + "x = " + roiX + "; y = " + roiY + "; width = " + roiWidth + "; height = " + roiHeight);
         }
+        if (roiWidth < 512 || roiHeight < 512) {
+            sendWidth = sendHeight = 256;
+        } else {
+            sendWidth = sendHeight = 512;
+        }
+        camWidth = (int) mmc.getImageWidth();
+        camHeight = (int) mmc.getImageHeight();
+        if (guiFrame != null) guiFrame.refreshView(width, height);
     }
 
     int[] getRoi() throws CameraException {
         updateRoi();
-        int[] roi = new int[4];
+        int[] roi = new int[ROILENGTH];
         roi[0] = roiX;
         roi[1] = roiY;
         roi[2] = roiWidth;
@@ -335,9 +339,8 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
     @Override
     public void setApp(ScriptInterface si) {
         try {
-            System.out.println("sicherheits nachricht");
             initPlugin(si);
-            prepareAcquisition(751, 765, 520, 520, 1000, 512, 512);
+            prepareAcquisition(751, 765, 720, 720);
             guiFrame.startButton.setEnabled(true);
             guiFrame.stopButton.setEnabled(false);
         } catch (CameraException | IOException ex) {

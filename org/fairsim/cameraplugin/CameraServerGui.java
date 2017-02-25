@@ -27,29 +27,48 @@ import org.fairsim.sim_gui.PlainImageDisplay;
  * @author m.lachetta
  */
 public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
-    JFrame viewFrame;
-    PlainImageDisplay view;
-    CameraPlugin cp;
+    private JFrame viewFrame;
+    private PlainImageDisplay view;
+    private int viewWidth, viewHeight;
+    private boolean refreshing;
+    private CameraPlugin cp;
     /**
      * Creates new form CameraGui
      */
     public CameraServerGui(int width, int height, CameraPlugin cp) {
         initComponents();
+        refreshing = false;
         initView(width, height);
         this.cp = cp;
         CameraServer.startCameraServer(this, cp);
     }
     
+    void refreshView(int width, int height) {
+        if (viewWidth != width || viewHeight != height) {
+            refreshing = true;
+            viewFrame.dispose();
+            viewFrame = null;
+            view = null;
+            initView(width, height);
+            viewFrame.toFront();
+            refreshing = false;
+        }
+    }
+    
     private void initView(int width, int height) {
+        viewWidth = width;
+        viewHeight = height;
         viewFrame = new JFrame("View");
-        view = new PlainImageDisplay(width, height);
+        view = new PlainImageDisplay(viewWidth, viewHeight);
         viewFrame.add(view.getPanel());
         viewFrame.pack();
         viewFrame.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-                cp.shutdownThreads();
-                CameraServerGui.this.dispose();
+                if (!refreshing) {
+                    cp.shutdownThreads();
+                    CameraServerGui.this.dispose();
+                }
             }
         });
         viewFrame.setVisible(true);
