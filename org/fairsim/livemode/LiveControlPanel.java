@@ -45,13 +45,14 @@ import org.fairsim.transport.ImageDiskWriter;
 import org.fairsim.transport.ImageWrapper;
 import org.fairsim.linalg.VectorFactory;
 import org.fairsim.accel.AccelVectorFactory;
-import org.fairsim.controller.ControllerClientGui;
+import org.fairsim.controller.ControllerGui;
 import org.fairsim.registration.Registration;
 import org.fairsim.linalg.Vec;
 import org.fairsim.sim_gui.PlainImageDisplay;
 
 import org.fairsim.linalg.Vec2d;
-import org.fairsim.controller.ControllerClientGui;
+import org.fairsim.controller.ControllerGui;
+import org.fairsim.linalg.BasicVectors;
 import org.fairsim.utils.Tool;
 import org.fairsim.utils.SimpleMT;
 
@@ -261,7 +262,7 @@ public class LiveControlPanel {
 	JTabbedPane tabbedPane = new JTabbedPane();
     
 	tabbedPane.addTab( "main", mainPanel );
-        tabbedPane.addTab("controller", new ControllerClientGui(cfg, channels, seqDetection, reconRunner) );
+        tabbedPane.addTab("controller", new ControllerGui(cfg, channels, seqDetection, reconRunner) );
 
 	for (int ch=0 ; ch<nrCh ; ch++) {
 	    ParameterTab pTab = new ParameterTab( reconRunner, ch, cfg );
@@ -367,16 +368,29 @@ public class LiveControlPanel {
         if ( OS.contains("nix") || OS.contains("nux") || OS.contains("aix") ) {
             String wd = System.getProperty("user.dir")+"/accel/";
             Tool.trace("loading library from: "+wd);
-            System.load(wd+"libcudaimpl.so");
-            avf = AccelVectorFactory.getFactory();
+            try {
+                System.load(wd+"libcudaimpl.so");
+                avf = AccelVectorFactory.getFactory();
+            }
+            catch(UnsatisfiedLinkError ex) {
+                System.err.println("[fairSIM] Error: " + ex);
+                System.err.println("[fairSIM] Error: now loading not GPU supported version");
+                avf = Vec.getBasicVectorFactory();
+            }
         }
         
         // following Factory for Windows-GPU-Reconstruction
         else if ( OS.contains("win") ) {
             String wd = System.getProperty("user.dir")+"\\";
             Tool.trace("loading library from: "+wd);
-            System.load(wd+"libcudaimpl.dll");
-            avf = AccelVectorFactory.getFactory();
+            try {
+                System.load(wd+"libcudaimpl.dll");
+                avf = AccelVectorFactory.getFactory();
+            } catch(UnsatisfiedLinkError ex) {
+                System.err.println("[fairSIM] Error: " + ex);
+                System.err.println("[fairSIM] Error: now loading not GPU supported version");
+                avf = Vec.getBasicVectorFactory();
+            }
         }
         
         // following Factory for CPU-Reconstruction

@@ -37,7 +37,7 @@ public class ControllerClient extends AbstractClient {
     String output;
     BlockingQueue<Instruction> instructions;
     */
-    ControllerClientGui clientGui;
+    ControllerGui clientGui;
     String[] slmInfo;
     String[] slmList;
 
@@ -48,7 +48,7 @@ public class ControllerClient extends AbstractClient {
      * @param serverPort for the Connection
      * @param clientGui Gui for the SLM
      */
-    protected ControllerClient(String serverAdress, int serverPort, ControllerClientGui clientGui) {
+    protected ControllerClient(String serverAdress, int serverPort, ControllerGui clientGui) {
         super(serverAdress, serverPort, clientGui);
         this.clientGui = clientGui;
         /*

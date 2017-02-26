@@ -26,12 +26,12 @@ import org.fairsim.utils.Tool;
  */
 public class CameraClient extends AbstractClient {
     String channelName;
-    ControllerClientGui clientGui;
+    ControllerGui clientGui;
     int[] rois;
     double exposure;
     private CameraGroup[] groups;
 
-    public CameraClient(String serverAdress, int serverPort, ControllerClientGui clientGui, String channelName) {
+    public CameraClient(String serverAdress, int serverPort, ControllerGui clientGui, String channelName) {
         super(serverAdress, serverPort, clientGui);
         this.channelName = channelName;
         this.clientGui = clientGui;

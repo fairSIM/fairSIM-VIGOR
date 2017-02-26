@@ -961,6 +961,9 @@
           <Properties>
             <Property name="text" type="java.lang.String" value="Set ROI"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cam1RoiButtonActionPerformed"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JTextField" name="cam1ExposureField">
           <Properties>
@@ -976,6 +979,9 @@
           <Properties>
             <Property name="text" type="java.lang.String" value="Set Exposure"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cam1ExposureButtonActionPerformed"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JComboBox" name="cam1GroupBox">
           <Properties>
@@ -983,6 +989,9 @@
               <StringArray count="0"/>
             </Property>
           </Properties>
+          <Events>
+            <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="cam1GroupBoxItemStateChanged"/>
+          </Events>
           <AuxValues>
             <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
           </AuxValues>
@@ -1001,6 +1010,9 @@
           <Properties>
             <Property name="text" type="java.lang.String" value="Set Config"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cam1ConfigButtonActionPerformed"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JLabel" name="cam2ChannelLabel">
           <Properties>
@@ -1036,6 +1048,9 @@
           <Properties>
             <Property name="text" type="java.lang.String" value="Set ROI"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cam2RoiButtonActionPerformed"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JTextField" name="cam2ExposureField">
           <Properties>
@@ -1056,6 +1071,9 @@
           <Properties>
             <Property name="text" type="java.lang.String" value="Set Exposure"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cam2ExposureButtonActionPerformed"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JComboBox" name="cam2GroupBox">
           <Properties>
@@ -1063,6 +1081,9 @@
               <StringArray count="0"/>
             </Property>
           </Properties>
+          <Events>
+            <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="cam2GroupBoxItemStateChanged"/>
+          </Events>
           <AuxValues>
             <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
           </AuxValues>
@@ -1081,6 +1102,9 @@
           <Properties>
             <Property name="text" type="java.lang.String" value="Set Config"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cam2ConfigButtonActionPerformed"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JButton" name="cam0StopButton">
           <Properties>
@@ -1102,21 +1126,33 @@
           <Properties>
             <Property name="text" type="java.lang.String" value="Stop Acquisition"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cam1StopButtonActionPerformed"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JButton" name="cam1StartButton">
           <Properties>
             <Property name="text" type="java.lang.String" value="Start Acquisition"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cam1StartButtonActionPerformed"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JButton" name="cam2StopButton">
           <Properties>
             <Property name="text" type="java.lang.String" value="Stop Acquisition"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cam2StopButtonActionPerformed"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JButton" name="cam2StartButton">
           <Properties>
             <Property name="text" type="java.lang.String" value="Start Acquisition"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cam2StartButtonActionPerformed"/>
+          </Events>
         </Component>
       </SubComponents>
     </Container>
