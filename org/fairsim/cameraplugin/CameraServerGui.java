@@ -28,7 +28,7 @@ import org.fairsim.sim_gui.PlainImageDisplay;
  */
 public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
     private JFrame viewFrame;
-    private PlainImageDisplay view;
+    PlainImageDisplay view;
     private int viewWidth, viewHeight;
     private boolean refreshing;
     private CameraPlugin cp;
@@ -73,11 +73,11 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
         });
         viewFrame.setVisible(true);
     }
-    
+    /*
     PlainImageDisplay getView() {
         return view;
     }
-
+    */
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

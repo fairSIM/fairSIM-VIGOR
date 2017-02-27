@@ -87,7 +87,7 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
             mmc.initializeCircularBuffer();
             guiFrame = new CameraServerGui(camWidth, camHeight, this);
             guiFrame.setVisible(true);
-            view = guiFrame.getView();
+            view = guiFrame.view;
             connect();
         } catch (CameraException ex) {
             throw ex;
@@ -230,7 +230,10 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         }
         camWidth = (int) mmc.getImageWidth();
         camHeight = (int) mmc.getImageHeight();
-        if (guiFrame != null) guiFrame.refreshView(width, height);
+        if (guiFrame != null) {
+            guiFrame.refreshView(width, height);
+            view = guiFrame.view;
+        }
     }
 
     int[] getRoi() throws CameraException {
@@ -350,7 +353,7 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
 
     @Override
     public void show() {
-        displayMessage(menuName + " got opend via mirco manager");
+        //displayMessage(menuName + " got opend via mirco manager");
     }
 
     @Override
