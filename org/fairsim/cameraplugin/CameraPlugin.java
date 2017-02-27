@@ -40,7 +40,7 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
     public static String menuName = "Fast SIM Camera Controller";
     public static String tooltipDescription = "Micro manager plugin to controll the cameras of the fast SIM setup";
 
-    ScriptInterface gui;
+    //ScriptInterface gui;
     CMMCore mmc;
     int channel;
     List<String> sendIps;
@@ -67,7 +67,7 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
     CameraServerGui guiFrame;
 
     void initPlugin(ScriptInterface gui) throws IOException {
-        this.gui = gui;
+        //this.gui = gui;
         this.mmc = gui.getMMCore();
         this.channel = -1;
         sendIps = new ArrayList<>();
@@ -107,12 +107,16 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         guiFrame.startButton.setEnabled(true);
         guiFrame.stopButton.setEnabled(false);
         acquisition = false;
-        if (acquisitionThread != null) acquisitionThread.interrupt();
+        if (acquisitionThread != null) {
+            acquisitionThread.interrupt();
+        }
     }
 
     void shutdownThreads() {
         acquisition = false;
-        if (acquisitionThread != null) acquisitionThread.interrupt();
+        if (acquisitionThread != null) {
+            acquisitionThread.interrupt();
+        }
         isend.shutdownThreads();
     }
 
@@ -157,8 +161,8 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
                                     + timeStamp % 1000000 + " us";
                             t1.start();
                         }
-                        // display image all 56 images
-                        if (count % 56 == 0) {
+                        // display image all 59 images
+                        if (count % 59 == 0) {
                             view.newImage(0, imgData);
                             view.refresh();
                         }
@@ -220,7 +224,7 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         }
         updateRoi();
         if (roiX != x || roiY != y || roiWidth != width || roiHeight != height) {
-            displayMessage("ROI was set wrong \n"
+            System.out.println("ROI was set wrong \n"
                     + "x = " + roiX + "; y = " + roiY + "; width = " + roiWidth + "; height = " + roiHeight);
         }
         if (roiWidth < 512 || roiHeight < 512) {
@@ -231,7 +235,7 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         camWidth = (int) mmc.getImageWidth();
         camHeight = (int) mmc.getImageHeight();
         if (guiFrame != null) {
-            guiFrame.refreshView(width, height);
+            guiFrame.refreshView(camWidth, camHeight);
             view = guiFrame.view;
         }
     }
@@ -258,6 +262,7 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
             roiWidth = w1[0];
             roiHeight = h1[0];
         } catch (Exception ex) {
+            System.out.println("test_3");
             throw new CameraException("unable to update ROI");
         }
     }
@@ -277,7 +282,7 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
             throw new CameraException("Getting exposure time went wrong");
         }
     }
-    
+
     void setConfig(int groupId, int configId) throws CameraException {
         try {
             mmc.setConfig(groups[groupId].getNmae(), groups[groupId].getConfig(configId));
@@ -285,7 +290,7 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
             throw new CameraException("Setting config went wrong");
         }
     }
-    
+
     private void updateGroups() throws CameraException {
         try {
             String[] grps = mmc.getAvailableConfigGroups().toArray();
@@ -297,7 +302,7 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
             throw new CameraException("Updating groups went wrong");
         }
     }
-    
+
     CameraGroup[] getGroups() throws CameraException {
         updateGroups();
         return groups;
@@ -327,6 +332,148 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         }
     }
 
+    //wrapped methods:
+    
+    public void startSequenceAcquisition() throws CameraException {
+        try {
+            mmc.startContinuousSequenceAcquisition(1);
+        } catch (Exception ex) {
+            throw new CameraException("Starting Acquisition went wrong");
+        }
+    }
+    
+    public void stopSequenceAcquisition() throws CameraException {
+        try {
+            mmc.stopSequenceAcquisition();
+        } catch (Exception ex) {
+            throw new CameraException("Stopping Acquisition went wrong");
+        }
+    }
+    
+    public void setBuffer(int buffer) throws CameraException {
+        try {
+            mmc.setCircularBufferMemoryFootprint(buffer);
+            mmc.initializeCircularBuffer();
+        } catch (Exception ex) {
+            throw new CameraException("Set buffer went wrong");
+        }
+    }
+    
+    public boolean isSequenceRunning() throws CameraException {
+        try {
+            return mmc.isSequenceRunning();
+        } catch (Exception ex) {
+            throw new CameraException("Getting sequence running went wrong");
+        }
+    }
+    
+    public int getRemainingImageCount() throws CameraException {
+        try {
+            return mmc.getRemainingImageCount();
+        } catch (Exception ex) {
+            throw new CameraException("Getting image count went wrong");
+        }
+    }
+    
+    public short[] getNextImage() throws CameraException {
+        try {
+            return (short[]) mmc.popNextImage();
+        } catch (Exception ex) {
+            throw new CameraException("Getting next image went wrong");
+        }
+    }
+    
+    public void sleep() throws CameraException {
+        try {
+            mmc.sleep(2);
+        } catch (Exception ex) {
+            throw new CameraException("Sleeping went wrong");
+        }
+    }
+    
+    public void setROI(int x, int y, int w, int h) throws CameraException {
+        try {
+            mmc.clearROI();
+            mmc.setROI(x, y, w, h);
+        } catch (Exception ex) {
+            throw new CameraException("Set ROI went wrong");
+        }
+    }
+    
+    public int getCamWidth() throws CameraException {
+        try {
+            return (int) mmc.getImageWidth();
+        } catch (Exception ex) {
+            throw new CameraException("Getting width went wrong");
+        }
+    }
+    
+    public int getCamHeight() throws CameraException {
+        try {
+            return (int) mmc.getImageHeight();
+        } catch (Exception ex) {
+            throw new CameraException("Getting height went wrong");
+        }
+    }
+    
+    public int[] getROI() throws CameraException {
+        int[] x = new int[1];
+        int[] y = new int[1];
+        int[] w = new int[1];
+        int[] h = new int[1];
+        try {
+            mmc.getROI(x, y, w, h);
+        } catch (Exception ex) {
+            throw new CameraException("Getting ROI went wrong");
+        }
+        int[] roi = new int[ROILENGTH];
+        roi[0] = x[0];
+        roi[1] = y[0];
+        roi[2] = w[0];
+        roi[3] = h[0];
+        return roi;
+    }
+    
+    public void setExposure(double time) throws CameraException {
+        try {
+            mmc.setExposure(time);
+        } catch (Exception ex) {
+            throw new CameraException("Set exposure time went wrong");
+        }
+    }
+    
+    public double getExposure() throws CameraException {
+        try {
+            return mmc.getExposure();
+        } catch (Exception ex) {
+            throw new CameraException("Getting exposure time went wrong");
+        }
+    }
+    
+    public void setConfig(String group, String config) throws CameraException {
+        try {
+            mmc.setConfig(group , config);
+        } catch (Exception ex) {
+            throw new CameraException("Set config went wrong");
+        }
+    }
+    
+    public String[] getConfigGroups() throws CameraException {
+        try {
+            return mmc.getAvailableConfigGroups().toArray();
+        } catch (Exception ex) {
+            throw new CameraException("Getting groups went wrong");
+        }
+    }
+    
+    public String[] getConfigs(String group) throws CameraException {
+        try {
+            return mmc.getAvailableConfigs(group).toArray();
+        } catch (Exception ex) {
+            throw new CameraException("Getting configs went wrong");
+        }
+    }
+    
     class CameraException extends Exception {
 
         CameraException(String massage) {
@@ -343,10 +490,10 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
     public void setApp(ScriptInterface si) {
         try {
             initPlugin(si);
-            prepareAcquisition(751, 765, 720, 720);
+            prepareAcquisition(768, 768, 512, 512);
             guiFrame.startButton.setEnabled(true);
             guiFrame.stopButton.setEnabled(false);
-        } catch (CameraException | IOException ex) {
+        } catch (Exception ex) {
             System.out.println(ex);
         }
     }

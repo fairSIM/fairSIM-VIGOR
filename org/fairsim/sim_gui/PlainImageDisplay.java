@@ -413,7 +413,7 @@ public class PlainImageDisplay {
 		
 	public void setImage( int ch, short [] pxl ) {
 	    if (pxl.length != width*height) 
-		throw new RuntimeException("Input array size does not match: ");
+		throw new RuntimeException("Input array size does not match: " + pxl.length + "/" + width + "/" + height);
 
 	    for (int i=0; i<width*height; i++) {
 		int val = (int)pxl[i];
@@ -438,8 +438,8 @@ public class PlainImageDisplay {
 
 	public void paintImage() {
 
-	    for (int y=0; y<width; y++)
-	    for (int x=0; x<height; x++) {
+	    for (int y=0; y<height; y++)
+	    for (int x=0; x<width; x++) {
 	
 		short r=0,g=0,b=0;
 

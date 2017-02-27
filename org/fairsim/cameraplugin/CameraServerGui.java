@@ -59,6 +59,7 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
         viewWidth = width;
         viewHeight = height;
         viewFrame = new JFrame("View");
+        System.out.println("view size: " + viewWidth + "/" + viewHeight);
         view = new PlainImageDisplay(viewWidth, viewHeight);
         viewFrame.add(view.getPanel());
         viewFrame.pack();
