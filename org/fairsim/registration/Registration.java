@@ -137,7 +137,7 @@ public class Registration {
     public static String getRegFolder(final Conf.Folder cfg) throws FileNotFoundException {
         String regFolder;// = "(not found)";
         try {
-            regFolder = cfg.getStr("RegistrationFolder").val();
+            regFolder = Tool.getFile(cfg.getStr("RegistrationFolder").val()).getAbsolutePath();
         } catch (Conf.EntryNotFoundException ex) {
             regFolder = System.getProperty("user.dir");
             System.out.println("[fairSIM] Registration: No registration folder found. Registration Folder was set to: " + regFolder);
@@ -146,7 +146,7 @@ public class Registration {
         if (file.exists()) {
             return regFolder;
         } else {
-            throw new FileNotFoundException("[fairSIM] Registration: Error: Registration folder does not exists");
+            throw new FileNotFoundException("Registration folder does not exists");
         }
     }
     
