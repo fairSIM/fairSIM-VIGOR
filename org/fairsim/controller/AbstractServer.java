@@ -56,14 +56,6 @@ public abstract class AbstractServer extends Thread {
     private void handleConnection() throws IOException, InterruptedException {
         String input;
         while (!interrupted) {
-            while (!in.hasNextLine()) {
-                if (!interrupted) {
-                    System.out.println("sleeping...");
-                    sleep(1000);
-                } else {
-                    throw new InterruptedException();
-                }
-            }
             input = in.nextLine();
             out.println("Server: Command '" + input + "' successfully transmitted to the server.");
             out.println(handleCommand(input));

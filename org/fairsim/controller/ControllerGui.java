@@ -41,8 +41,8 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
     private final ControllerClient controllerClient;
     private List<CameraClient> camClients;
     private List<Component> slmControllers, arduinoControllers; // cam0Controllers, cam1Controllers, cam2Controllers;
-    private final int CAMCOUNT = 3;
-    private final int ROILENGTH = 4;
+    private static final int CAMCOUNT = 3;
+    private static final int ROILENGTH = 4;
     private List<Component>[] camControllers;
     private List<String> arduinoCommands;
     private boolean controllerInstructionDone;

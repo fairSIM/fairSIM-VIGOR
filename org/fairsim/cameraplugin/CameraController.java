@@ -98,7 +98,6 @@ public class CameraController {
         for (String ip : sendIps) {
             isend.connect(ip, null);
         }
-        
         this.gui = new CameraServerGui(imageWidth, imageHeight, this);
     }
     
@@ -110,9 +109,6 @@ public class CameraController {
         cp.stopSequenceAcquisition();
         cp.setROI(x, y, width, height);
         roi = cp.getROI();
-        if (roi[0] != x || roi[1] != y || roi[2] != width || roi[3] != height) {
-            throw new DataFormatException("ROI was set wrong");
-        }
         imageWidth = cp.getImageWidth();
         imageHeight = cp.getImageHeight();
         if (imageWidth != roi[2] || imageHeight != roi[3]) {
@@ -126,7 +122,9 @@ public class CameraController {
         if (!firstTime) {
             gui.refreshView(imageWidth, imageHeight);
         }
-        //view = guiFrame.view;
+        if (roi[0] != x || roi[1] != y || roi[2] != width || roi[3] != height) {
+            throw new DataFormatException("ROI was set wrong");
+        }
     }
 
     int[] getRoi() throws CameraException {
