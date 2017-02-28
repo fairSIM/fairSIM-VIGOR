@@ -23,45 +23,69 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author m.lachetta
  */
-public abstract class AbstractServer extends Thread{
+public abstract class AbstractServer extends Thread {
+
     protected ServerGui gui;
     private int port;
     private ServerSocket server;
     private Socket client;
     protected Scanner in;
     protected PrintWriter out;
-    
+    public boolean interrupted;
+
     protected AbstractServer(ServerGui gui) throws IOException {
         this.gui = gui;
         port = 32322;
         server = new ServerSocket(port);
+        interrupted = false;
     }
 
     protected abstract void buildUpConnection();
+
     protected abstract void buildDownConnection();
+
     protected abstract String handleCommand(String input);
-    
-    private void handleConnection() throws IOException {
+
+    private void handleConnection() throws IOException, InterruptedException {
         String input;
-        while (true) {
-            try {
-                input = in.nextLine();
-                out.println("Server: Command '" + input + "' successfully transmitted to the server.");
-            } catch (NoSuchElementException e) {
-                break;
+        while (!interrupted) {
+            while (!in.hasNextLine()) {
+                if (!interrupted) {
+                    System.out.println("sleeping...");
+                    sleep(1000);
+                } else {
+                    throw new InterruptedException();
+                }
             }
-            out.println( handleCommand(input) );
+            input = in.nextLine();
+            out.println("Server: Command '" + input + "' successfully transmitted to the server.");
+            out.println(handleCommand(input));
         }
     }
-    
+
+    public void close() {
+        new Thread(new Runnable() {
+            public void run() {
+                interrupted = true;
+                try {
+                    server.close();
+                } catch (Exception ex) {
+                    System.err.println(ex);
+                }
+            }
+        }).start();
+    }
+
     @Override
     public void run() {
-        while (true) {
+        while (!interrupted) {
             client = null;
             in = null;
             out = null;
@@ -75,6 +99,8 @@ public abstract class AbstractServer extends Thread{
                 handleConnection();
             } catch (IOException ex) {
                 gui.showText(ex.toString());
+            } catch (InterruptedException ex) {
+                System.out.println("AbstractServer: run: interrupted");
             } finally {
                 if (client != null) {
                     buildDownConnection();
@@ -87,5 +113,6 @@ public abstract class AbstractServer extends Thread{
                 }
             }
         }
+        System.out.println("AbstractServer: run: Emde im Gelände!");
     }
 }

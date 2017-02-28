@@ -19,6 +19,10 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 package org.fairsim.cameraplugin;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.zip.DataFormatException;
+import org.fairsim.cameraplugin.CameraPlugin.CameraException;
 import org.fairsim.controller.AbstractServer;
 import org.fairsim.utils.Tool;
 
@@ -28,92 +32,94 @@ import org.fairsim.utils.Tool;
  */
 public class CameraServer extends AbstractServer {
 
-    CameraPlugin cp;
+    CameraController cc;
 
-    private CameraServer(CameraServerGui cameraGui, CameraPlugin cp) throws IOException {
+    private CameraServer(CameraServerGui cameraGui, CameraController cc) throws IOException {
         super(cameraGui);
-        this.cp = cp;
+        this.cc = cc;
     }
 
     private String setRoi(int x, int y, int width, int height) {
+        //cc.stopAcquisition();
         try {
-            cp.stopAcquisition();
-            cp.setRoi(x, y, width, height);
-            int[] roi = cp.getRoi();
-            String output = "ROI was set to: (" + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ")";
+            String output;
+            try {
+                cc.setRoi(x, y, width, height);
+                output = "ROI successfully set";
+            } catch (DataFormatException ex) {
+                int[] roi = cc.getRoi();
+                output = "ROI was set to: (" + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ")";
+            }
             gui.showText(output);
             return output;
-        } catch (CameraPlugin.CameraException ex) {
+        } catch (CameraException ex) {
             return ex.toString();
         }
+        
     }
 
     private String getRoi() {
         try {
-            int[] roi = cp.getRoi();
+            int[] roi = cc.getRoi();
             gui.showText("Transfering roi");
             return Tool.encodeArray("Transfering roi", roi);
-        } catch (CameraPlugin.CameraException ex) {
+        } catch (CameraException ex) {
             return ex.toString();
         }
     }
 
     private String setExposureTime(double time) {
         try {
-            cp.setExposureTime(time);
-            String output = "Exposure time was set to: " + cp.getExposureTime() + "ms";
+            cc.setExposure(time);
+            String output = "Exposure time was set to: " + cc.getExposure() + "ms";
             gui.showText(output);
             return output;
-        } catch (CameraPlugin.CameraException ex) {
+        } catch (CameraException ex) {
             return ex.toString();
         }
     }
 
     private String getExposureTime() {
         try {
-            String output = "Transfering exposure time;" + cp.getExposureTime();
+            String output = "Transfering exposure time;" + cc.getExposure();
             gui.showText(output);
             return output;
-        } catch (CameraPlugin.CameraException ex) {
+        } catch (CameraException ex) {
             return ex.toString();
         }
     }
 
     private String getGroups() {
-        try {
-            CameraGroup[] groups = cp.getGroups();
-            int len = groups.length;
-            String[] groupStrings = new String[len];
-            for (int i = 0; i < len; i++) {
-                groupStrings[i] = groups[i].encode();
-            }
-            gui.showText("Transfering groups");
-            return Tool.encodeArray("Transfering groups", groupStrings);
-        } catch (CameraPlugin.CameraException ex) {
-            return ex.toString();
+        CameraGroup[] groups = cc.getGroups();
+        int len = groups.length;
+        String[] groupStrings = new String[len];
+        for (int i = 0; i < len; i++) {
+            groupStrings[i] = groups[i].encode();
         }
+        gui.showText("Transfering groups");
+        return Tool.encodeArray("Transfering groups", groupStrings);
     }
 
     private String setConfig(int groupId, int configId) {
         try {
-            cp.setConfig(groupId, configId);
+            cc.setConfig(groupId, configId);
             String output = "New config has been set";
             gui.showText(output);
             return output;
-        } catch (CameraPlugin.CameraException ex) {
+        } catch (CameraException ex) {
             return ex.toString();
         }
     }
     
     private String startAcquisition() {
-        cp.startAcquisition();
+        cc.startAcquisition();
         String output = "Acquisition started";
         gui.showText(output);
         return output;
     }
     
     private String stopAcquisition() {
-        cp.stopAcquisition();
+        cc.stopAcquisition();
         String output = "Acquisition stopped";
         gui.showText(output);
         return output;
@@ -160,9 +166,9 @@ public class CameraServer extends AbstractServer {
         }
     }
 
-    static CameraServer startCameraServer(CameraServerGui gui, CameraPlugin cp) {
+    static CameraServer startCameraServer(CameraServerGui gui, CameraController cc) {
         try {
-            CameraServer serverObject = new CameraServer(gui, cp);
+            CameraServer serverObject = new CameraServer(gui, cc);
             serverObject.start();
             return serverObject;
         } catch (IOException ex) {

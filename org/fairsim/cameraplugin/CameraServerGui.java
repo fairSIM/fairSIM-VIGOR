@@ -29,18 +29,22 @@ import org.fairsim.sim_gui.PlainImageDisplay;
 public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
     private JFrame viewFrame;
     PlainImageDisplay view;
+    CameraServer cs;
     private int viewWidth, viewHeight;
     private boolean refreshing;
-    private CameraPlugin cp;
+    private CameraController cc;
     /**
      * Creates new form CameraGui
      */
-    public CameraServerGui(int width, int height, CameraPlugin cp) {
+    public CameraServerGui(int width, int height, CameraController cc) {
         initComponents();
         refreshing = false;
         initView(width, height);
-        this.cp = cp;
-        CameraServer.startCameraServer(this, cp);
+        this.cc = cc;
+        cs = CameraServer.startCameraServer(this, cc);
+        startButton.setEnabled(true);
+        stopButton.setEnabled(false);
+        setVisible(true);
     }
     
     void refreshView(int width, int height) {
@@ -55,11 +59,18 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
         }
     }
     
+    private void close() {
+        cc.close();
+        cs.close();
+        dispose();
+        viewFrame.dispose();
+        System.out.println("Closing?=?");
+    }
+    
     private void initView(int width, int height) {
         viewWidth = width;
         viewHeight = height;
         viewFrame = new JFrame("View");
-        System.out.println("view size: " + viewWidth + "/" + viewHeight);
         view = new PlainImageDisplay(viewWidth, viewHeight);
         viewFrame.add(view.getPanel());
         viewFrame.pack();
@@ -67,8 +78,7 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
             @Override
             public void windowClosing(java.awt.event.WindowEvent windowEvent) {
                 if (!refreshing) {
-                    cp.shutdownThreads();
-                    CameraServerGui.this.dispose();
+                    close();
                 }
             }
         });
@@ -152,16 +162,15 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
     }// </editor-fold>//GEN-END:initComponents
 
     private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
-        cp.startAcquisition();
+        cc.startAcquisition();
     }//GEN-LAST:event_startButtonActionPerformed
 
     private void stopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButtonActionPerformed
-        cp.stopAcquisition();
+        cc.stopAcquisition();
     }//GEN-LAST:event_stopButtonActionPerformed
     
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-        cp.shutdownThreads();
-        viewFrame.dispose();
+        close();
     }//GEN-LAST:event_formWindowClosing
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

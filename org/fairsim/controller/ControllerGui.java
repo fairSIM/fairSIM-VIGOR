@@ -1700,9 +1700,7 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
         try {
             javax.swing.JTextField exposureField = (javax.swing.JTextField) camControllers[camId].get(4);
             String exposureString = exposureField.getText();
-            System.out.println(exposureString);
             double exposureTime = Double.parseDouble(exposureString);
-            System.out.println(exposureTime);
             sendCamInstruction("set exposure;" + exposureTime, camId);
             if (camInstructionDone[camId]) updateExposure(camId);
         } catch (NumberFormatException ex) {}
@@ -1721,7 +1719,7 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
     private void groupBoxSelected(int camId) {
         javax.swing.JComboBox<String> groupBox = (javax.swing.JComboBox<String>) camControllers[camId].get(6);
         int groupId = groupBox.getSelectedIndex();
-        this.updateConfigs(camId, groupId);
+        if (groupId >= 0) this.updateConfigs(camId, groupId);
     }
     
     private int[] getRoi(int camId) throws NumberFormatException {
