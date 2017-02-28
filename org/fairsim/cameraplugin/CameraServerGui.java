@@ -59,12 +59,11 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
         }
     }
     
-    private void close() {
+    public void closeWholePlugin() {
         cc.close();
         cs.close();
         dispose();
         viewFrame.dispose();
-        System.out.println("Closing?=?");
     }
     
     private void initView(int width, int height) {
@@ -78,7 +77,7 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
             @Override
             public void windowClosing(java.awt.event.WindowEvent windowEvent) {
                 if (!refreshing) {
-                    close();
+                    closeWholePlugin();
                 }
             }
         });
@@ -170,7 +169,7 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
     }//GEN-LAST:event_stopButtonActionPerformed
     
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-        close();
+        closeWholePlugin();
     }//GEN-LAST:event_formWindowClosing
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

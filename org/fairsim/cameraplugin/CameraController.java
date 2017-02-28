@@ -19,14 +19,19 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 package org.fairsim.cameraplugin;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.DataFormatException;
 import org.fairsim.cameraplugin.CameraPlugin.CameraException;
 import org.fairsim.transport.ImageSender;
 import org.fairsim.transport.ImageWrapper;
+import org.fairsim.utils.Conf;
 import org.fairsim.utils.Tool;
 
 /**
@@ -38,7 +43,7 @@ public class CameraController {
     private final CameraPlugin cp;
     private final CameraServerGui gui;
     private AcquisitionThread acquisitionThread;
-    private final int channel;
+    private int channel;
     private final List<String> sendIps;
     private final CameraGroup[] groups;
     private static final int CAMBUFFER = 1000;
@@ -48,7 +53,7 @@ public class CameraController {
     private int sendWidth;
     private int sendHeight;
     private boolean mirrored;
-    private boolean croped;
+    private boolean cropped;
     private final ImageSender isend;
     private String fps;
 
@@ -56,21 +61,33 @@ public class CameraController {
         this.cp = cp;
         isend = new ImageSender();
         sendIps = new ArrayList<>();
-        
+
+        readinFromXML();
+
+        cp.setBuffer(CAMBUFFER);
+
+        String[] grps = cp.getConfigGroups();
+        groups = new CameraGroup[grps.length];
+        for (int i = 0; i < grps.length; i++) {
+            groups[i] = new CameraGroup(grps[i], cp.getConfigs(grps[i]));
+        }
+
+        this.gui = new CameraServerGui(imageWidth, imageHeight, this);
+    }
+    /*
+    private void readinFromTXT() throws IOException, CameraException {
         String filename = Tool.getFile(System.getProperty("user.home") + "/documents/fair-sim-ips.txt").getAbsolutePath();
         BufferedReader br = new BufferedReader(new FileReader(filename));
         channel = Integer.parseInt(br.readLine());
         String line = br.readLine();
         String[] flags = line.split(" ");
         mirrored = false;
-        croped = false;
+        cropped = false;
         for (String flag : flags) {
-            if (line.equals("m")) {
+            if (flag.equals("m")) {
                 mirrored = true;
-            } else if (line.equals("c")) {
-                croped = true;
-            } else {
-                throw new IOException("Readin failed from: " + filename);
+            } else if (flag.equals("c")) {
+                cropped = true;
             }
         }
         line = br.readLine();
@@ -86,21 +103,43 @@ public class CameraController {
         while ((line = br.readLine()) != null) {
             sendIps.add(line);
         }
-        
-        cp.setBuffer(CAMBUFFER);
-        
-        String[] grps = cp.getConfigGroups();
-        groups = new CameraGroup[grps.length];
-        for (int i = 0; i < grps.length; i++) {
-            groups[i] = new CameraGroup(grps[i], cp.getConfigs(grps[i]));
-        }
-        
-        for (String ip : sendIps) {
-            isend.connect(ip, null);
-        }
-        this.gui = new CameraServerGui(imageWidth, imageHeight, this);
+        br.close();
     }
+    */
     
+    private void readinFromXML() throws IOException, CameraException {
+        String filename = Tool.getFile(System.getProperty("user.home") + "/documents/fastsim-camera.xml").getAbsolutePath();
+
+        try {
+            Conf.Folder cfg = Conf.loadFile(filename).r().cd("camera-settings");
+            channel = cfg.getInt("Channel").val();
+            String[] flags = cfg.getStr("Flags").val().split(" ");
+            int[] roi = cfg.getInt("Roi").vals();
+            String[] ips = cfg.getStr("SendIps").val().split(" ");
+            mirrored = false;
+            cropped = false;
+            for (String flag : flags) {
+                if (flag.equals("mirrored")) {
+                    mirrored = true;
+                } else if (flag.equals("cropped")) {
+                    cropped = true;
+                }
+            }
+            try {
+                setRoi(roi[0], roi[1], roi[2], roi[3], true);
+            } catch (DataFormatException ex) {
+            }
+            for (String ip : ips) {
+                sendIps.add(ip);
+            }
+        } catch (Conf.SomeIOException ex) {
+            throw new FileNotFoundException(filename);
+        } catch (Conf.EntryNotFoundException ex) {
+            throw new IOException("Entry not found: " + filename);
+        }
+
+    }
+
     void setRoi(int x, int y, int width, int height) throws CameraException, DataFormatException {
         setRoi(x, y, width, height, false);
     }
@@ -170,16 +209,17 @@ public class CameraController {
     }
 
     private class AcquisitionThread extends Thread {
+
         boolean acquisition;
         boolean imageQueued;
 
         private void queueImage(short[] imgData, int count, long timeStamp) {
             ImageWrapper iw;
-            if (croped && !mirrored) {
+            if (cropped && !mirrored) {
                 iw = ImageWrapper.copyImageCrop(imgData, sendWidth, sendHeight, imageWidth, imageHeight, 0, 0, 0, channel, count);
-            } else if (mirrored && !croped) {
+            } else if (mirrored && !cropped) {
                 iw = ImageWrapper.copyImageMirrorX(imgData, imageWidth, imageHeight, 0, 0, 0, channel, count);
-            } else if (mirrored && croped) {
+            } else if (mirrored && cropped) {
                 iw = ImageWrapper.copyImageCropMirrorX(imgData, sendWidth, sendHeight, imageWidth, imageHeight, 0, 0, 0, channel, count);
             } else {
                 iw = ImageWrapper.copyImage(imgData, imageWidth, imageHeight, 0, 0, 0, channel, count);
@@ -192,6 +232,9 @@ public class CameraController {
         public void run() {
             acquisition = true;
             try {
+                for (String ip : sendIps) {
+                    isend.connect(ip, null);
+                }
                 cp.startSequenceAcquisition();
                 int count = 0;
                 Tool.Timer t1 = Tool.getTimer();
@@ -230,9 +273,10 @@ public class CameraController {
                 }
                 t1.stop();
                 cp.stopSequenceAcquisition();
-            } catch (CameraException ex) {
+            } catch (UnknownHostException | CameraException ex) {
                 acquisition = false;
                 gui.showText("AcquisitionThread: " + ex.toString());
+                gui.closeWholePlugin();
             }
         }
     }

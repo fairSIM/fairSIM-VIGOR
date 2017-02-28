@@ -256,10 +256,10 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
         camControllers[2].add(this.cam2RoiXField);      //14
         camControllers[2].add(this.cam2RoiYField);      //15
         disableCamControllers(2);
-        
+
         camInstructionDone = new boolean[CAMCOUNT];
     }
-    
+
     private void enableCamButtons(int camId) {
         camControllers[camId].get(2).setEnabled(true);
         camControllers[camId].get(3).setEnabled(true);
@@ -267,7 +267,7 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
         camControllers[camId].get(9).setEnabled(true);
         camControllers[camId].get(10).setEnabled(true);
     }
-    
+
     private void disableCamButtons(int camId) {
         camControllers[camId].get(2).setEnabled(false);
         camControllers[camId].get(3).setEnabled(false);
@@ -403,8 +403,8 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
                     updateGroups(i);
                     enableCamControllers(i);
                     camControllers[i].get(9).setEnabled(false);
+                    break;
                 }
-                break;
             }
         }
     }
@@ -1675,37 +1675,57 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
         sendCamInstruction("start", camId);
         if (camInstructionDone[camId]) {
             disableCamButtons(camId);
-            cam0StopButton.setEnabled(true);
+            switch (camId) {
+                case 0:
+                    cam0StopButton.setEnabled(true);
+                case 1:
+                    cam1StopButton.setEnabled(true);
+                case 2:
+                    cam2StopButton.setEnabled(true);
+            }
         }
     }
-    
+
     private void stopCam(int camId) {
         sendCamInstruction("stop", camId);
         if (camInstructionDone[camId]) {
             enableCamButtons(camId);
-            cam0StopButton.setEnabled(false);
+            switch (camId) {
+                case 0:
+                    cam0StopButton.setEnabled(false);
+                case 1:
+                    cam1StopButton.setEnabled(false);
+                case 2:
+                    cam2StopButton.setEnabled(false);
+            }
         }
     }
-    
+
     private void setRoi(int camId) {
         try {
             int[] roi = getRoi(camId);
             String sRoi = Tool.encodeArray("set roi", roi);
             sendCamInstruction(sRoi, camId);
-            if (camInstructionDone[camId]) updateRoi(camId);
-        } catch (NumberFormatException ex) {}
+            if (camInstructionDone[camId]) {
+                updateRoi(camId);
+            }
+        } catch (NumberFormatException ex) {
+        }
     }
-    
+
     private void setExposureTime(int camId) {
         try {
             javax.swing.JTextField exposureField = (javax.swing.JTextField) camControllers[camId].get(4);
             String exposureString = exposureField.getText();
             double exposureTime = Double.parseDouble(exposureString);
             sendCamInstruction("set exposure;" + exposureTime, camId);
-            if (camInstructionDone[camId]) updateExposure(camId);
-        } catch (NumberFormatException ex) {}
+            if (camInstructionDone[camId]) {
+                updateExposure(camId);
+            }
+        } catch (NumberFormatException ex) {
+        }
     }
-    
+
     private void setConfig(int camId) {
         javax.swing.JComboBox<String> groupBox = (javax.swing.JComboBox<String>) camControllers[camId].get(6);
         javax.swing.JComboBox<String> configBox = (javax.swing.JComboBox<String>) camControllers[camId].get(1);
@@ -1715,13 +1735,15 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
         String stringIds = Tool.encodeArray("set config", ids);
         sendCamInstruction(stringIds, camId);
     }
-    
+
     private void groupBoxSelected(int camId) {
         javax.swing.JComboBox<String> groupBox = (javax.swing.JComboBox<String>) camControllers[camId].get(6);
         int groupId = groupBox.getSelectedIndex();
-        if (groupId >= 0) this.updateConfigs(camId, groupId);
+        if (groupId >= 0) {
+            this.updateConfigs(camId, groupId);
+        }
     }
-    
+
     private int[] getRoi(int camId) throws NumberFormatException {
         javax.swing.JTextField x = (javax.swing.JTextField) camControllers[camId].get(14);
         javax.swing.JTextField y = (javax.swing.JTextField) camControllers[camId].get(15);
@@ -1734,7 +1756,7 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
         roi[3] = Integer.parseInt(h.getText());
         return roi;
     }
-    
+
     private void setRGBButtonSelected(boolean b) {
         arduinoRedButton.setSelected(b);
         arduinoGreenButton.setSelected(b);

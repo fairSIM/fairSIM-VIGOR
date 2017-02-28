@@ -1,0 +1,8 @@
+<fairsim>
+    <camera-settings>
+        <Channel type="int">488</Channel>
+        <Flags type="string">mirrored cropped</Flags>
+        <Roi type="int">768 768 512 512</Roi>
+        <SendIps type="string">192.168.31.10 192.168.32.10</SendIps>
+    </camera-settings>
+</fairsim>

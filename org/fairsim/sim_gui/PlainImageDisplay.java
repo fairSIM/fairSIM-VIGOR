@@ -312,7 +312,6 @@ public class PlainImageDisplay {
 	    width=w; height=h; nrChannels = ch;
 	   
 	    setIgnoreRepaint(true);
-            System.out.println("pid: " + width + "/" + height);
 	    bufferedImage = new BufferedImage(width,height, BufferedImage.TYPE_3BYTE_BGR);
 	    imgBuffer	  = new float[nrChannels][w*h];
 	    

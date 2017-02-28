@@ -127,10 +127,12 @@ public class CameraServer extends AbstractServer {
 
     @Override
     protected void buildUpConnection() {
+        cc.stopAcquisition();
     }
 
     @Override
     protected void buildDownConnection() {
+        cc.stopAcquisition();
     }
 
     @Override

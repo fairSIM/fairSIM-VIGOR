@@ -53,12 +53,15 @@ public abstract class AbstractServer extends Thread {
 
     protected abstract String handleCommand(String input);
 
-    private void handleConnection() throws IOException, InterruptedException {
+    private void handleConnection() throws IOException {
         String input;
-        while (!interrupted) {
-            input = in.nextLine();
-            out.println("Server: Command '" + input + "' successfully transmitted to the server.");
-            out.println(handleCommand(input));
+        try {
+            while (!interrupted) {
+                input = in.nextLine();
+                out.println("Server: Command '" + input + "' successfully transmitted to the server.");
+                out.println(handleCommand(input));
+            }
+        } catch (NoSuchElementException ex) {
         }
     }
 
@@ -91,8 +94,6 @@ public abstract class AbstractServer extends Thread {
                 handleConnection();
             } catch (IOException ex) {
                 gui.showText(ex.toString());
-            } catch (InterruptedException ex) {
-                System.out.println("AbstractServer: run: interrupted");
             } finally {
                 if (client != null) {
                     buildDownConnection();
@@ -105,6 +106,5 @@ public abstract class AbstractServer extends Thread {
                 }
             }
         }
-        System.out.println("AbstractServer: run: Emde im Gelände!");
     }
 }
