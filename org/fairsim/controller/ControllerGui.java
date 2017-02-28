@@ -1678,10 +1678,13 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
             switch (camId) {
                 case 0:
                     cam0StopButton.setEnabled(true);
+                    break;
                 case 1:
                     cam1StopButton.setEnabled(true);
+                    break;
                 case 2:
                     cam2StopButton.setEnabled(true);
+                    break;
             }
         }
     }
@@ -1693,10 +1696,13 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
             switch (camId) {
                 case 0:
                     cam0StopButton.setEnabled(false);
+                    break;
                 case 1:
                     cam1StopButton.setEnabled(false);
+                    break;
                 case 2:
                     cam2StopButton.setEnabled(false);
+                    break;
             }
         }
     }

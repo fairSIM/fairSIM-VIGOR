@@ -205,7 +205,6 @@ public class CameraController {
         if (acquisitionThread != null) {
             acquisitionThread.interrupt();
         }
-        isend.shutdownThreads();
     }
 
     private class AcquisitionThread extends Thread {
@@ -269,6 +268,9 @@ public class CameraController {
                     }
                     if (isInterrupted()) {
                         acquisition = false;
+                        for (String ip : sendIps) {
+                            isend.shutdownThreads();
+                        }
                     }
                 }
                 t1.stop();
