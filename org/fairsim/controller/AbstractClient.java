@@ -27,6 +27,9 @@ import java.util.Scanner;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  *
@@ -73,15 +76,20 @@ public abstract class AbstractClient extends Thread {
         instruction.lock.lock();
         try {
             instructions.add(instruction);
-            instruction.condition.await(TIMEOUT, TimeUnit.SECONDS);
+            boolean outtimed = !instruction.condition.await(TIMEOUT, TimeUnit.SECONDS);
+            if (outtimed) {
+                handleTimeout(instruction.command);
+            }
         } catch (InterruptedException ex) {
-            clientGui.showText("Gui: Error: Instruction timed out: " + ex.toString());
+            handleInterrupt(instruction.command);
         } finally {
             instruction.lock.unlock();
         }
     }
 
     protected abstract void handleServerAnswer(String answer);
+    protected abstract void handleTimeout(String command);
+    protected abstract void handleInterrupt(String command);
 
     @Override
     public void run() {
@@ -131,6 +139,17 @@ public abstract class AbstractClient extends Thread {
                     disconnect();
                 }
             }
+        }
+    }
+    
+    private class Instruction {
+        Lock lock;
+        Condition condition;
+        String command;
+        Instruction(String command) {
+            lock = new ReentrantLock();
+            condition = lock.newCondition();
+            this.command = command;
         }
     }
 }

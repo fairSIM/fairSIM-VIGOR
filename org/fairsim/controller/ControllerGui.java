@@ -41,12 +41,12 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
     private final ControllerClient controllerClient;
     private List<CameraClient> camClients;
     private List<Component> slmControllers, arduinoControllers; // cam0Controllers, cam1Controllers, cam2Controllers;
-    private static final int CAMCOUNT = 3;
+    private static final int CAMCOUNTMAX = 3;
     private static final int ROILENGTH = 4;
     private List<Component>[] camControllers;
     private List<String> arduinoCommands;
-    private boolean controllerInstructionDone;
-    private boolean[] camInstructionDone;
+    boolean controllerInstructionDone;
+    boolean[] camInstructionDone;
     String controllerAdress, redCamAdress, greenCamAdress, blueCamAdress, regFolder;
     int TCPPort;
     String[] channelNames;
@@ -198,7 +198,7 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
     }
 
     private void initCams() {
-        camControllers = new List[CAMCOUNT];
+        camControllers = new List[CAMCOUNTMAX];
 
         camControllers[0] = new ArrayList<>();
         camControllers[0].add(this.cam0ChannelLabel);
@@ -257,7 +257,7 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
         camControllers[2].add(this.cam2RoiYField);      //15
         disableCamControllers(2);
 
-        camInstructionDone = new boolean[CAMCOUNT];
+        camInstructionDone = new boolean[CAMCOUNTMAX];
     }
 
     private void enableCamButtons(int camId) {
@@ -309,7 +309,7 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
         camClients = new ArrayList<>();
         for (int i = 0; i < len; i++) {
             if (adresses[i] != null) {
-                CameraClient c = new CameraClient(adresses[i], TCPPort, this, channelNames[i]);
+                CameraClient c = new CameraClient(adresses[i], TCPPort, this, channelNames[i], i);
                 c.start();
                 camClients.add(c);
             }
@@ -394,7 +394,7 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
             slmConnectButton.setEnabled(true);
             arduinoConnectButton.setEnabled(true);
         } else if (client instanceof CameraClient) {
-            for (int i = 0; i < CAMCOUNT; i++) {
+            for (int i = 0; i < CAMCOUNTMAX; i++) {
                 if (client == camClients.get(i)) {
                     javax.swing.JLabel channelLabel = (javax.swing.JLabel) camControllers[i].get(0);
                     channelLabel.setText("Channel: " + camClients.get(i).channelName);
@@ -460,7 +460,7 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
             slmConnectButton.setEnabled(false);
             disableArduinoControllers();
         } else if (client instanceof CameraClient) {
-            for (int i = 0; i < CAMCOUNT; i++) {
+            for (int i = 0; i < CAMCOUNTMAX; i++) {
                 if (client == camClients.get(i)) {
                     disableCamControllers(i);
                 }
@@ -546,7 +546,7 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
     }
 
     void handleCamError(String error, CameraClient client) {
-        for (int i = 0; i < CAMCOUNT; i++) {
+        for (int i = 0; i < CAMCOUNTMAX; i++) {
             if (client == camClients.get(i)) {
                 camInstructionDone[i] = false;
                 //disableCamControllers(i);
@@ -1740,13 +1740,17 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
         ids[1] = configBox.getSelectedIndex();
         String stringIds = Tool.encodeArray("set config", ids);
         sendCamInstruction(stringIds, camId);
+        if (camInstructionDone[camId]) {
+            updateRoi(camId);
+            updateExposure(camId);
+        }
     }
 
     private void groupBoxSelected(int camId) {
         javax.swing.JComboBox<String> groupBox = (javax.swing.JComboBox<String>) camControllers[camId].get(6);
         int groupId = groupBox.getSelectedIndex();
         if (groupId >= 0) {
-            this.updateConfigs(camId, groupId);
+            updateConfigs(camId, groupId);
         }
     }
 

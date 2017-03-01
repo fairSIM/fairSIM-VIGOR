@@ -30,11 +30,13 @@ public class CameraClient extends AbstractClient {
     int[] rois;
     double exposure;
     private CameraGroup[] groups;
+    private int camId;
 
-    public CameraClient(String serverAdress, int serverPort, ControllerGui clientGui, String channelName) {
+    public CameraClient(String serverAdress, int serverPort, ControllerGui clientGui, String channelName, int camId) {
         super(serverAdress, serverPort, clientGui);
         this.channelName = channelName;
         this.clientGui = clientGui;
+        this.camId = camId;
     }
     
     String[] getGroupArray() {
@@ -76,6 +78,18 @@ public class CameraClient extends AbstractClient {
         } else {
             clientGui.showText(answer);
         }
+    }
+
+    @Override
+    protected void handleTimeout(String command) {
+        clientGui.showText("Timeout for command: " + command);
+        clientGui.camInstructionDone[camId] = false;
+    }
+
+    @Override
+    protected void handleInterrupt(String command) {
+        clientGui.showText("Interrupt while command: " + command);
+        clientGui.camInstructionDone[camId] = false;
     }
     
 }

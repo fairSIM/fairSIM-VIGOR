@@ -91,7 +91,16 @@ public class ImageSender {
 	return imageQueue.offer( img);
     }
 
-
+    public void clearBuffer() {
+        imageQueue.clear();
+    }
+    
+    public boolean canSend() {
+        for (SendingThread s : connection) {
+            if (s.canSend) return s.canSend;
+        }
+        return false;
+    }
 
     /** This thread opens a TCP socket and sends images in queue */
     class SendingThread extends Thread {

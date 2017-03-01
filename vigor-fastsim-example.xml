@@ -72,7 +72,7 @@
 
 <offset type="decimal">140</offset>
 <ChannelNumber type="int">568</ChannelNumber>
-<CamAdress type="string">DESKTOP-FM7820Q</CamAdress>
+<CamAdress type="string">localhost</CamAdress>
 
 <sim-param>
 <nr-angles type="int"> 3 </nr-angles>

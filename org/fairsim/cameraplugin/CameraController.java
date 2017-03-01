@@ -18,6 +18,7 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 
 package org.fairsim.cameraplugin;
 
+import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -226,10 +227,15 @@ public class CameraController {
             iw.setTimeCamera(timeStamp);
             iw.setTimeCapture(System.currentTimeMillis() * 1000);
             imageQueued = isend.queueImage(iw);
+            if (imageQueued) gui.setQueuingColor(Color.GREEN);
+            else gui.setQueuingColor(Color.RED);
+            if (isend.canSend()) gui.setSendingColor(Color.GREEN);
+            else gui.setSendingColor(Color.RED);
         }
 
         public void run() {
             acquisition = true;
+            isend.clearBuffer();
             try {
                 for (String ip : sendIps) {
                     isend.connect(ip, null);
@@ -275,6 +281,8 @@ public class CameraController {
                 }
                 t1.stop();
                 cp.stopSequenceAcquisition();
+                gui.resetQueuingColor();
+                gui.resetSendingColor();
             } catch (UnknownHostException | CameraException ex) {
                 acquisition = false;
                 gui.showText("AcquisitionThread: " + ex.toString());

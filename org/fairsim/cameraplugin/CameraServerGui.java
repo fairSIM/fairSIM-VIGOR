@@ -18,6 +18,7 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 
 package org.fairsim.cameraplugin;
 
+import java.awt.Color;
 import javax.swing.JFrame;
 import org.fairsim.controller.ServerGui;
 import org.fairsim.sim_gui.PlainImageDisplay;
@@ -33,6 +34,7 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
     private int viewWidth, viewHeight;
     private boolean refreshing;
     private CameraController cc;
+    private Color defaultColor;
     /**
      * Creates new form CameraGui
      */
@@ -45,6 +47,23 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
         startButton.setEnabled(true);
         stopButton.setEnabled(false);
         setVisible(true);
+        defaultColor = queuingPanel.getBackground();
+    }
+    
+    void setQueuingColor(Color c) {
+        queuingPanel.setBackground(c);
+    }
+    
+    void resetQueuingColor() {
+        queuingPanel.setBackground(defaultColor);
+    }
+    
+    void setSendingColor(Color c) {
+        sendingPanel.setBackground(c);
+    }
+    
+    void resetSendingColor() {
+        sendingPanel.setBackground(defaultColor);
     }
     
     void refreshView(int width, int height) {
@@ -101,6 +120,10 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
         stopButton = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         serverTrace = new javax.swing.JTextArea();
+        queuingPanel = new javax.swing.JPanel();
+        queuingLabel = new javax.swing.JLabel();
+        sendingPanel = new javax.swing.JPanel();
+        sendingLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Camera Server");
@@ -131,29 +154,77 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
         serverTrace.setRows(5);
         jScrollPane1.setViewportView(serverTrace);
 
+        queuingPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+
+        queuingLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        queuingLabel.setText("Image Queuing");
+
+        javax.swing.GroupLayout queuingPanelLayout = new javax.swing.GroupLayout(queuingPanel);
+        queuingPanel.setLayout(queuingPanelLayout);
+        queuingPanelLayout.setHorizontalGroup(
+            queuingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(queuingPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(queuingLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 95, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        queuingPanelLayout.setVerticalGroup(
+            queuingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(queuingLabel)
+        );
+
+        sendingPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+
+        sendingLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        sendingLabel.setText("Image Sending");
+
+        javax.swing.GroupLayout sendingPanelLayout = new javax.swing.GroupLayout(sendingPanel);
+        sendingPanel.setLayout(sendingPanelLayout);
+        sendingPanelLayout.setHorizontalGroup(
+            sendingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(sendingPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(sendingLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        sendingPanelLayout.setVerticalGroup(
+            sendingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(sendingLabel)
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jScrollPane1)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(startButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 110, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(queuingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(sendingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 18, Short.MAX_VALUE)
                         .addComponent(stopButton)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(startButton)
-                    .addComponent(stopButton))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(startButton)
+                            .addComponent(stopButton)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(queuingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(sendingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 346, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -174,6 +245,10 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel queuingLabel;
+    private javax.swing.JPanel queuingPanel;
+    private javax.swing.JLabel sendingLabel;
+    private javax.swing.JPanel sendingPanel;
     private javax.swing.JTextArea serverTrace;
     javax.swing.JButton startButton;
     javax.swing.JButton stopButton;

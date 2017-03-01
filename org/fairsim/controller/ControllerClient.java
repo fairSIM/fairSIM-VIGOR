@@ -120,6 +120,18 @@ public class ControllerClient extends AbstractClient {
             clientGui.showText(answer);
         }
     }
+
+    @Override
+    protected void handleTimeout(String command) {
+        clientGui.showText("Timeout for command: " + command);
+        clientGui.controllerInstructionDone = false;
+    }
+
+    @Override
+    protected void handleInterrupt(String command) {
+        clientGui.showText("Interrupt for command: " + command);
+        clientGui.controllerInstructionDone = false;
+    }
     
     /**
      * Starts the Client, used from the SlmPanel.java
