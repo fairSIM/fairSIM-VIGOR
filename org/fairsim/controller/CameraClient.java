@@ -25,12 +25,14 @@ import org.fairsim.utils.Tool;
  * @author m.lachetta
  */
 public class CameraClient extends AbstractClient {
+
     String channelName;
     ControllerGui clientGui;
     int[] rois;
-    double exposure;
+    double exposure, fps;
+    boolean queued, sended;
     private CameraGroup[] groups;
-    private int camId;
+    int camId;
 
     public CameraClient(String serverAdress, int serverPort, ControllerGui clientGui, String channelName, int camId) {
         super(serverAdress, serverPort, clientGui);
@@ -38,7 +40,7 @@ public class CameraClient extends AbstractClient {
         this.clientGui = clientGui;
         this.camId = camId;
     }
-    
+
     String[] getGroupArray() {
         int len = groups.length;
         String[] s = new String[len];
@@ -47,7 +49,7 @@ public class CameraClient extends AbstractClient {
         }
         return s;
     }
-    
+
     String[] getConfigArray(int groupId) {
         return groups[groupId].getConfigArray();
     }
@@ -61,8 +63,7 @@ public class CameraClient extends AbstractClient {
             for (int i = 0; i < len; i++) {
                 rois[i] = Integer.parseInt(sRois[i]);
             }
-        }
-        else if (answer.startsWith("Transfering groups")) {
+        } else if (answer.startsWith("Transfering groups")) {
             String[] groupStrings = Tool.decodeArray(answer);
             int len = groupStrings.length;
             groups = new CameraGroup[len];
@@ -71,6 +72,11 @@ public class CameraClient extends AbstractClient {
             }
         } else if (answer.startsWith("Transfering exposure time")) {
             exposure = Double.parseDouble(answer.split(";")[1]);
+        } else if (answer.startsWith("Transfering status")) {
+            String[] statusArray = Tool.decodeArray(answer);
+            fps = Double.parseDouble(statusArray[0]);
+            queued = Boolean.parseBoolean(statusArray[1]);
+            sended = Boolean.parseBoolean(statusArray[2]);
         } else if (answer.startsWith("Acquisition")) {
             //do nothing
         } else if (answer.startsWith("Error: ")) {
@@ -91,5 +97,5 @@ public class CameraClient extends AbstractClient {
         clientGui.showText("Interrupt while command: " + command);
         clientGui.camInstructionDone[camId] = false;
     }
-    
+
 }

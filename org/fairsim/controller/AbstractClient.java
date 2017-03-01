@@ -43,7 +43,7 @@ public abstract class AbstractClient extends Thread {
     protected Socket serverSocket;
     protected Scanner in;
     protected PrintWriter out;
-    protected final int TIMEOUT = 5;
+    protected final int TIMEOUT = 1000;
     private String output;
     protected BlockingQueue<Instruction> instructions;
 
@@ -76,7 +76,7 @@ public abstract class AbstractClient extends Thread {
         instruction.lock.lock();
         try {
             instructions.add(instruction);
-            boolean outtimed = !instruction.condition.await(TIMEOUT, TimeUnit.SECONDS);
+            boolean outtimed = !instruction.condition.await(TIMEOUT, TimeUnit.MILLISECONDS);
             if (outtimed) {
                 handleTimeout(instruction.command);
             }

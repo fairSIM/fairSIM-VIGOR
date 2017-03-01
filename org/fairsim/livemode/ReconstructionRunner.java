@@ -454,7 +454,6 @@ public class ReconstructionRunner {
 	    // set if 'angle then phase' or 'phase then angle'
 	    // in input. Remember to do this ALSO in the
 	    // reconstruction
-	    // TODO: read in the order from SimParam
 	
 	    int count = 0;
 	    for (int a=0; a<nrDirs; a++) {
@@ -465,9 +464,7 @@ public class ReconstructionRunner {
 		    inFFT[a][p].fft2d(false);
 		}
 	    }
-
-	    // TODO: think about merging this with the estimation in "SimAlgorithm"
-	    // and only implement this once
+	    
 	    // run the parameter fit for each angle
 	    for (int angIdx=0; angIdx < sp.nrDir(); angIdx ++ ) {
 
@@ -485,41 +482,10 @@ public class ReconstructionRunner {
 		    return;
 		}
 
-		// RUN a coarse, pixel-precision fit fisrt		
-	    
-		Vec2d.Real otfAtt = Vec2d.createReal( sp );
-		otfPr.writeAttenuationVector( otfAtt, .99, 0.15*otfPr.getCutoff(), 0, 0  ); 
-		
-		Vec2d.Cplx c0 = separate[0].duplicate();
-		Vec2d.Cplx c1 = separate[hb].duplicate();
-	
-		c0.times(otfAtt);
-		c1.times(otfAtt);
-			
-		// compute correlation: ifft, mult. in spatial, fft back
-		Transforms.fft2d( c0, true);
-		Transforms.fft2d( c1, true);
-		c1.timesConj( c0 );
-		Transforms.fft2d( c1, false);
-	   
-		// find the highest peak in corr of band0 to highest band 
-		// with min dist 0.5*otfCutoff from origin, store in 'param'
-		double fitExclude = .5;
-		double minDist = fitExclude * otfPr.getCutoff() / sp.pxlSizeCyclesMicron();
-		double [] peak = Correlation.locatePeak(  c1 , minDist );
-
-
-		// get the sub-pixel position of the peak
-		/*
 		double [] peak = 
 		    Correlation.fitPeak( separate[0], separate[hb], 0, 1, 
 			otfPr, -par.px(nBand), -par.py(nBand), 
-			0.05, 2.5, null ); */
-		peak = 
-		    Correlation.fitPeak( separate[0], separate[hb], 0, 1, 
-			otfPr,-peak[0], -peak[1],
 			0.05, 2.5, null );
-
 	
 		Cplx.Double p1 = 
 		    Correlation.getPeak( separate[0], separate[lb], 

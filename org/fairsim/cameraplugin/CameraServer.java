@@ -124,6 +124,14 @@ public class CameraServer extends AbstractServer {
         gui.showText(output);
         return output;
     }
+    
+    private String getStatus() {
+        String[] status = new String[3];
+        status[0] = String.valueOf(cc.fps);
+        status[1] = String.valueOf(cc.queued);
+        status[2] = String.valueOf(cc.sended);
+        return Tool.encodeArray("Transfering status", status);
+    }
 
     @Override
     protected void buildUpConnection() {
@@ -143,6 +151,8 @@ public class CameraServer extends AbstractServer {
             return getExposureTime();
         } else if (input.equals("get groups")) {
             return getGroups();
+        } else if (input.equals("get status")) {
+            return getStatus();
         } else if (input.startsWith("set roi")) {
             String[] sRoi = Tool.decodeArray(input);
             int x = Integer.parseInt(sRoi[0]);

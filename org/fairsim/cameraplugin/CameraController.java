@@ -48,6 +48,7 @@ public class CameraController {
     private final List<String> sendIps;
     private final CameraGroup[] groups;
     private static final int CAMBUFFER = 1000;
+    private static final int FPSCOUNTS = 1000;
     private int[] roi;
     private int imageWidth;
     private int imageHeight;
@@ -56,7 +57,9 @@ public class CameraController {
     private boolean mirrored;
     private boolean cropped;
     private final ImageSender isend;
-    private String fps;
+    double  fps;
+    boolean queued;
+    boolean sended;
 
     CameraController(CameraPlugin cp) throws IOException, CameraException {
         this.cp = cp;
@@ -211,7 +214,8 @@ public class CameraController {
     private class AcquisitionThread extends Thread {
 
         boolean acquisition;
-        boolean imageQueued;
+        boolean imagesQueued;
+        boolean imagesSended;
 
         private void queueImage(short[] imgData, int count, long timeStamp) {
             ImageWrapper iw;
@@ -226,15 +230,12 @@ public class CameraController {
             }
             iw.setTimeCamera(timeStamp);
             iw.setTimeCapture(System.currentTimeMillis() * 1000);
-            imageQueued = isend.queueImage(iw);
-            if (imageQueued) gui.setQueuingColor(Color.GREEN);
-            else gui.setQueuingColor(Color.RED);
-            if (isend.canSend()) gui.setSendingColor(Color.GREEN);
-            else gui.setSendingColor(Color.RED);
+            imagesQueued = imagesQueued && isend.queueImage(iw);
+            imagesSended = imagesSended && isend.canSend();
         }
 
         public void run() {
-            acquisition = true;
+            acquisition = imagesQueued = imagesSended = true;
             isend.clearBuffer();
             try {
                 for (String ip : sendIps) {
@@ -257,15 +258,20 @@ public class CameraController {
                         // send image to reconstruction / capture
                         queueImage(imgData, count, timeStamp);
                         // sets framerate all 1000 frames
-                        if (count % 1000 == 0) {
+                        if (count % FPSCOUNTS == 0) {
                             t1.stop();
-                            fps = ((1000 * 1000) / t1.msElapsed()) + " "
-                                    + Tool.readableTimeStampMillis(timeStamp / 1000, true) + " ."
-                                    + timeStamp % 1000000 + " us";
+                            fps = ((FPSCOUNTS * 1000) / t1.msElapsed());
                             t1.start();
                         }
-                        // display image all 59 images
+                        // display image all 59 images & updates queuing/sending color
                         if (count % 59 == 0) {
+                            if (imagesQueued) gui.setQueuingColor(Color.GREEN);
+                            else gui.setQueuingColor(Color.RED);
+                            if (imagesSended) gui.setSendingColor(Color.GREEN);
+                            else gui.setSendingColor(Color.RED);
+                            queued = imagesQueued;
+                            sended = imagesSended;
+                            imagesQueued = imagesSended = true;
                             gui.view.newImage(0, imgData);
                             gui.view.refresh();
                         }
