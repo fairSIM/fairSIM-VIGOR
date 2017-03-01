@@ -48,7 +48,7 @@ public class CameraController {
     private final List<String> sendIps;
     private final CameraGroup[] groups;
     private static final int CAMBUFFER = 1000;
-    private static final int FPSCOUNTS = 1000;
+    private static final int FPSCOUNTS = 59;
     private int[] roi;
     private int imageWidth;
     private int imageHeight;
@@ -204,6 +204,12 @@ public class CameraController {
             acquisitionThread.interrupt();
         }
     }
+    
+    void startNetworkAcquisition() {
+        gui.startButton.setEnabled(false);
+        acquisitionThread = new AcquisitionThread();
+        acquisitionThread.start();
+    }
 
     void close() {
         if (acquisitionThread != null) {
@@ -257,14 +263,12 @@ public class CameraController {
                         long timeStamp = Tool.decodeBcdTimestamp(imgData);
                         // send image to reconstruction / capture
                         queueImage(imgData, count, timeStamp);
-                        // sets framerate all 1000 frames
+                        // display image all 59 images & updates queuing/sending color
                         if (count % FPSCOUNTS == 0) {
                             t1.stop();
                             fps = ((FPSCOUNTS * 1000) / t1.msElapsed());
                             t1.start();
-                        }
-                        // display image all 59 images & updates queuing/sending color
-                        if (count % 59 == 0) {
+                            gui.setFps(fps);
                             if (imagesQueued) gui.setQueuingColor(Color.GREEN);
                             else gui.setQueuingColor(Color.RED);
                             if (imagesSended) gui.setSendingColor(Color.GREEN);
@@ -287,6 +291,7 @@ public class CameraController {
                 }
                 t1.stop();
                 cp.stopSequenceAcquisition();
+                gui.resetFps();
                 gui.resetQueuingColor();
                 gui.resetSendingColor();
             } catch (UnknownHostException | CameraException ex) {

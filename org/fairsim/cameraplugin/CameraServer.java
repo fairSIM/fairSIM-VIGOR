@@ -112,7 +112,7 @@ public class CameraServer extends AbstractServer {
     }
     
     private String startAcquisition() {
-        cc.startAcquisition();
+        cc.startNetworkAcquisition();
         String output = "Acquisition started";
         gui.showText(output);
         return output;

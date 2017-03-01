@@ -2013,7 +2013,7 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
         groupBoxSelected(2);
     }//GEN-LAST:event_cam2GroupBoxItemStateChanged
 
-    private void startCam(int camId) {
+    void startCam(int camId) {
         sendCamInstruction("start", camId);
         if (camControllers[camId].instructionDone) {
             camControllers[camId].disableButtons();
@@ -2033,7 +2033,7 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
         }
     }
 
-    private void stopCam(int camId) {
+    void stopCam(int camId) {
         sendCamInstruction("stop", camId);
         if (camControllers[camId].instructionDone) {
             camControllers[camId].enableButtons();
@@ -2052,7 +2052,7 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
         }
     }
 
-    private void setRoi(int camId) {
+    void setRoi(int camId) {
         try {
             int[] roi = getRoi(camId);
             String sRoi = Tool.encodeArray("set roi", roi);
@@ -2064,7 +2064,7 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
         }
     }
 
-    private void setExposureTime(int camId) {
+    void setExposureTime(int camId) {
         try {
             JTextField exposureField = camControllers[camId].exposureField;
             String exposureString = exposureField.getText();
@@ -2077,7 +2077,7 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
         }
     }
 
-    private void setConfig(int camId) {
+    void setConfig(int camId) {
         JComboBox<String> groupBox = camControllers[camId].groupBox;
         JComboBox<String> configBox = camControllers[camId].configBox;
         int[] ids = new int[2];
@@ -2091,7 +2091,7 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
         }
     }
 
-    private void groupBoxSelected(int camId) {
+    void groupBoxSelected(int camId) {
         JComboBox<String> groupBox = camControllers[camId].groupBox;
         int groupId = groupBox.getSelectedIndex();
         if (groupId >= 0) {
@@ -2099,7 +2099,7 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
         }
     }
 
-    private int[] getRoi(int camId) throws NumberFormatException {
+    int[] getRoi(int camId) throws NumberFormatException {
         JTextField x = camControllers[camId].roiXField;
         JTextField y = camControllers[camId].roiYField;
         JTextField w = camControllers[camId].roiWidthField;
@@ -2112,7 +2112,7 @@ public class ControllerGui extends javax.swing.JPanel implements ClientGui {
         return roi;
     }
 
-    private void setRGBButtonSelected(boolean b) {
+    void setRGBButtonSelected(boolean b) {
         arduinoRedButton.setSelected(b);
         arduinoGreenButton.setSelected(b);
         arduinoBlueButton.setSelected(b);

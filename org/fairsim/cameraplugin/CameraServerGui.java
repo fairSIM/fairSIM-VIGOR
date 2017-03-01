@@ -66,6 +66,14 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
         sendingPanel.setBackground(defaultColor);
     }
     
+    void setFps(double fps) {
+        fpsLabel.setText("FPS: " + Math.round(fps * 1000) / 1000.0);
+    }
+    
+    void resetFps() {
+        fpsLabel.setText("FPS: -");
+    }
+    
     void refreshView(int width, int height) {
         if (viewWidth != width || viewHeight != height) {
             refreshing = true;
@@ -124,6 +132,7 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
         queuingLabel = new javax.swing.JLabel();
         sendingPanel = new javax.swing.JPanel();
         sendingLabel = new javax.swing.JLabel();
+        fpsLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Camera Server");
@@ -192,6 +201,8 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
             .addComponent(sendingLabel)
         );
 
+        fpsLabel.setText("FPS: -");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -205,7 +216,8 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
                         .addGap(18, 18, 18)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(queuingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(sendingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(sendingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(fpsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 18, Short.MAX_VALUE)
                         .addComponent(stopButton)))
                 .addContainerGap())
@@ -221,10 +233,12 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
                             .addComponent(stopButton)))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(queuingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGap(3, 3, 3)
+                        .addComponent(fpsLabel)
+                        .addGap(1, 1, 1)
                         .addComponent(sendingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 346, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 338, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -244,6 +258,7 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
     }//GEN-LAST:event_formWindowClosing
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel fpsLabel;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel queuingLabel;
     private javax.swing.JPanel queuingPanel;
