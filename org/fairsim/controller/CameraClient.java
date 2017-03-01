@@ -89,13 +89,13 @@ public class CameraClient extends AbstractClient {
     @Override
     protected void handleTimeout(String command) {
         clientGui.showText("Timeout for command: " + command);
-        clientGui.camInstructionDone[camId] = false;
+        clientGui.interruptCamInstruction(camId);
     }
 
     @Override
     protected void handleInterrupt(String command) {
         clientGui.showText("Interrupt while command: " + command);
-        clientGui.camInstructionDone[camId] = false;
+        clientGui.interruptCamInstruction(camId);
     }
 
 }
