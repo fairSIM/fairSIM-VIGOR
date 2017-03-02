@@ -20,19 +20,20 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="clientServerPanel" alignment="0" max="32767" attributes="0"/>
-                  <Group type="102" alignment="0" attributes="0">
-                      <Component id="softwarePanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="regPanel" max="32767" attributes="0"/>
-                  </Group>
                   <Group type="102" alignment="1" attributes="0">
                       <Group type="103" groupAlignment="1" attributes="0">
                           <Component id="camControllerPanel2" alignment="0" max="32767" attributes="0"/>
                           <Component id="camControllerPanel1" alignment="0" max="32767" attributes="0"/>
                           <Component id="camControllerPanel0" alignment="0" max="32767" attributes="0"/>
-                          <Component id="controllerPanel1" max="32767" attributes="0"/>
+                          <Component id="controllerPanel" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="1" attributes="0">
+                      <Component id="syncPanel" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="registrationPanel" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
               </Group>
           </Group>
@@ -42,7 +43,7 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="controllerPanel1" min="-2" max="-2" attributes="0"/>
+              <Component id="controllerPanel" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="camControllerPanel0" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
@@ -50,9 +51,9 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="camControllerPanel2" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                  <Component id="softwarePanel" max="32767" attributes="0"/>
-                  <Component id="regPanel" min="-2" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="syncPanel" min="-2" max="-2" attributes="0"/>
+                  <Component id="registrationPanel" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="clientServerPanel" max="32767" attributes="0"/>
@@ -81,7 +82,7 @@
                           <Component id="serverLabel" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                       </Group>
-                      <Component id="textArea1" max="32767" attributes="0"/>
+                      <Component id="logger" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
@@ -92,7 +93,7 @@
               <Group type="102" alignment="0" attributes="0">
                   <Component id="serverLabel" min="-2" pref="25" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="textArea1" max="32767" attributes="0"/>
+                  <Component id="logger" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -101,198 +102,12 @@
         <Component class="javax.swing.JLabel" name="serverLabel">
           <Properties>
             <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Tahoma" size="14" style="1"/>
+              <Font name="Tahoma" size="12" style="0"/>
             </Property>
-            <Property name="text" type="java.lang.String" value="Server: -"/>
+            <Property name="text" type="java.lang.String" value="Controller: -   Camera_1: -   Camera_2: -    Camera_3: -"/>
           </Properties>
         </Component>
-        <Component class="java.awt.TextArea" name="textArea1">
-        </Component>
-      </SubComponents>
-    </Container>
-    <Container class="javax.swing.JPanel" name="softwarePanel">
-      <Properties>
-        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-          <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-            <TitledBorder title="Sync-Controller"/>
-          </Border>
-        </Property>
-      </Properties>
-
-      <Layout>
-        <DimensionLayout dim="0">
-          <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="102" alignment="0" attributes="0">
-                  <EmptySpace max="32767" attributes="0"/>
-                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                      <Component id="syncFreqLabel" alignment="0" max="32767" attributes="0"/>
-                      <Component id="syncDelayLabel" alignment="0" max="32767" attributes="0"/>
-                      <Component id="syncAvrLabel" alignment="0" max="32767" attributes="0"/>
-                  </Group>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                      <Component id="syncDelayButton" alignment="0" max="32767" attributes="0"/>
-                      <Component id="syncAvrButton" alignment="0" max="32767" attributes="0"/>
-                      <Component id="syncFreqButton" alignment="0" max="32767" attributes="0"/>
-                  </Group>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                      <Component id="syncDelayTextField" alignment="0" pref="50" max="32767" attributes="0"/>
-                      <Component id="syncAvrTextField" alignment="0" max="32767" attributes="0"/>
-                      <Component id="syncFreqTextField" alignment="0" max="32767" attributes="0"/>
-                  </Group>
-              </Group>
-          </Group>
-        </DimensionLayout>
-        <DimensionLayout dim="1">
-          <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="102" alignment="0" attributes="0">
-                  <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="syncDelayButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="syncDelayTextField" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="syncDelayLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="syncAvrButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="syncAvrTextField" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="syncAvrLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="syncFreqLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="syncFreqButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="syncFreqTextField" alignment="3" min="-2" max="-2" attributes="0"/>
-                  </Group>
-              </Group>
-          </Group>
-        </DimensionLayout>
-      </Layout>
-      <SubComponents>
-        <Component class="javax.swing.JButton" name="syncDelayButton">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Set Delay"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="syncDelayButtonActionPerformed"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JTextField" name="syncDelayTextField">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="0"/>
-          </Properties>
-          <Events>
-            <EventHandler event="keyPressed" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="syncDelayTextFieldKeyPressed"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JButton" name="syncAvrButton">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Set Average"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="syncAvrButtonActionPerformed"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JTextField" name="syncAvrTextField">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="0"/>
-          </Properties>
-        </Component>
-        <Component class="javax.swing.JLabel" name="syncDelayLabel">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Delay: -----"/>
-          </Properties>
-        </Component>
-        <Component class="javax.swing.JLabel" name="syncAvrLabel">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Average: -----"/>
-          </Properties>
-        </Component>
-        <Component class="javax.swing.JLabel" name="syncFreqLabel">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Frequency: -----"/>
-          </Properties>
-        </Component>
-        <Component class="javax.swing.JButton" name="syncFreqButton">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Set Frequency"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="syncFreqButtonActionPerformed"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JTextField" name="syncFreqTextField">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="0"/>
-          </Properties>
-        </Component>
-      </SubComponents>
-    </Container>
-    <Container class="javax.swing.JPanel" name="regPanel">
-      <Properties>
-        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-          <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-            <TitledBorder title="Image Registration"/>
-          </Border>
-        </Property>
-      </Properties>
-
-      <Layout>
-        <DimensionLayout dim="0">
-          <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="102" alignment="0" attributes="0">
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="regWfButton" max="32767" attributes="0"/>
-                      <Component id="regReconButton" max="32767" attributes="0"/>
-                      <Component id="regCreatorButton" alignment="0" max="32767" attributes="0"/>
-                  </Group>
-                  <EmptySpace max="-2" attributes="0"/>
-              </Group>
-          </Group>
-        </DimensionLayout>
-        <DimensionLayout dim="1">
-          <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="102" alignment="1" attributes="0">
-                  <Component id="regWfButton" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Component id="regReconButton" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="32767" attributes="0"/>
-                  <Component id="regCreatorButton" min="-2" max="-2" attributes="0"/>
-              </Group>
-          </Group>
-        </DimensionLayout>
-      </Layout>
-      <SubComponents>
-        <Component class="javax.swing.JToggleButton" name="regWfButton">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Register In Widefield"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="regWfButtonActionPerformed"/>
-          </Events>
-          <AuxValues>
-            <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
-          </AuxValues>
-        </Component>
-        <Component class="javax.swing.JToggleButton" name="regReconButton">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Register In Reconstruction"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="regReconButtonActionPerformed"/>
-          </Events>
-          <AuxValues>
-            <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
-          </AuxValues>
-        </Component>
-        <Component class="javax.swing.JButton" name="regCreatorButton">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Create Registration File"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="regCreatorButtonActionPerformed"/>
-          </Events>
+        <Component class="java.awt.TextArea" name="logger">
         </Component>
       </SubComponents>
     </Container>
@@ -302,7 +117,11 @@
     </Component>
     <Component class="org.fairsim.controller.CameraPanel" name="camControllerPanel2">
     </Component>
-    <Component class="org.fairsim.controller.ControllerPanel" name="controllerPanel1">
+    <Component class="org.fairsim.controller.ControllerPanel" name="controllerPanel">
+    </Component>
+    <Component class="org.fairsim.controller.SyncPanel" name="syncPanel">
+    </Component>
+    <Component class="org.fairsim.controller.RegistrationPanel" name="registrationPanel">
     </Component>
   </SubComponents>
 </Form>

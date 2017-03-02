@@ -338,7 +338,7 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
         configBox = new javax.swing.JComboBox<>();
         configButton = new javax.swing.JButton();
 
-        setBorder(javax.swing.BorderFactory.createTitledBorder("Camera-Controller"));
+        setBorder(javax.swing.BorderFactory.createTitledBorder("Camera"));
 
         channelLabel.setText("Channel: - ");
 
@@ -401,12 +401,32 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
         );
 
         roiXField.setText("765");
+        roiXField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                roiXFieldKeyPressed(evt);
+            }
+        });
 
         roiYField.setText("765");
+        roiYField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                roiYFieldKeyPressed(evt);
+            }
+        });
 
         roiWField.setText("520");
+        roiWField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                roiWFieldKeyPressed(evt);
+            }
+        });
 
         roiHField.setText("520");
+        roiHField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                roiHFieldKeyPressed(evt);
+            }
+        });
 
         roiButton.setText("Set ROI");
         roiButton.addActionListener(new java.awt.event.ActionListener() {
@@ -416,6 +436,11 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
         });
 
         exposureField.setText("3.509");
+        exposureField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                exposureFieldKeyPressed(evt);
+            }
+        });
 
         msLabel.setText("ms");
 
@@ -448,12 +473,12 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                 .addComponent(channelLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(roiLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 165, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(exposureLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 167, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(exposureLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                 .addComponent(roiXField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -462,26 +487,26 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
                                 .addComponent(roiWField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(roiHField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(roiButton)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(roiButton)
+                                .addGap(18, 18, 18)
                                 .addComponent(exposureField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(msLabel)
-                                .addGap(18, 18, 18)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(exposureButton)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGap(18, 18, 18)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(startButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(stopButton))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(groupBox, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(configBox, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(configButton))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(startButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(stopButton)))
+                                .addComponent(configButton)))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(fpsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -546,6 +571,26 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
     private void configButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_configButtonActionPerformed
         setConfig();
     }//GEN-LAST:event_configButtonActionPerformed
+
+    private void roiXFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_roiXFieldKeyPressed
+        setRoi();
+    }//GEN-LAST:event_roiXFieldKeyPressed
+
+    private void roiYFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_roiYFieldKeyPressed
+        setRoi();
+    }//GEN-LAST:event_roiYFieldKeyPressed
+
+    private void roiWFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_roiWFieldKeyPressed
+        setRoi();
+    }//GEN-LAST:event_roiWFieldKeyPressed
+
+    private void roiHFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_roiHFieldKeyPressed
+        setRoi();
+    }//GEN-LAST:event_roiHFieldKeyPressed
+
+    private void exposureFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_exposureFieldKeyPressed
+        setExposureTime();
+    }//GEN-LAST:event_exposureFieldKeyPressed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
