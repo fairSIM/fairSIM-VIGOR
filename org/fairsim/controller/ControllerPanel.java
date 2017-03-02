@@ -472,28 +472,25 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
             slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(slmPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(slmPanelLayout.createSequentialGroup()
-                        .addComponent(slmComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(slmConnectButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(slmSelectButton)
+                        .addComponent(slmDisconnectButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(slmRebootButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(slmRefreshButton))
+                    .addComponent(slmSelect)
+                    .addGroup(slmPanelLayout.createSequentialGroup()
                         .addComponent(slmActivateButton, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(slmDeactivateButton))
-                    .addGroup(slmPanelLayout.createSequentialGroup()
-                        .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(slmPanelLayout.createSequentialGroup()
-                                .addComponent(slmConnectButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(slmDisconnectButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(slmRebootButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(slmRefreshButton))
-                            .addComponent(slmSelect))
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .addComponent(slmDeactivateButton)
+                        .addGap(18, 18, 18)
+                        .addComponent(slmSelectButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(slmComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         slmPanelLayout.setVerticalGroup(
             slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -567,7 +564,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
             }
         });
 
-        arduinoBreakTimeTextField.setText("1000");
+        arduinoBreakTimeTextField.setText("0");
 
         arduinoDelayLabel.setText("delay (ms)");
 
@@ -611,7 +608,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
                         .addComponent(arduinoBreakTimeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(arduinoDelayLabel)))
-                .addContainerGap(30, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         arduinoPanelLayout.setVerticalGroup(
             arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

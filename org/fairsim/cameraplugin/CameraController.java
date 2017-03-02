@@ -296,6 +296,7 @@ public class CameraController {
                 gui.resetSendingColor();
             } catch (UnknownHostException | CameraException ex) {
                 acquisition = false;
+                System.err.println(ex);
                 gui.showText("AcquisitionThread: " + ex.toString());
                 gui.closeWholePlugin();
             }

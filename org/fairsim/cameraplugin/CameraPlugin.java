@@ -321,7 +321,7 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
     }
     
     public void setROI(int x, int y, int w, int h) throws CameraException {
-        try {
+        try {;
             mmc.clearROI();
             mmc.setROI(x, y, w, h);
         } catch (Exception ex) {
@@ -405,9 +405,9 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
     
     class CameraException extends Exception {
 
-        CameraException(String massage) {
-            super("Error: " + massage);
-            //shutdownThreads();
+        CameraException(String message) {
+            super("Error: " + message);
+            System.out.println(message);
         }
     }
 

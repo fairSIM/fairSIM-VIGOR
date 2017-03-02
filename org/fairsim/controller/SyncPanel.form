@@ -28,19 +28,19 @@
               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                   <Component id="syncFreqLabel" alignment="0" max="32767" attributes="0"/>
                   <Component id="syncDelayLabel" alignment="0" max="32767" attributes="0"/>
-                  <Component id="syncAvrLabel" alignment="0" min="-2" pref="78" max="-2" attributes="0"/>
+                  <Component id="syncAvrLabel" alignment="0" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                   <Component id="syncDelayButton" alignment="0" max="32767" attributes="0"/>
                   <Component id="syncAvrButton" alignment="0" max="32767" attributes="0"/>
-                  <Component id="syncFreqButton" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="syncFreqButton" alignment="0" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                   <Component id="syncDelayTextField" alignment="0" max="32767" attributes="0"/>
                   <Component id="syncAvrTextField" alignment="0" max="32767" attributes="0"/>
-                  <Component id="syncFreqTextField" alignment="0" min="-2" pref="50" max="-2" attributes="0"/>
+                  <Component id="syncFreqTextField" alignment="0" pref="50" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
