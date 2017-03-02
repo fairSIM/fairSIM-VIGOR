@@ -39,7 +39,7 @@ public abstract class AbstractClient extends Thread {
 
     protected String serverAdress;
     protected int serverPort;
-    protected ClientGui clientGui;
+    protected ClientPanel gui;
     protected Socket serverSocket;
     protected Scanner in;
     protected PrintWriter out;
@@ -47,17 +47,17 @@ public abstract class AbstractClient extends Thread {
     private String output;
     protected BlockingQueue<Instruction> instructions;
 
-    protected AbstractClient(String serverAdress, int serverPort, ClientGui clientGui) {
+    protected AbstractClient(String serverAdress, int serverPort, ClientPanel gui) {
         this.serverAdress = serverAdress;
         this.serverPort = serverPort;
-        this.clientGui = clientGui;
+        this.gui = gui;
         instructions = new LinkedBlockingQueue<>();
     }
 
     private void connectToServer() throws IOException {
-        clientGui.showText("Client: Trying to connect to: " + serverAdress + ":" + serverPort);
+        gui.showText("Client: Trying to connect to: " + serverAdress + ":" + serverPort);
         serverSocket = new Socket(serverAdress, serverPort);
-        clientGui.showText("Client: Connected to: " + serverAdress + ":" + serverPort);
+        gui.showText("Client: Connected to: " + serverAdress + ":" + serverPort);
         in = new Scanner(serverSocket.getInputStream());
         out = new PrintWriter(serverSocket.getOutputStream(), true);
     }
@@ -100,7 +100,7 @@ public abstract class AbstractClient extends Thread {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        clientGui.registerClient(AbstractClient.this);
+                        gui.registerClient(AbstractClient.this);
                     }
                 }).start();
                 while (!isInterrupted()) {
@@ -118,23 +118,23 @@ public abstract class AbstractClient extends Thread {
                     }
                 }
             } catch (UnknownHostException e) {
-                clientGui.showText("Client: Error: UnknownHostException");
+                gui.showText("Client: Error: UnknownHostException");
             } catch (ConnectException e) {
-                clientGui.showText("Client: Error: Connection failed to : " + serverAdress + ":" + serverPort);
+                gui.showText("Client: Error: Connection failed to : " + serverAdress + ":" + serverPort);
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException ex) {
                     interrupt();
-                    clientGui.showText("Client: Error: InterruptedException 1");
+                    gui.showText("Client: Error: InterruptedException 1");
                 }
             } catch (IOException e) {
-                clientGui.showText("Client: Error: IOException");
+                gui.showText("Client: Error: IOException");
             } catch (NoSuchElementException e) {
-                clientGui.showText("Client: Error: Connection lost to: " + serverAdress + ":" + serverPort);
+                gui.showText("Client: Error: Connection lost to: " + serverAdress + ":" + serverPort);
             } catch (InterruptedException ex) {
-                clientGui.showText("Client: Error: InterruptedException 2");
+                gui.showText("Client: Error: InterruptedException 2");
             } finally {
-                clientGui.unregisterClient(this);
+                gui.unregisterClient(this);
                 if (this != null) {
                     disconnect();
                 }

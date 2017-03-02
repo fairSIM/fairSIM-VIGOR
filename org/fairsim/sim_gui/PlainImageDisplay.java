@@ -71,11 +71,11 @@ public class PlainImageDisplay {
     enum LUT {
 
 	GREY(0), 
+	CYAN(3),
+	MAGENTA(5),
 	RED(4),
 	GREEN(2),
 	BLUE(1),
-	CYAN(3),
-	MAGENTA(5),
 	YELLOW(6);
 	
 	int val=0;

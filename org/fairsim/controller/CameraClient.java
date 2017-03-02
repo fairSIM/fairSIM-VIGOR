@@ -26,19 +26,15 @@ import org.fairsim.utils.Tool;
  */
 public class CameraClient extends AbstractClient {
 
-    String channelName;
-    ControllerGui clientGui;
-    int[] rois;
+    ClientPanel gui;
+    int[] roi;
     double exposure, fps;
     boolean queued, sended;
     private CameraGroup[] groups;
-    int camId;
 
-    public CameraClient(String serverAdress, int serverPort, ControllerGui clientGui, String channelName, int camId) {
-        super(serverAdress, serverPort, clientGui);
-        this.channelName = channelName;
-        this.clientGui = clientGui;
-        this.camId = camId;
+    public CameraClient(String serverAdress, int serverPort, ClientPanel gui) {
+        super(serverAdress, serverPort, gui);
+        this.gui = gui;
     }
 
     String[] getGroupArray() {
@@ -59,9 +55,9 @@ public class CameraClient extends AbstractClient {
         if (answer.startsWith("Transfering roi")) {
             String[] sRois = Tool.decodeArray(answer);
             int len = sRois.length;
-            rois = new int[len];
+            roi = new int[len];
             for (int i = 0; i < len; i++) {
-                rois[i] = Integer.parseInt(sRois[i]);
+                roi[i] = Integer.parseInt(sRois[i]);
             }
         } else if (answer.startsWith("Transfering groups")) {
             String[] groupStrings = Tool.decodeArray(answer);
@@ -80,22 +76,22 @@ public class CameraClient extends AbstractClient {
         } else if (answer.startsWith("Acquisition")) {
             //do nothing
         } else if (answer.startsWith("Error: ")) {
-            clientGui.handleCamError(answer, this);
+            gui.handleError(answer);
         } else {
-            clientGui.showText(answer);
+            gui.showText(answer);
         }
     }
 
     @Override
     protected void handleTimeout(String command) {
-        clientGui.showText("Timeout for command: " + command);
-        clientGui.interruptCamInstruction(camId);
+        gui.showText("Timeout for command: " + command);
+        gui.interruptInstruction();
     }
 
     @Override
     protected void handleInterrupt(String command) {
-        clientGui.showText("Interrupt while command: " + command);
-        clientGui.interruptCamInstruction(camId);
+        gui.showText("Interrupt while command: " + command);
+        gui.interruptInstruction();
     }
 
 }

@@ -21,8 +21,10 @@ package org.fairsim.controller;
  *
  * @author m.lachetta
  */
-public interface ClientGui {
+public interface ClientPanel {
     void showText(String text);
     void registerClient(AbstractClient client);
     void unregisterClient(AbstractClient client);
+    void handleError(String message);
+    void interruptInstruction();
 }

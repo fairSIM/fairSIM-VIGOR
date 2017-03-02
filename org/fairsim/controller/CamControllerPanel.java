@@ -17,24 +17,294 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
  */
 package org.fairsim.controller;
 
+import java.awt.Color;
+import java.awt.Component;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.*;
+import org.fairsim.utils.Tool;
+
 /**
  *
  * @author m.lachetta
  */
-public class CamControllerPanel extends javax.swing.JPanel {
-    private ControllerGui cg;
-    int camId;
-    
+public class CamControllerPanel extends javax.swing.JPanel implements ClientPanel {
+
+    private ControllerGui motherGui;
+    private CameraClient client;
+    private String channelName;
+    boolean instructionDone;
+    private Color defaultColor;
+    private StatusUpdateThread updateThread;
+    private List<JButton> buttons;
+    private List<Component> components;
+    private static final int ROILENGTH = 4, UPDATEDELAY = 2000;
+
     /**
      * Creates new form CamControllerPanel
      */
     public CamControllerPanel() {
         initComponents();
     }
+
+    private void init() {
+        defaultColor = queuingPanel.getBackground();
+
+        components = new ArrayList<>();
+        components.add(channelLabel);
+        components.add(exposureLabel);
+        components.add(msLabel);
+        components.add(roiLabel);
+        components.add(fpsLabel);
+        components.add(configBox);
+        components.add(groupBox);
+        components.add(configButton);
+        components.add(exposureButton);
+        components.add(startButton);
+        components.add(stopButton);
+        components.add(roiButton);
+        components.add(exposureField);
+        components.add(roiWField);
+        components.add(roiHField);
+        components.add(roiXField);
+        components.add(roiYField);
+        components.add(queuingPanel);
+        components.add(sendingPanel);
+        disableControllers();
+
+        buttons = new ArrayList<>();
+        buttons.add(configButton);
+        buttons.add(exposureButton);
+        buttons.add(startButton);
+        buttons.add(stopButton);
+        buttons.add(roiButton);
+        
+        
+    }
     
-    public void init(ControllerGui cg, int camId) {
-        this.cg = cg;
-        this.camId = camId;
+    void enablePanel(ControllerGui motherGui, String adress, int port, String channelName) {
+        init();
+        this.motherGui = motherGui;
+        this.channelName = channelName;
+        channelLabel.setText("Channel: " + channelName);
+        if (adress != null) {
+            client = new CameraClient(adress, port, this);
+            client.start();
+        }
+    }
+    
+    void disablePanel() {
+        init();
+        disableControllers();
+        this.setEnabled(false);
+    }
+
+    private void updateRoi() {
+        sendInstruction("get roi");
+        if (instructionDone) {
+            int[] rois = client.roi;
+            roiLabel.setText("ROI: " + rois[0] + ", " + rois[1] + ", " + rois[2] + ", " + rois[3]);
+        }
+
+    }
+
+    private void updateExposure() {
+        sendInstruction("get exposure");
+        if (instructionDone) {
+            exposureLabel.setText("Exposure Time: " + Math.round(client.exposure * 1000) / 1000.0);
+        }
+    }
+
+    private void updateGroups() {
+        sendInstruction("get groups");
+        if (instructionDone) {
+            String[] groups = client.getGroupArray();
+            groupBox.removeAllItems();
+            for (String s : groups) {
+                groupBox.addItem(s);
+            }
+            updateConfigs(groupBox.getSelectedIndex());
+        }
+    }
+
+    private void updateConfigs(int groupId) {
+        String[] configs = client.getConfigArray(groupId);
+        configBox.removeAllItems();
+        for (String s : configs) {
+            configBox.addItem(s);
+        }
+    }
+
+    private void updateStatus() {
+        sendInstruction("get status");
+        if (instructionDone) {
+            fpsLabel.setText("FPS: " + Math.round(client.fps * 10) / 10.0);
+            if (client.queued) {
+                queuingPanel.setBackground(Color.GREEN);
+            } else {
+                queuingPanel.setBackground(Color.RED);
+            }
+            if (client.sended) {
+                sendingPanel.setBackground(Color.GREEN);
+            } else {
+                sendingPanel.setBackground(Color.RED);
+            }
+        }
+    }
+
+    void resetCamStatus() {
+        if (updateThread != null) {
+            updateThread.interrupt();
+        }
+        fpsLabel.setText("FPS: -");
+        queuingPanel.setBackground(defaultColor);
+        sendingPanel.setBackground(defaultColor);
+    }
+
+    void sendInstruction(String command) {
+        instructionDone = true;
+        client.addInstruction(command);
+    }
+
+    void enableButtons() {
+        for (JButton b : buttons) {
+            b.setEnabled(true);
+        }
+    }
+
+    void disableButtons() {
+        for (JButton b : buttons) {
+            b.setEnabled(false);
+        }
+    }
+
+    void enableControllers() {
+        for (Component comp : components) {
+            comp.setEnabled(true);
+        }
+    }
+
+    void disableControllers() {
+        for (Component comp : components) {
+            comp.setEnabled(false);
+        }
+    }
+    
+    void startCam() {
+        sendInstruction("start");
+        if (instructionDone) {
+            disableButtons();
+            stopButton.setEnabled(true);
+            updateThread = new StatusUpdateThread();
+            updateThread.start();
+        }
+    }
+
+    void stopCam() {
+        sendInstruction("stop");
+        if (instructionDone) {
+            enableButtons();
+            stopButton.setEnabled(false);
+            resetCamStatus();
+        }
+    }
+
+    void setRoi() {
+        try {
+            int[] roi = getRoi();
+            String sRoi = Tool.encodeArray("set roi", roi);
+            sendInstruction(sRoi);
+            if (instructionDone) {
+                updateRoi();
+            }
+        } catch (NumberFormatException ex) {
+        }
+    }
+
+    void setExposureTime() {
+        try {
+            String exposureString = exposureField.getText();
+            double exposureTime = Double.parseDouble(exposureString);
+            sendInstruction("set exposure;" + exposureTime);
+            if (instructionDone) {
+                updateExposure();
+            }
+        } catch (NumberFormatException ex) {
+        }
+    }
+
+    void setConfig() {
+        int[] ids = new int[2];
+        ids[0] = groupBox.getSelectedIndex();
+        ids[1] = configBox.getSelectedIndex();
+        String stringIds = Tool.encodeArray("set config", ids);
+        sendInstruction(stringIds);
+        if (instructionDone) {
+            updateRoi();
+            updateExposure();
+        }
+    }
+
+    void groupBoxSelected() {
+        int groupId = groupBox.getSelectedIndex();
+        if (groupId >= 0) {
+            updateConfigs(groupId);
+        }
+    }
+
+    int[] getRoi() throws NumberFormatException {
+        int[] roi = new int[ROILENGTH];
+        roi[0] = Integer.parseInt(roiXField.getText());
+        roi[1] = Integer.parseInt(roiYField.getText());
+        roi[2] = Integer.parseInt(roiWField.getText());
+        roi[3] = Integer.parseInt(roiHField.getText());
+        return roi;
+    }
+    
+    private class StatusUpdateThread extends Thread {
+        @Override
+        public void run() {
+            while (!isInterrupted()) {
+                try {
+                    sleep(UPDATEDELAY);
+                    updateStatus();
+                } catch (InterruptedException ex) {
+                    interrupt();
+                }
+            }
+        }
+    }
+
+    @Override
+    public void showText(String text) {
+        motherGui.showText(text);
+    }
+
+    @Override
+    public void registerClient(AbstractClient client) {
+        updateRoi();
+        updateExposure();
+        updateGroups();
+        enableControllers();
+        stopButton.setEnabled(false);
+    }
+
+    @Override
+    public void unregisterClient(AbstractClient client) {
+        disableControllers();
+        resetCamStatus();
+    }
+    
+    @Override
+    public void handleError(String error) {
+        instructionDone = false;
+        showText("Gui: Error with camera channel '" + channelName + "' occurred");
+        showText(error);
+    }
+
+    @Override
+    public void interruptInstruction() {
+        instructionDone = false;
     }
 
     /**
@@ -46,126 +316,126 @@ public class CamControllerPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        cam0ChannelLabel = new javax.swing.JLabel();
-        cam0RoiLabel = new javax.swing.JLabel();
-        cam0ExposureLabel = new javax.swing.JLabel();
-        cam0StartButton = new javax.swing.JButton();
-        cam0StopButton = new javax.swing.JButton();
-        cam0FpsLabel = new javax.swing.JLabel();
-        cam0QueuingPanel = new javax.swing.JPanel();
-        cam0QueuingLabel = new javax.swing.JLabel();
-        cam0SendingPanel = new javax.swing.JPanel();
-        cam0SendingLabel = new javax.swing.JLabel();
-        cam0RoiXField = new javax.swing.JTextField();
-        cam0RoiYField = new javax.swing.JTextField();
-        cam0RoiWField = new javax.swing.JTextField();
-        cam0RoiHField = new javax.swing.JTextField();
-        cam0RoiButton = new javax.swing.JButton();
-        cam0ExposureField = new javax.swing.JTextField();
-        cam0MsLabel = new javax.swing.JLabel();
-        cam0ExposureButton = new javax.swing.JButton();
-        cam0GroupBox = new javax.swing.JComboBox<>();
-        cam0ConfigBox = new javax.swing.JComboBox<>();
-        cam0ConfigButton = new javax.swing.JButton();
+        channelLabel = new javax.swing.JLabel();
+        roiLabel = new javax.swing.JLabel();
+        exposureLabel = new javax.swing.JLabel();
+        startButton = new javax.swing.JButton();
+        stopButton = new javax.swing.JButton();
+        fpsLabel = new javax.swing.JLabel();
+        queuingPanel = new javax.swing.JPanel();
+        queuingLabel = new javax.swing.JLabel();
+        sendingPanel = new javax.swing.JPanel();
+        sendingLabel = new javax.swing.JLabel();
+        roiXField = new javax.swing.JTextField();
+        roiYField = new javax.swing.JTextField();
+        roiWField = new javax.swing.JTextField();
+        roiHField = new javax.swing.JTextField();
+        roiButton = new javax.swing.JButton();
+        exposureField = new javax.swing.JTextField();
+        msLabel = new javax.swing.JLabel();
+        exposureButton = new javax.swing.JButton();
+        groupBox = new javax.swing.JComboBox<>();
+        configBox = new javax.swing.JComboBox<>();
+        configButton = new javax.swing.JButton();
 
         setBorder(javax.swing.BorderFactory.createTitledBorder("Camera-Controller"));
 
-        cam0ChannelLabel.setText("Channel: - ");
+        channelLabel.setText("Channel: - ");
 
-        cam0RoiLabel.setText("ROI: -");
+        roiLabel.setText("ROI: -");
 
-        cam0ExposureLabel.setText("Exposure Time: - ");
+        exposureLabel.setText("Exposure Time: - ");
 
-        cam0StartButton.setText("Start Acquisition");
-        cam0StartButton.addActionListener(new java.awt.event.ActionListener() {
+        startButton.setText("Start Acquisition");
+        startButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cam0StartButtonActionPerformed(evt);
+                startButtonActionPerformed(evt);
             }
         });
 
-        cam0StopButton.setText("Stop Acquisition");
-        cam0StopButton.addActionListener(new java.awt.event.ActionListener() {
+        stopButton.setText("Stop Acquisition");
+        stopButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cam0StopButtonActionPerformed(evt);
+                stopButtonActionPerformed(evt);
             }
         });
 
-        cam0FpsLabel.setText("FPS: -");
+        fpsLabel.setText("FPS: -");
 
-        cam0QueuingPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        queuingPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
-        cam0QueuingLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        cam0QueuingLabel.setText("Image Queuing");
+        queuingLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        queuingLabel.setText("Image Queuing");
 
-        javax.swing.GroupLayout cam0QueuingPanelLayout = new javax.swing.GroupLayout(cam0QueuingPanel);
-        cam0QueuingPanel.setLayout(cam0QueuingPanelLayout);
-        cam0QueuingPanelLayout.setHorizontalGroup(
-            cam0QueuingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(cam0QueuingPanelLayout.createSequentialGroup()
+        javax.swing.GroupLayout queuingPanelLayout = new javax.swing.GroupLayout(queuingPanel);
+        queuingPanel.setLayout(queuingPanelLayout);
+        queuingPanelLayout.setHorizontalGroup(
+            queuingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(queuingPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(cam0QueuingLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(queuingLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
-        cam0QueuingPanelLayout.setVerticalGroup(
-            cam0QueuingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(cam0QueuingLabel)
+        queuingPanelLayout.setVerticalGroup(
+            queuingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(queuingLabel)
         );
 
-        cam0SendingPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        sendingPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
-        cam0SendingLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        cam0SendingLabel.setText("Image Sending");
+        sendingLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        sendingLabel.setText("Image Sending");
 
-        javax.swing.GroupLayout cam0SendingPanelLayout = new javax.swing.GroupLayout(cam0SendingPanel);
-        cam0SendingPanel.setLayout(cam0SendingPanelLayout);
-        cam0SendingPanelLayout.setHorizontalGroup(
-            cam0SendingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(cam0SendingPanelLayout.createSequentialGroup()
+        javax.swing.GroupLayout sendingPanelLayout = new javax.swing.GroupLayout(sendingPanel);
+        sendingPanel.setLayout(sendingPanelLayout);
+        sendingPanelLayout.setHorizontalGroup(
+            sendingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(sendingPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(cam0SendingLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(sendingLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
-        cam0SendingPanelLayout.setVerticalGroup(
-            cam0SendingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(cam0SendingLabel)
+        sendingPanelLayout.setVerticalGroup(
+            sendingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(sendingLabel)
         );
 
-        cam0RoiXField.setText("765");
+        roiXField.setText("765");
 
-        cam0RoiYField.setText("765");
+        roiYField.setText("765");
 
-        cam0RoiWField.setText("520");
+        roiWField.setText("520");
 
-        cam0RoiHField.setText("520");
+        roiHField.setText("520");
 
-        cam0RoiButton.setText("Set ROI");
-        cam0RoiButton.addActionListener(new java.awt.event.ActionListener() {
+        roiButton.setText("Set ROI");
+        roiButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cam0RoiButtonActionPerformed(evt);
+                roiButtonActionPerformed(evt);
             }
         });
 
-        cam0ExposureField.setText("3.509");
+        exposureField.setText("3.509");
 
-        cam0MsLabel.setText("ms");
+        msLabel.setText("ms");
 
-        cam0ExposureButton.setText("Set Exposure");
-        cam0ExposureButton.addActionListener(new java.awt.event.ActionListener() {
+        exposureButton.setText("Set Exposure");
+        exposureButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cam0ExposureButtonActionPerformed(evt);
+                exposureButtonActionPerformed(evt);
             }
         });
 
-        cam0GroupBox.addItemListener(new java.awt.event.ItemListener() {
+        groupBox.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cam0GroupBoxItemStateChanged(evt);
+                groupBoxItemStateChanged(evt);
             }
         });
 
-        cam0ConfigButton.setText("Set Config");
-        cam0ConfigButton.addActionListener(new java.awt.event.ActionListener() {
+        configButton.setText("Set Config");
+        configButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cam0ConfigButtonActionPerformed(evt);
+                configButtonActionPerformed(evt);
             }
         });
 
@@ -179,46 +449,46 @@ public class CamControllerPanel extends javax.swing.JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(cam0ChannelLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(channelLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cam0RoiLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 165, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(roiLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 165, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cam0ExposureLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 167, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(exposureLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 167, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(cam0RoiXField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(roiXField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cam0RoiYField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(roiYField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cam0RoiWField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(roiWField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cam0RoiHField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(roiHField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
-                                .addComponent(cam0RoiButton)
+                                .addComponent(roiButton)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cam0ExposureField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(exposureField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cam0MsLabel)
+                                .addComponent(msLabel)
                                 .addGap(18, 18, 18)
-                                .addComponent(cam0ExposureButton)))
+                                .addComponent(exposureButton)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(cam0GroupBox, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(groupBox, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cam0ConfigBox, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(configBox, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cam0ConfigButton))
+                                .addComponent(configButton))
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(cam0StartButton)
+                                .addComponent(startButton)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cam0StopButton)))
+                                .addComponent(stopButton)))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(cam0FpsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(fpsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(cam0QueuingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(queuingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(cam0SendingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(sendingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
@@ -226,79 +496,79 @@ public class CamControllerPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cam0ChannelLabel)
-                    .addComponent(cam0RoiLabel)
-                    .addComponent(cam0StopButton)
-                    .addComponent(cam0StartButton)
-                    .addComponent(cam0ExposureLabel))
+                    .addComponent(channelLabel)
+                    .addComponent(roiLabel)
+                    .addComponent(stopButton)
+                    .addComponent(startButton)
+                    .addComponent(exposureLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(cam0FpsLabel)
-                    .addComponent(cam0QueuingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cam0SendingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(fpsLabel)
+                    .addComponent(queuingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(sendingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cam0RoiButton)
-                    .addComponent(cam0RoiXField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cam0RoiYField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cam0RoiWField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cam0RoiHField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cam0ExposureButton)
-                    .addComponent(cam0ExposureField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cam0MsLabel)
-                    .addComponent(cam0GroupBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cam0ConfigBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cam0ConfigButton))
+                    .addComponent(roiButton)
+                    .addComponent(roiXField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(roiYField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(roiWField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(roiHField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(exposureButton)
+                    .addComponent(exposureField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(msLabel)
+                    .addComponent(groupBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(configBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(configButton))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void cam0StartButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cam0StartButtonActionPerformed
-        cg.startCam(camId);
-    }//GEN-LAST:event_cam0StartButtonActionPerformed
+    private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
+        startCam();
+    }//GEN-LAST:event_startButtonActionPerformed
 
-    private void cam0StopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cam0StopButtonActionPerformed
-        cg.stopCam(camId);
-    }//GEN-LAST:event_cam0StopButtonActionPerformed
+    private void stopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButtonActionPerformed
+        stopCam();
+    }//GEN-LAST:event_stopButtonActionPerformed
 
-    private void cam0RoiButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cam0RoiButtonActionPerformed
-        cg.setRoi(camId);
-    }//GEN-LAST:event_cam0RoiButtonActionPerformed
+    private void roiButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_roiButtonActionPerformed
+        setRoi();
+    }//GEN-LAST:event_roiButtonActionPerformed
 
-    private void cam0ExposureButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cam0ExposureButtonActionPerformed
-        cg.setExposureTime(camId);
-    }//GEN-LAST:event_cam0ExposureButtonActionPerformed
+    private void exposureButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exposureButtonActionPerformed
+        setExposureTime();
+    }//GEN-LAST:event_exposureButtonActionPerformed
 
-    private void cam0GroupBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cam0GroupBoxItemStateChanged
-        cg.groupBoxSelected(camId);
-    }//GEN-LAST:event_cam0GroupBoxItemStateChanged
+    private void groupBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_groupBoxItemStateChanged
+        groupBoxSelected();
+    }//GEN-LAST:event_groupBoxItemStateChanged
 
-    private void cam0ConfigButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cam0ConfigButtonActionPerformed
-        cg.setConfig(camId);
-    }//GEN-LAST:event_cam0ConfigButtonActionPerformed
+    private void configButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_configButtonActionPerformed
+        setConfig();
+    }//GEN-LAST:event_configButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel cam0ChannelLabel;
-    private javax.swing.JComboBox<String> cam0ConfigBox;
-    private javax.swing.JButton cam0ConfigButton;
-    private javax.swing.JButton cam0ExposureButton;
-    private javax.swing.JTextField cam0ExposureField;
-    private javax.swing.JLabel cam0ExposureLabel;
-    private javax.swing.JLabel cam0FpsLabel;
-    private javax.swing.JComboBox<String> cam0GroupBox;
-    private javax.swing.JLabel cam0MsLabel;
-    private javax.swing.JLabel cam0QueuingLabel;
-    private javax.swing.JPanel cam0QueuingPanel;
-    private javax.swing.JButton cam0RoiButton;
-    private javax.swing.JTextField cam0RoiHField;
-    private javax.swing.JLabel cam0RoiLabel;
-    private javax.swing.JTextField cam0RoiWField;
-    private javax.swing.JTextField cam0RoiXField;
-    private javax.swing.JTextField cam0RoiYField;
-    private javax.swing.JLabel cam0SendingLabel;
-    private javax.swing.JPanel cam0SendingPanel;
-    private javax.swing.JButton cam0StartButton;
-    private javax.swing.JButton cam0StopButton;
+    private javax.swing.JLabel channelLabel;
+    private javax.swing.JComboBox<String> configBox;
+    private javax.swing.JButton configButton;
+    private javax.swing.JButton exposureButton;
+    private javax.swing.JTextField exposureField;
+    private javax.swing.JLabel exposureLabel;
+    private javax.swing.JLabel fpsLabel;
+    private javax.swing.JComboBox<String> groupBox;
+    private javax.swing.JLabel msLabel;
+    private javax.swing.JLabel queuingLabel;
+    private javax.swing.JPanel queuingPanel;
+    private javax.swing.JButton roiButton;
+    private javax.swing.JTextField roiHField;
+    private javax.swing.JLabel roiLabel;
+    private javax.swing.JTextField roiWField;
+    private javax.swing.JTextField roiXField;
+    private javax.swing.JTextField roiYField;
+    private javax.swing.JLabel sendingLabel;
+    private javax.swing.JPanel sendingPanel;
+    private javax.swing.JButton startButton;
+    private javax.swing.JButton stopButton;
     // End of variables declaration//GEN-END:variables
 }
