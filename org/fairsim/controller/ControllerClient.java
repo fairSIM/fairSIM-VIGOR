@@ -27,17 +27,6 @@ import org.fairsim.utils.Tool;
  * @author m.lachetta
  */
 public class ControllerClient extends AbstractClient {
-    /*
-    String serverAdress;
-    int serverPort;
-    private final ClientGui clientGui;
-    private Socket serverSocket;
-    private Scanner in;
-    private PrintWriter out;
-    String output;
-    BlockingQueue<Instruction> instructions;
-    */
-    ControllerGui clientGui;
     String[] slmInfo;
     String[] slmList;
 
@@ -48,58 +37,10 @@ public class ControllerClient extends AbstractClient {
      * @param serverPort for the Connection
      * @param clientGui Gui for the SLM
      */
-    protected ControllerClient(String serverAdress, int serverPort, ControllerGui clientGui) {
-        super(serverAdress, serverPort, clientGui);
-        this.clientGui = clientGui;
-        /*
-        clientGui.showText("Client: Trying to connect to: " + serverAdress + ":" + serverPort);
-        serverSocket = new Socket(serverAdress, serverPort);
-        clientGui.showText("Client: Connected to: " + serverAdress + ":" + serverPort);
-        in = new Scanner(serverSocket.getInputStream());
-        out = new PrintWriter(serverSocket.getOutputStream(), true);
-        */
-        
+    protected ControllerClient(String serverAdress, int serverPort, ClientPanel controllerPanel) {
+        super(serverAdress, serverPort, controllerPanel);
     }
-    /*
-    protected void connectToServer() throws IOException  {
-        clientGui.showText("Client: Trying to connect to: " + serverAdress + ":" + serverPort);
-        serverSocket = new Socket(serverAdress, serverPort);
-        clientGui.showText("Client: Connected to: " + serverAdress + ":" + serverPort);
-        in = new Scanner(serverSocket.getInputStream());
-        out = new PrintWriter(serverSocket.getOutputStream(), true);
-    }
-    */
-    /**
-     * closes the Connection to the host-server
-     */
-    /*
-    protected void disconnect() {
-        if (serverSocket != null) {
-            try {
-                serverSocket.close();
-            } catch (IOException e) {
-            }
-        }
-
-    }
-    */
-    /**
-     * Reciving an array from the host-server
-     *
-     * @param output optput from the server
-     * @return the recived array
-     */
-    /*
-    private String[] receivingData(String output) {
-        String[] split = output.split(";");
-        String[] data = new String[split.length - 1];
-        for (int i = 0; i < data.length; i++) {
-            data[i] = split[i + 1];
-        }
-        return data;
-    }
-    */
-
+    
     /**
      * handle the answers of the host-server
      *
@@ -112,81 +53,22 @@ public class ControllerClient extends AbstractClient {
             slmInfo = Tool.decodeArray(answer);
         } else if (answer.startsWith("Slm: Transfering rolist")) {
             slmList = Tool.decodeArray(answer);
-        } else if (answer.startsWith("Slm: Error: ")) {
-            clientGui.handleSlmError(answer);
-        } else if (answer.startsWith("Arduino: Error: ")) {
-            clientGui.handleArduinoError(answer);
+        } else if (answer.startsWith("Slm: Error: ") || answer.startsWith("Arduino: Error: ")) {
+            gui.handleError(answer);
         } else {
-            clientGui.showText(answer);
+            gui.showText(answer);
         }
     }
 
     @Override
     protected void handleTimeout(String command) {
-        clientGui.showText("Timeout for command: " + command);
-        clientGui.controllerInstructionDone = false;
+        gui.showText("Timeout for command: " + command);
+        gui.interruptInstruction();
     }
 
     @Override
     protected void handleInterrupt(String command) {
-        clientGui.showText("Interrupt for command: " + command);
-        clientGui.controllerInstructionDone = false;
+        gui.showText("Interrupt for command: " + command);
+        gui.interruptInstruction();
     }
-    
-    /**
-     * Starts the Client, used from the SlmPanel.java
-     *
-     * @param serverAdress IP/name of the host-server
-     * @param clientGui Gui for the SLM
-     */
-    /*
-    static void startClient(final String adress, final int port, final ClientGui clientGui) {
-        clientGui.setConnectionLabel(adress, port);
-        ControllerClient client = new ControllerClient(adress, port, clientGui);
-        Thread connection = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    try {
-                        client.connectToServer();
-                        clientGui.registerClient(client);
-                        Instruction input;
-                        while (true) {
-                            System.out.println(client.serverAdress);
-                            input = client.instructions.take();
-                            input.lock.lock();
-                            try {
-                                client.handleAction(input.command);
-                            } finally {
-                                input.condition.signal();
-                                input.lock.unlock();
-                            }
-                        }
-                    } catch (UnknownHostException e) {
-                        clientGui.showText("Client: Error: UnknownHostException");
-                    } catch (ConnectException e) {
-                        clientGui.showText("Client: Error: Connection failed to : " + adress + ":" + port);
-                        try {
-                            Thread.sleep(2000);
-                        } catch (InterruptedException ex) {
-                            clientGui.showText("Client: Error: InterruptedException 1");
-                        }
-                    } catch (IOException e) {
-                        clientGui.showText("Client: Error: IOException");
-                    } catch (NoSuchElementException e) {
-                        clientGui.showText("Client: Error: Connection lost to: " + adress + ":" + port);
-                    } catch (InterruptedException ex) {
-                        clientGui.showText("Client: Error: InterruptedException 2");
-                    } finally {
-                        clientGui.unregisterClient();
-                        if (client != null) {
-                            client.disconnect();
-                        }
-                    }
-                }
-            }
-        });
-        connection.start();
-    }
-    */
 }

@@ -100,7 +100,7 @@ public abstract class AbstractClient extends Thread {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        gui.registerClient(AbstractClient.this);
+                        gui.registerClient();
                     }
                 }).start();
                 while (!isInterrupted()) {
@@ -134,7 +134,7 @@ public abstract class AbstractClient extends Thread {
             } catch (InterruptedException ex) {
                 gui.showText("Client: Error: InterruptedException 2");
             } finally {
-                gui.unregisterClient(this);
+                gui.unregisterClient();
                 if (this != null) {
                     disconnect();
                 }

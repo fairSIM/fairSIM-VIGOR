@@ -28,7 +28,7 @@ import org.fairsim.utils.Tool;
  *
  * @author m.lachetta
  */
-public class CamControllerPanel extends javax.swing.JPanel implements ClientPanel {
+public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
 
     private ControllerGui motherGui;
     private CameraClient client;
@@ -43,7 +43,7 @@ public class CamControllerPanel extends javax.swing.JPanel implements ClientPane
     /**
      * Creates new form CamControllerPanel
      */
-    public CamControllerPanel() {
+    public CameraPanel() {
         initComponents();
     }
 
@@ -281,7 +281,7 @@ public class CamControllerPanel extends javax.swing.JPanel implements ClientPane
     }
 
     @Override
-    public void registerClient(AbstractClient client) {
+    public void registerClient() {
         updateRoi();
         updateExposure();
         updateGroups();
@@ -290,7 +290,7 @@ public class CamControllerPanel extends javax.swing.JPanel implements ClientPane
     }
 
     @Override
-    public void unregisterClient(AbstractClient client) {
+    public void unregisterClient() {
         disableControllers();
         resetCamStatus();
     }
