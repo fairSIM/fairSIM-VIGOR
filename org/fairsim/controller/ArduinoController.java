@@ -19,7 +19,7 @@ import java.util.Enumeration;
 
 /**
  * Class to controll the Arduino.
- * 
+ *
  * @author m.lachetta
  */
 public class ArduinoController implements SerialPortEventListener {
@@ -53,14 +53,13 @@ public class ArduinoController implements SerialPortEventListener {
      */
     private static final int DATA_RATE = 19200;
 
-    private ArduinoController() throws Exception{
+    private ArduinoController() throws Exception {
         initialize();
     }
-    
+
     ArduinoController(ControllerServerGui serverGui) {
         this.serverGui = serverGui;
     }
-    
 
     private void initialize() throws Exception {
         CommPortIdentifier portId = null;
@@ -78,23 +77,27 @@ public class ArduinoController implements SerialPortEventListener {
         }
         if (portId == null) {
             String massage = "Could not find COM port.";
-            System.out.println(massage);
-            throw new UnsupportedOperationException(massage);
+            try {
+                serverGui.showText("Arduino: " + massage);
+            } catch (NullPointerException ex) {
+                System.out.println("Arduino: " + massage);
+            }
+            throw new NullPointerException(massage);
         }
 
-            // open serial port, and use class name for the appName.
-            serialPort = (SerialPort) portId.open(this.getClass().getName(), TIME_OUT);
+        // open serial port, and use class name for the appName.
+        serialPort = (SerialPort) portId.open(this.getClass().getName(), TIME_OUT);
 
-            // set port parameters
-            serialPort.setSerialPortParams(DATA_RATE, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
+        // set port parameters
+        serialPort.setSerialPortParams(DATA_RATE, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
 
-            // open the streams
-            input = new BufferedReader(new InputStreamReader(serialPort.getInputStream()));
-            output = serialPort.getOutputStream();
+        // open the streams
+        input = new BufferedReader(new InputStreamReader(serialPort.getInputStream()));
+        output = serialPort.getOutputStream();
 
-            // add event listeners
-            serialPort.addEventListener(this);
-            serialPort.notifyOnDataAvailable(true);
+        // add event listeners
+        serialPort.addEventListener(this);
+        serialPort.notifyOnDataAvailable(true);
     }
 
     /**
@@ -125,7 +128,8 @@ public class ArduinoController implements SerialPortEventListener {
                 //close();
                 try {
                     serverGui.showText("Arduino: Error: " + e.toString());
-                } catch (NullPointerException ex) {}
+                } catch (NullPointerException ex) {
+                }
             }
         }
         // Ignore all the other eventTypes, but you should consider the other ones.
@@ -143,7 +147,7 @@ public class ArduinoController implements SerialPortEventListener {
             return "Error: " + ex.toString();
         }
     }
-    
+
     synchronized String connect() {
         try {
             initialize();
@@ -152,7 +156,7 @@ public class ArduinoController implements SerialPortEventListener {
             return "Error: " + e.toString();
         }
     }
-    
+
     synchronized String disconnect() {
         try {
             close();
@@ -163,7 +167,7 @@ public class ArduinoController implements SerialPortEventListener {
     }
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        try{
+        try {
             ArduinoController main = new ArduinoController(null);
             main.connect();
             BufferedReader in = new BufferedReader(new InputStreamReader(System.in));

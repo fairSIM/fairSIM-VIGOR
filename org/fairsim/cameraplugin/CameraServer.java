@@ -24,6 +24,7 @@ import java.util.logging.Logger;
 import java.util.zip.DataFormatException;
 import org.fairsim.cameraplugin.CameraPlugin.CameraException;
 import org.fairsim.controller.AbstractServer;
+import org.fairsim.controller.ServerGui;
 import org.fairsim.utils.Tool;
 
 /**
@@ -34,8 +35,8 @@ public class CameraServer extends AbstractServer {
 
     CameraController cc;
 
-    private CameraServer(CameraServerGui cameraGui, CameraController cc) throws IOException {
-        super(cameraGui);
+    private CameraServer(ServerGui gui, CameraController cc) throws IOException {
+        super(gui);
         this.cc = cc;
     }
 

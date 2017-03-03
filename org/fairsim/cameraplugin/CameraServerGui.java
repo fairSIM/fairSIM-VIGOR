@@ -126,13 +126,12 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
 
         startButton = new javax.swing.JButton();
         stopButton = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        serverTrace = new javax.swing.JTextArea();
         queuingPanel = new javax.swing.JPanel();
         queuingLabel = new javax.swing.JLabel();
         sendingPanel = new javax.swing.JPanel();
         sendingLabel = new javax.swing.JLabel();
         fpsLabel = new javax.swing.JLabel();
+        serverTrace = new java.awt.TextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Camera Server");
@@ -158,10 +157,6 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
                 stopButtonActionPerformed(evt);
             }
         });
-
-        serverTrace.setColumns(20);
-        serverTrace.setRows(5);
-        jScrollPane1.setViewportView(serverTrace);
 
         queuingPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
@@ -203,14 +198,16 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
 
         fpsLabel.setText("FPS: -");
 
+        serverTrace.setEditable(false);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jScrollPane1)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(serverTrace, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(startButton)
                         .addGap(18, 18, 18)
@@ -238,7 +235,7 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
                         .addGap(1, 1, 1)
                         .addComponent(sendingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 338, Short.MAX_VALUE)
+                .addComponent(serverTrace, javax.swing.GroupLayout.DEFAULT_SIZE, 335, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -259,12 +256,11 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel fpsLabel;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel queuingLabel;
     private javax.swing.JPanel queuingPanel;
     private javax.swing.JLabel sendingLabel;
     private javax.swing.JPanel sendingPanel;
-    private javax.swing.JTextArea serverTrace;
+    private java.awt.TextArea serverTrace;
     javax.swing.JButton startButton;
     javax.swing.JButton stopButton;
     // End of variables declaration//GEN-END:variables

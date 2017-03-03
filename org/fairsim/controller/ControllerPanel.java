@@ -375,7 +375,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
 
     @Override
     public void interruptInstruction() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        controllerInstructionDone = false;
     }
 
     /**

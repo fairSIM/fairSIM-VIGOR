@@ -107,6 +107,9 @@
           </Properties>
         </Component>
         <Component class="java.awt.TextArea" name="logger">
+          <Properties>
+            <Property name="editable" type="boolean" value="false"/>
+          </Properties>
         </Component>
       </SubComponents>
     </Container>

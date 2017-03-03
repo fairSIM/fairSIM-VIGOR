@@ -146,6 +146,8 @@ public class ControllerGui extends javax.swing.JPanel {
         serverLabel.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         serverLabel.setText("Controller: -   Camera_1: -   Camera_2: -    Camera_3: -");
 
+        logger.setEditable(false);
+
         javax.swing.GroupLayout clientServerPanelLayout = new javax.swing.GroupLayout(clientServerPanel);
         clientServerPanel.setLayout(clientServerPanelLayout);
         clientServerPanelLayout.setHorizontalGroup(
