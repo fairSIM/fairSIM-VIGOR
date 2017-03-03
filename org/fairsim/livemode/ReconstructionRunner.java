@@ -35,7 +35,8 @@ import org.fairsim.registration.Registration;
  * and parameter fitting. */
 public class ReconstructionRunner {
     
-    public final int width, height, nrChannels;
+    public int width, height;
+    public final int nrChannels;
     public final int nrDirs, nrPhases, nrBands;
     public final int nrThreads;
     
@@ -162,7 +163,11 @@ public class ReconstructionRunner {
 	    Tool.trace("Started parameter fit/update thread: ");
 	}
     }
-
+    
+    public void setImageSize(int width, int height) {
+        this.width = width;
+        this.height = height;
+    }
 
     // ---- MGMT ----
 

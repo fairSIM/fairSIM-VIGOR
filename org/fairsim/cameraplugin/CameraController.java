@@ -19,15 +19,11 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 package org.fairsim.cameraplugin;
 
 import java.awt.Color;
-import java.io.BufferedReader;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.DataFormatException;
 import org.fairsim.cameraplugin.CameraPlugin.CameraException;
 import org.fairsim.transport.ImageSender;
@@ -52,10 +48,8 @@ public class CameraController {
     private int[] roi;
     private int imageWidth;
     private int imageHeight;
-    private int sendWidth;
-    private int sendHeight;
+    private int sendPixelSize;
     private boolean mirrored;
-    private boolean cropped;
     private final ImageSender isend;
     double  fps;
     boolean queued;
@@ -78,39 +72,7 @@ public class CameraController {
 
         this.gui = new CameraServerGui(imageWidth, imageHeight, this);
     }
-    /*
-    private void readinFromTXT() throws IOException, CameraException {
-        String filename = Tool.getFile(System.getProperty("user.home") + "/documents/fair-sim-ips.txt").getAbsolutePath();
-        BufferedReader br = new BufferedReader(new FileReader(filename));
-        channel = Integer.parseInt(br.readLine());
-        String line = br.readLine();
-        String[] flags = line.split(" ");
-        mirrored = false;
-        cropped = false;
-        for (String flag : flags) {
-            if (flag.equals("m")) {
-                mirrored = true;
-            } else if (flag.equals("c")) {
-                cropped = true;
-            }
-        }
-        line = br.readLine();
-        String[] roiStrings = line.split(" ");
-        int x = Integer.parseInt(roiStrings[0]);
-        int y = Integer.parseInt(roiStrings[1]);
-        int w = Integer.parseInt(roiStrings[2]);
-        int h = Integer.parseInt(roiStrings[3]);
-        try {
-            setRoi(x, y, w, h, true);
-        } catch (DataFormatException ex) {
-        }
-        while ((line = br.readLine()) != null) {
-            sendIps.add(line);
-        }
-        br.close();
-    }
-    */
-    
+        
     private void readinFromXML() throws IOException, CameraException {
         String filename = Tool.getFile(System.getProperty("user.home") + "/documents/fastsim-camera.xml").getAbsolutePath();
 
@@ -121,12 +83,9 @@ public class CameraController {
             int[] roi = cfg.getInt("Roi").vals();
             String[] ips = cfg.getStr("SendIps").val().split(" ");
             mirrored = false;
-            cropped = false;
             for (String flag : flags) {
                 if (flag.equals("mirrored")) {
                     mirrored = true;
-                } else if (flag.equals("cropped")) {
-                    cropped = true;
                 }
             }
             try {
@@ -151,17 +110,13 @@ public class CameraController {
     private void setRoi(int x, int y, int width, int height, boolean firstTime) throws CameraException, DataFormatException {
         cp.stopSequenceAcquisition();
         cp.setROI(x, y, width, height);
-        roi = cp.getROI();
+        roi = cp.getRoi();
         imageWidth = cp.getImageWidth();
         imageHeight = cp.getImageHeight();
         if (imageWidth != roi[2] || imageHeight != roi[3]) {
             throw new RuntimeException("This should never happen!");
         }
-        if (imageWidth < 512 || imageHeight < 512) {
-            sendWidth = sendHeight = 256;
-        } else {
-            sendWidth = sendHeight = 512;
-        }
+        sendPixelSize = (imageWidth < imageHeight) ? imageWidth : imageHeight;
         if (!firstTime) {
             gui.refreshView(imageWidth, imageHeight);
         }
@@ -171,7 +126,14 @@ public class CameraController {
     }
 
     int[] getRoi() throws CameraException {
-        return cp.getROI();
+        int rawRoi[] = cp.getRoi();
+        int len = rawRoi.length;
+        int roi[] = new int[len + 1];
+        for (int i = 0; i < len; i++) {
+            roi[i] = rawRoi[i];
+        }
+        roi[len] = sendPixelSize;
+        return roi;
     }
 
     void setExposure(double time) throws CameraException {
@@ -225,14 +187,12 @@ public class CameraController {
 
         private void queueImage(short[] imgData, int count, long timeStamp) {
             ImageWrapper iw;
-            if (cropped && !mirrored) {
-                iw = ImageWrapper.copyImageCrop(imgData, sendWidth, sendHeight, imageWidth, imageHeight, 0, 0, 0, channel, count);
-            } else if (mirrored && !cropped) {
-                iw = ImageWrapper.copyImageMirrorX(imgData, imageWidth, imageHeight, 0, 0, 0, channel, count);
-            } else if (mirrored && cropped) {
-                iw = ImageWrapper.copyImageCropMirrorX(imgData, sendWidth, sendHeight, imageWidth, imageHeight, 0, 0, 0, channel, count);
+            //System.out.println(mirrored + "/" + sendPixelSize);
+            if (mirrored) {
+                iw = ImageWrapper.copyImageCropMirrorX(imgData, sendPixelSize, sendPixelSize, imageWidth, imageHeight, 0, 0, 0, channel, count);
+                
             } else {
-                iw = ImageWrapper.copyImage(imgData, imageWidth, imageHeight, 0, 0, 0, channel, count);
+                iw = ImageWrapper.copyImageCrop(imgData, sendPixelSize, sendPixelSize, imageWidth, imageHeight, 0, 0, 0, channel, count);
             }
             iw.setTimeCamera(timeStamp);
             iw.setTimeCapture(System.currentTimeMillis() * 1000);

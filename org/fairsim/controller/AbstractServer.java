@@ -23,8 +23,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -53,7 +51,7 @@ public abstract class AbstractServer extends Thread {
 
     protected abstract String handleCommand(String input);
 
-    private void handleConnection() throws IOException {
+    private final void handleConnection() throws IOException {
         String input;
         try {
             while (!interrupted) {
@@ -65,7 +63,7 @@ public abstract class AbstractServer extends Thread {
         }
     }
 
-    public void close() {
+    public final void close() {
         new Thread(new Runnable() {
             public void run() {
                 interrupted = true;
@@ -79,7 +77,7 @@ public abstract class AbstractServer extends Thread {
     }
 
     @Override
-    public void run() {
+    public final void run() {
         while (!interrupted) {
             client = null;
             in = null;

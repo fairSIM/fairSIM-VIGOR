@@ -18,6 +18,7 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 
 package org.fairsim.controller;
 
+import org.fairsim.livemode.LiveControlPanel;
 import org.fairsim.livemode.ReconstructionRunner;
 import org.fairsim.livemode.SimSequenceExtractor;
 import org.fairsim.utils.Conf;
@@ -28,10 +29,12 @@ import org.fairsim.utils.Tool;
  * @author m.lachetta
  */
 public class ControllerGui extends javax.swing.JPanel {
-    private static final int CAMCOUNTMAX = 3;
+    
+    LiveControlPanel motherGui;
     private String controllerAdress;
-    private int port, camCounts;
     private final String[] camAdresses;
+    private int port, camCounts;
+    private static final int CAMCOUNTMAX = 3;
 
     /**
      * Creates the GUI for the Controller
@@ -40,12 +43,14 @@ public class ControllerGui extends javax.swing.JPanel {
      * @param channelNames Camera Channels
      * @param seqDetection The Sim-Sequence-Extractor
      */
-    public ControllerGui(Conf.Folder cfg, String[] channelNames, SimSequenceExtractor seqDetection, ReconstructionRunner recRunner) {
+    public ControllerGui(Conf.Folder cfg, String[] channelNames, LiveControlPanel motherGui) {
         initComponents();
-        
+        this.motherGui = motherGui;
         camCounts = channelNames.length;
-        if (camCounts > 3) camCounts = CAMCOUNTMAX;
-        
+        if (camCounts > 3) {
+            camCounts = CAMCOUNTMAX;
+        }
+        camAdresses = new String[camCounts];
         //readin port
         try {
             port = cfg.getInt("TCPPort").val();
@@ -61,7 +66,7 @@ public class ControllerGui extends javax.swing.JPanel {
             Tool.error("[fairSIM] No ControllerAdress found. ControllerAdress set to 'localhost'", false);
         }
         //readin cam adresses
-        camAdresses = new String[camCounts];
+        
         for (int i = 0; i < camCounts; i++) {
             try {
                 Conf.Folder fld = cfg.cd("channel-" + channelNames[i]);
@@ -88,29 +93,32 @@ public class ControllerGui extends javax.swing.JPanel {
             }
         }
         //init controller panels
-        controllerPanel.enablePanel(this, controllerAdress, port, seqDetection);
+        controllerPanel.enablePanel(this, controllerAdress, port, motherGui.seqDetection);
         serverLabel.setText("Controller: " + controllerAdress);
-        
+
         if (camCounts > 0 && camAdresses[0] != null) {
             camControllerPanel0.enablePanel(this, camAdresses[0], port, channelNames[0]);
             serverLabel.setText(serverLabel.getText() + "   Camera_0: " + camAdresses[0]);
+        } else {
+            camControllerPanel0.disablePanel();
         }
-        else camControllerPanel0.disablePanel();
         if (camCounts > 1 && camAdresses[1] != null) {
             camControllerPanel1.enablePanel(this, camAdresses[1], port, channelNames[1]);
             serverLabel.setText(serverLabel.getText() + "   Camera_1: " + camAdresses[1]);
+        } else {
+            camControllerPanel1.disablePanel();
         }
-        else camControllerPanel1.disablePanel();
         if (camCounts > 2 && camAdresses[2] != null) {
             camControllerPanel2.enablePanel(this, camAdresses[2], port, channelNames[2]);
             serverLabel.setText(serverLabel.getText() + "   Camera_2: " + camAdresses[2]);
+        } else {
+            camControllerPanel2.disablePanel();
         }
-        else camControllerPanel2.disablePanel();
-        
-        syncPanel.enablePanel(seqDetection);
-        registrationPanel.enablePanel(cfg, channelNames, seqDetection, recRunner);
+
+        syncPanel.enablePanel(motherGui.seqDetection);
+        registrationPanel.enablePanel(cfg, channelNames, motherGui.seqDetection, motherGui.reconRunner);
     }
-    
+
     /**
      * Shows a new text-line in the text-field
      *
@@ -119,8 +127,29 @@ public class ControllerGui extends javax.swing.JPanel {
     public void showText(String text) {
         logger.append(text + "\n");
     }
-
     
+    int calculateViewSize() {
+        int[] pixelSize = new int[CAMCOUNTMAX];
+        
+        pixelSize[0] = camControllerPanel0.recivingPixelSize;
+        pixelSize[1] = camControllerPanel1.recivingPixelSize;
+        pixelSize[2] = camControllerPanel2.recivingPixelSize;
+        
+        int ps = -1;
+        for (int i = 0; i < CAMCOUNTMAX; i++) {
+            if (pixelSize[i] > 0) {
+                ps = pixelSize[i];
+                for (int j = i + 1; j < CAMCOUNTMAX; j++) {
+                    if (pixelSize[j] > 0 && pixelSize[i] != pixelSize[j]) ps = -1;
+                }
+                break;
+            }
+        }
+        if (ps > 0) refreshButton.setEnabled(true);
+        else refreshButton.setEnabled(false);
+        System.out.println(ps);
+        return ps;
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -134,6 +163,7 @@ public class ControllerGui extends javax.swing.JPanel {
         clientServerPanel = new javax.swing.JPanel();
         serverLabel = new javax.swing.JLabel();
         logger = new java.awt.TextArea();
+        refreshButton = new javax.swing.JButton();
         camControllerPanel0 = new org.fairsim.controller.CameraPanel();
         camControllerPanel1 = new org.fairsim.controller.CameraPanel();
         camControllerPanel2 = new org.fairsim.controller.CameraPanel();
@@ -148,6 +178,14 @@ public class ControllerGui extends javax.swing.JPanel {
 
         logger.setEditable(false);
 
+        refreshButton.setText("Refresh View");
+        refreshButton.setEnabled(false);
+        refreshButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                refreshButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout clientServerPanelLayout = new javax.swing.GroupLayout(clientServerPanel);
         clientServerPanel.setLayout(clientServerPanelLayout);
         clientServerPanelLayout.setHorizontalGroup(
@@ -157,14 +195,17 @@ public class ControllerGui extends javax.swing.JPanel {
                 .addGroup(clientServerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(clientServerPanelLayout.createSequentialGroup()
                         .addComponent(serverLabel)
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(refreshButton))
                     .addComponent(logger, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         clientServerPanelLayout.setVerticalGroup(
             clientServerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(clientServerPanelLayout.createSequentialGroup()
-                .addComponent(serverLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(clientServerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(serverLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(refreshButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(logger, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -210,9 +251,11 @@ public class ControllerGui extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    
-    
-    
+    private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
+        int ps = calculateViewSize();
+        if (ps > 0) motherGui.refreshView(ps);
+    }//GEN-LAST:event_refreshButtonActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private org.fairsim.controller.CameraPanel camControllerPanel0;
@@ -221,6 +264,7 @@ public class ControllerGui extends javax.swing.JPanel {
     private javax.swing.JPanel clientServerPanel;
     private org.fairsim.controller.ControllerPanel controllerPanel;
     private java.awt.TextArea logger;
+    private javax.swing.JButton refreshButton;
     private org.fairsim.controller.RegistrationPanel registrationPanel;
     private javax.swing.JLabel serverLabel;
     private org.fairsim.controller.SyncPanel syncPanel;

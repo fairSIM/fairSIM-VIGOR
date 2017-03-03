@@ -14,8 +14,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
-*/
-
+ */
 package org.fairsim.livemode;
 
 import javax.swing.JFrame;
@@ -38,382 +37,393 @@ import java.awt.GridLayout;
 import java.util.Arrays;
 
 import org.fairsim.utils.Conf;
-import org.fairsim.sim_algorithm.SimParam;
-import org.fairsim.sim_algorithm.OtfProvider;
 import org.fairsim.transport.ImageReceiver;
 import org.fairsim.transport.ImageDiskWriter;
-import org.fairsim.transport.ImageWrapper;
 import org.fairsim.linalg.VectorFactory;
 import org.fairsim.accel.AccelVectorFactory;
-import org.fairsim.controller.ControllerGui;
-import org.fairsim.registration.Registration;
 import org.fairsim.linalg.Vec;
 import org.fairsim.sim_gui.PlainImageDisplay;
 
 import org.fairsim.linalg.Vec2d;
 import org.fairsim.controller.ControllerGui;
-import org.fairsim.linalg.BasicVectors;
 import org.fairsim.utils.Tool;
 import org.fairsim.utils.SimpleMT;
 
-/** Provides the control interface for live mode */
+/**
+ * Provides the control interface for live mode
+ */
 public class LiveControlPanel {
 
     boolean isRecording = false;    // if the raw stream is recorded
 
+    private int wfPixelSize;
+    private final int nrCh;
+    private final String[] channels;
+
     final JProgressBar networkBufferBar;
     final JProgressBar reconBufferInputBar;
     final JProgressBar reconBufferOutputBar;
-    
+
     final JProgressBar fileBufferBar;
 
     // The different threads in use:
-    final ImageDiskWriter	liveStreamWriter;	
-    final ImageReceiver		imageReceiver;
-    final ReconstructionRunner  reconRunner;
-    final SimSequenceExtractor  seqDetection;
-    
-    
-    final PlainImageDisplay	wfDisplay;
-    final PlainImageDisplay	reconDisplay;
+    final ImageDiskWriter liveStreamWriter;
+    final ImageReceiver imageReceiver;
+    public final ReconstructionRunner reconRunner;
+    public final SimSequenceExtractor seqDetection;
 
-    final JTextArea  statusField;
+    PlainImageDisplay wfDisplay;
+    PlainImageDisplay reconDisplay;
+
+    final JTextArea statusField;
     final JTextField statusMessage;
 
-    JButton [] syncButtons ;
+    JButton[] syncButtons;
+    
+    private JFrame hrFr;
+    private JFrame lrFr;
 
-    public LiveControlPanel(final Conf.Folder cfg, 
-	VectorFactory avf, String [] channels) 
-	throws Conf.EntryNotFoundException, java.io.IOException {
-	
-	// get parameters
-	final int imgSize = cfg.getInt("NetworkBuffer").val();
+    public LiveControlPanel(final Conf.Folder cfg,
+            VectorFactory avf, String[] channels)
+            throws Conf.EntryNotFoundException, java.io.IOException {
 
-	//  ------- 
-	//  initialize the GUI
-	//  ------- 
-	
-	JFrame mainFrame = new JFrame("Live SIM control");
-	JPanel mainPanel = new JPanel();
-	mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        // get parameters
+        final int imgSize = cfg.getInt("NetworkBuffer").val();
 
-	// GUI - buffering
-	JPanel reconBuffersPanel = new JPanel();
-	reconBuffersPanel.setBorder(BorderFactory.createTitledBorder(
-	    "Reconstruction buffers") );
-	reconBuffersPanel.setLayout( new GridLayout( 3, 1,2,2 ));
+        //  ------- 
+        //  initialize the GUI
+        //  ------- 
+        JFrame mainFrame = new JFrame("Live SIM control");
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
-	networkBufferBar = new JProgressBar();
-	networkBufferBar.setString("network input buffer");
-	networkBufferBar.setStringPainted(true);
+        // GUI - buffering
+        JPanel reconBuffersPanel = new JPanel();
+        reconBuffersPanel.setBorder(BorderFactory.createTitledBorder(
+                "Reconstruction buffers"));
+        reconBuffersPanel.setLayout(new GridLayout(3, 1, 2, 2));
 
-	reconBufferInputBar = new JProgressBar();
-	reconBufferInputBar.setString("recon input buffer");
-	reconBufferInputBar.setStringPainted(true);
-	
-	reconBufferOutputBar = new JProgressBar();
-	reconBufferOutputBar.setString("recon output buffer");
-	reconBufferOutputBar.setStringPainted(true);
-	
-	reconBuffersPanel.add( networkBufferBar );
-	reconBuffersPanel.add( reconBufferInputBar );
-	reconBuffersPanel.add( reconBufferOutputBar );
+        networkBufferBar = new JProgressBar();
+        networkBufferBar.setString("network input buffer");
+        networkBufferBar.setStringPainted(true);
 
-	mainPanel.add( reconBuffersPanel );
+        reconBufferInputBar = new JProgressBar();
+        reconBufferInputBar.setString("recon input buffer");
+        reconBufferInputBar.setStringPainted(true);
 
-	// GUI - image record function
-	JPanel recorderPanel = new JPanel();
-	recorderPanel.setBorder(BorderFactory.createTitledBorder(
-	    "raw Stream recording") );
-	recorderPanel.setLayout( new GridLayout( 3, 1,2,2 ));
-	
-	final JTextField filePrefix = new JTextField("VIGOR", 30);
+        reconBufferOutputBar = new JProgressBar();
+        reconBufferOutputBar.setString("recon output buffer");
+        reconBufferOutputBar.setStringPainted(true);
 
-	final JButton recordButton = new JButton("record");
-	recordButton.addActionListener( new ActionListener() {
-	    public void actionPerformed( ActionEvent e ) {
-		if (!isRecording) {
-		    recordButton.setForeground(Color.RED);
-		    try {
-			liveStreamWriter.startRecording( filePrefix.getText());
-		    } catch (Exception ex) {
-			throw new RuntimeException(ex);
-		    }
-		    isRecording = true;
-		}
-		else {
-		    recordButton.setForeground(Color.BLACK);
-		    liveStreamWriter.stopRecording();
-		    isRecording = false;
-		}
-	    };
-	});
+        reconBuffersPanel.add(networkBufferBar);
+        reconBuffersPanel.add(reconBufferInputBar);
+        reconBuffersPanel.add(reconBufferOutputBar);
+
+        mainPanel.add(reconBuffersPanel);
+
+        // GUI - image record function
+        JPanel recorderPanel = new JPanel();
+        recorderPanel.setBorder(BorderFactory.createTitledBorder(
+                "raw Stream recording"));
+        recorderPanel.setLayout(new GridLayout(3, 1, 2, 2));
+
+        final JTextField filePrefix = new JTextField("VIGOR", 30);
+
+        final JButton recordButton = new JButton("record");
+        recordButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (!isRecording) {
+                    recordButton.setForeground(Color.RED);
+                    try {
+                        liveStreamWriter.startRecording(filePrefix.getText());
+                    } catch (Exception ex) {
+                        throw new RuntimeException(ex);
+                    }
+                    isRecording = true;
+                } else {
+                    recordButton.setForeground(Color.BLACK);
+                    liveStreamWriter.stopRecording();
+                    isRecording = false;
+                }
+            }
+        ;
+        });
 
 	final JButton bufferClearButton = new JButton("buffer clear / resync");
-	bufferClearButton.addActionListener( new ActionListener() {
-	    public void actionPerformed( ActionEvent e ) {
-		seqDetection.clearBuffers();	
-	    };
-	});
+        bufferClearButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                seqDetection.clearBuffers();
+            }
+        ;
+        });
 
 
 	fileBufferBar = new JProgressBar();
-	fileBufferBar.setString("save buffer");
-	fileBufferBar.setStringPainted(true);
+        fileBufferBar.setString("save buffer");
+        fileBufferBar.setStringPainted(true);
 
-	recorderPanel.add( recordButton );
-	recorderPanel.add( bufferClearButton );
-	recorderPanel.add(filePrefix);
-	recorderPanel.add(fileBufferBar);
-	mainPanel.add(recorderPanel);
-        
+        recorderPanel.add(recordButton);
+        recorderPanel.add(bufferClearButton);
+        recorderPanel.add(filePrefix);
+        recorderPanel.add(fileBufferBar);
+        mainPanel.add(recorderPanel);
+
         //mainPanel.add(new RegistrationPanel(avf, cfg, channels));
-
-	JButton fitPeakButton = new JButton("run parameter fit");
-	fitPeakButton.addActionListener( new ActionListener() {
-	    public void actionPerformed( ActionEvent e ) {
-		//rt.triggerParamRefit();
-	    };
-	});
+        JButton fitPeakButton = new JButton("run parameter fit");
+        fitPeakButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                //rt.triggerParamRefit();
+            }
+        ;
+        });
 
 	// error output and such
 	JPanel statusPanel = new JPanel();
-	statusPanel.setBorder(BorderFactory.createTitledBorder(
-	    "status messages") );
-	statusField = new JTextArea(30,60);
-	statusField.setEditable(false);
-	DefaultCaret cr = (DefaultCaret)statusField.getCaret();
-	cr.setUpdatePolicy( DefaultCaret.ALWAYS_UPDATE );
-	JScrollPane statusScroller = new JScrollPane( statusField );
-	statusPanel.add( statusScroller );
-	mainPanel.add(statusPanel);
-	
-	final int size = cfg.getInt("RawPxlCount").val();
-	final int nrCh = channels.length;
+        statusPanel.setBorder(BorderFactory.createTitledBorder(
+                "status messages"));
+        statusField = new JTextArea(30, 60);
+        statusField.setEditable(false);
+        DefaultCaret cr = (DefaultCaret) statusField.getCaret();
+        cr.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
+        JScrollPane statusScroller = new JScrollPane(statusField);
+        statusPanel.add(statusScroller);
+        mainPanel.add(statusPanel);
 
-	JPanel statusPanel2 = new JPanel();
-	syncButtons = new JButton[nrCh];
+        wfPixelSize = cfg.getInt("RawPxlCount").val();
+        this.channels = channels;
+        nrCh = channels.length;
 
-	for ( int c=0; c<nrCh; c++) {
-	    syncButtons[c] = new JButton("");
-	    syncButtons[c].setEnabled(false);
-	    statusPanel2.add( syncButtons[c] );
-	}
+        JPanel statusPanel2 = new JPanel();
+        syncButtons = new JButton[nrCh];
 
-	statusMessage = new JTextField(40);
-	statusMessage.setEditable(false);
+        for (int c = 0; c < nrCh; c++) {
+            syncButtons[c] = new JButton("");
+            syncButtons[c].setEnabled(false);
+            statusPanel2.add(syncButtons[c]);
+        }
 
-	statusPanel2.add( statusMessage );
+        statusMessage = new JTextField(40);
+        statusMessage.setEditable(false);
 
-	mainPanel.add(statusPanel2);
+        statusPanel2.add(statusMessage);
 
-	// redirect log output
-	Tool.setLogger( new Tool.Logger() {
-	    public void writeTrace( String e ) {
-		statusField.append(e+"\n");
-	    }
-	    public void writeShortMessage( String e) {
-		statusMessage.setText(e);
-	    }
-	    public void writeError( String e, boolean fatal) {
-		statusField.append( (fatal)?("FATAL err: "):("ERR :: ")+e+"\n");
-	    }
-	});
-    
-        
-	
-	//  ------- 
-	//  initialize the components
-	//  ------- 
+        mainPanel.add(statusPanel2);
 
+        // redirect log output
+        Tool.setLogger(new Tool.Logger() {
+            public void writeTrace(String e) {
+                statusField.append(e + "\n");
+            }
 
-	// network receiver and image storage
-	int netBufferSize   = cfg.getInt("NetworkBuffer").val();
-	imageReceiver	    = new ImageReceiver(netBufferSize,size,size);
-	
-	String saveFolder   = cfg.getStr( "DiskFolder" ).val();
-	int diskBufferSize  = cfg.getInt("DiskBuffer").val();
-	liveStreamWriter = new ImageDiskWriter( saveFolder, diskBufferSize );
-	imageReceiver.setDiskWriter( liveStreamWriter );
-	
-	// start the network receiver
-	imageReceiver.startReceiving( null, null );	
-	
-	// start the reconstruction threads
-	reconRunner = new ReconstructionRunner(cfg, avf, channels); 
+            public void writeShortMessage(String e) {
+                statusMessage.setText(e);
+            }
 
-	// start the SIM sequence detection
-	seqDetection = new SimSequenceExtractor(cfg, imageReceiver, reconRunner, this);
+            public void writeError(String e, boolean fatal) {
+                statusField.append((fatal) ? ("FATAL err: ") : ("ERR :: ") + e + "\n");
+            }
+        });
 
-	// setup the displays
-	wfDisplay    = new PlainImageDisplay( nrCh,   size,   size, channels );
-	reconDisplay = new PlainImageDisplay( nrCh, 2*size, 2*size, channels );
-	JFrame hrFr = new JFrame("Reconstruction");
-	JFrame lrFr = new JFrame("Widefiled");
-	hrFr.add( reconDisplay.getPanel() );
-	lrFr.add(    wfDisplay.getPanel() );
-	hrFr.pack();
-	lrFr.pack();
+        //  ------- 
+        //  initialize the components
+        //  ------- 
+        // network receiver and image storage
+        int netBufferSize = cfg.getInt("NetworkBuffer").val();
+        imageReceiver = new ImageReceiver(netBufferSize, wfPixelSize, wfPixelSize);
 
-	hrFr.setVisible(true);
-	lrFr.setVisible(true);
+        String saveFolder = cfg.getStr("DiskFolder").val();
+        int diskBufferSize = cfg.getInt("DiskBuffer").val();
+        liveStreamWriter = new ImageDiskWriter(saveFolder, diskBufferSize);
+        imageReceiver.setDiskWriter(liveStreamWriter);
 
-	// setup main interface tabs
-	JTabbedPane tabbedPane = new JTabbedPane();
-    
-	tabbedPane.addTab( "main", mainPanel );
-        tabbedPane.addTab("controller", new ControllerGui(cfg, channels, seqDetection, reconRunner) );
+        // start the network receiver
+        imageReceiver.startReceiving(null, null);
 
-	for (int ch=0 ; ch<nrCh ; ch++) {
-	    ParameterTab pTab = new ParameterTab( reconRunner, ch, cfg );
-	    tabbedPane.addTab( channels[ch], pTab.getPanel());
-	}
-	    
+        // start the reconstruction threads
+        reconRunner = new ReconstructionRunner(cfg, avf, channels);
 
-	mainFrame.add(tabbedPane);
-	mainFrame.pack();
+        // start the SIM sequence detection
+        seqDetection = new SimSequenceExtractor(cfg, imageReceiver, reconRunner, this);
+
+        // setup the displays
+        initView();
+
+        // setup main interface tabs
+        JTabbedPane tabbedPane = new JTabbedPane();
+
+        tabbedPane.addTab("main", mainPanel);
+        tabbedPane.addTab("controller", new ControllerGui(cfg, channels, this));
+
+        for (int ch = 0; ch < nrCh; ch++) {
+            ParameterTab pTab = new ParameterTab(reconRunner, ch, cfg);
+            tabbedPane.addTab(channels[ch], pTab.getPanel());
+        }
+
+        mainFrame.add(tabbedPane);
+        mainFrame.pack();
         mainFrame.setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-	mainFrame.setVisible(true);
-	
-	// setup the display-update threads
-	SimpleImageForward sif1 = new SimpleImageForward(false);
-	SimpleImageForward sif2 = new SimpleImageForward(true);
+        mainFrame.setVisible(true);
 
-	sif1.start();
-	sif2.start(); 
+        // setup the display-update threads
+        SimpleImageForward sif1 = new SimpleImageForward(false);
+        SimpleImageForward sif2 = new SimpleImageForward(true);
 
+        sif1.start();
+        sif2.start();
 
-	DynamicDisplayUpdate updateThread = new DynamicDisplayUpdate();
-	updateThread.start();
+        DynamicDisplayUpdate updateThread = new DynamicDisplayUpdate();
+        updateThread.start();
 
     }
-
-
-   
-    /** Thread updating dynamic display */
-    class DynamicDisplayUpdate extends Thread {
     
-	public void run() {
-	    while (true) {
-		// update save buffer state
-		fileBufferBar.setString( String.format("%7.0f MB / %7.0f sec left",
-		    liveStreamWriter.getSpace()/1024/1024.,
-		    liveStreamWriter.getTimeLeft(512, 1, 100) ));
-		fileBufferBar.setValue( liveStreamWriter.bufferState());
-	
-		int dropped = liveStreamWriter.nrDroppedFrames();
-		if ( dropped > 0 && isRecording ) Tool.error("#"+dropped+" not saved", false);
+    private void initView() {
+        wfDisplay = new PlainImageDisplay(nrCh, wfPixelSize, wfPixelSize, channels);
+        reconDisplay = new PlainImageDisplay(nrCh, 2 * wfPixelSize, 2 * wfPixelSize, channels);
+        hrFr = new JFrame("Reconstruction");
+        lrFr = new JFrame("Widefiled");
+        hrFr.add(reconDisplay.getPanel());
+        lrFr.add(wfDisplay.getPanel());
+        hrFr.pack();
+        lrFr.pack();
 
-		try {
-		    Thread.sleep(500);
-		} catch (InterruptedException e) {
-		    return;
-		}	
-	    }
-	}
-
+        hrFr.setVisible(true);
+        lrFr.setVisible(true);
+    }
+    
+    public void refreshView(int pixelSize) {
+        this.wfPixelSize = pixelSize;
+        reconRunner.setImageSize(wfPixelSize, wfPixelSize);
+        imageReceiver.setImageSize(wfPixelSize, wfPixelSize);
+        hrFr.dispose();
+        lrFr.dispose();
+        initView();
+        hrFr.toFront();
+        lrFr.toFront();
     }
 
+    /**
+     * Thread updating dynamic display
+     */
+    class DynamicDisplayUpdate extends Thread {
+
+        public void run() {
+            while (true) {
+                // update save buffer state
+                fileBufferBar.setString(String.format("%7.0f MB / %7.0f sec left",
+                        (float) liveStreamWriter.getSpace() / (2*wfPixelSize) / (2*wfPixelSize),
+                        liveStreamWriter.getTimeLeft(wfPixelSize, 1, 100)));
+                fileBufferBar.setValue(liveStreamWriter.bufferState());
+
+                int dropped = liveStreamWriter.nrDroppedFrames();
+                if (dropped > 0 && isRecording) {
+                    Tool.error("#" + dropped + " not saved", false);
+                }
+
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    return;
+                }
+            }
+        }
+
+    }
 
     class SimpleImageForward extends Thread {
-	
-	final boolean doWidefield;
-	
-	SimpleImageForward( boolean dwf ) {
-	    doWidefield = dwf;
-	}
 
-	public void run() {
-	    while (true) {
-		try {
-		    Vec2d.Real [] img ; 
-		    if (doWidefield) {
-		        img = reconRunner.finalWidefield.take();
-		    } else {
-		        //reconRunner.finalRecon.take();
-		        //reconRunner.finalRecon.take();
-		        //reconRunner.finalRecon.take();
-		        img =  reconRunner.finalRecon.take();
-		    }
-		    
-		    for (int c=0; c<reconRunner.nrChannels; c++) {
-			if (doWidefield)
-			    wfDisplay.newImage( c, img[c] );
-			else
-			    reconDisplay.newImage( c, img[c] );
-		    }
-		} catch (InterruptedException e ) {
-		    Tool.trace("Display thread interrupted, why?");
-		}
-		    
-		if (doWidefield)
-		    wfDisplay.refresh();
-		else
-		    reconDisplay.refresh();
-	    }
-	}
+        final boolean doWidefield;
+
+        SimpleImageForward(boolean dwf) {
+            doWidefield = dwf;
+        }
+
+        public void run() {
+            while (true) {
+                try {
+                    Vec2d.Real[] img;
+                    if (doWidefield) {
+                        img = reconRunner.finalWidefield.take();
+                    } else {
+                        //reconRunner.finalRecon.take();
+                        //reconRunner.finalRecon.take();
+                        //reconRunner.finalRecon.take();
+                        img = reconRunner.finalRecon.take();
+                    }
+
+                    for (int c = 0; c < reconRunner.nrChannels; c++) {
+                        if (doWidefield) {
+                            wfDisplay.newImage(c, img[c]);
+                        } else {
+                            reconDisplay.newImage(c, img[c]);
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    Tool.trace("Display thread interrupted, why?");
+                }
+
+                if (doWidefield) {
+                    wfDisplay.refresh();
+                } else {
+                    reconDisplay.refresh();
+                }
+            }
+        }
     }
 
-    /** starts and displays the GUI */
-    public static void main(String [] arg) {
-	// tweak SimpleMT
-	SimpleMT.setNrThreads( Math.max( SimpleMT.getNrThreads()-2, 2));
-	
-	
-	// load the CUDA library
+    /**
+     * starts and displays the GUI
+     */
+    public static void main(String[] arg) {
+        // tweak SimpleMT
+        SimpleMT.setNrThreads(Math.max(SimpleMT.getNrThreads() - 2, 2));
+
+        // load the CUDA library
         String OS = System.getProperty("os.name").toLowerCase();
         VectorFactory avf;
-        
+
         // following Factory for Linux-GPU-Reconstruction
-        if ( OS.contains("nix") || OS.contains("nux") || OS.contains("aix") ) {
-            String wd = System.getProperty("user.dir")+"/accel/";
-            Tool.trace("loading library from: "+wd);
+        if (OS.contains("nix") || OS.contains("nux") || OS.contains("aix")) {
+            String wd = System.getProperty("user.dir") + "/accel/";
+            Tool.trace("loading library from: " + wd);
             try {
-                System.load(wd+"libcudaimpl.so");
+                System.load(wd + "libcudaimpl.so");
                 avf = AccelVectorFactory.getFactory();
-            }
-            catch(UnsatisfiedLinkError ex) {
+            } catch (UnsatisfiedLinkError ex) {
                 System.err.println("[fairSIM] Error: " + ex);
                 System.err.println("[fairSIM] Error: now loading not GPU supported version");
                 avf = Vec.getBasicVectorFactory();
             }
-        }
-        
-        // following Factory for Windows-GPU-Reconstruction
-        else if ( OS.contains("win") ) {
-            String wd = System.getProperty("user.dir")+"\\";
-            Tool.trace("loading library from: "+wd);
+        } // following Factory for Windows-GPU-Reconstruction
+        else if (OS.contains("win")) {
+            String wd = System.getProperty("user.dir") + "\\";
+            Tool.trace("loading library from: " + wd);
             try {
-                System.load(wd+"libcudaimpl.dll");
+                System.load(wd + "libcudaimpl.dll");
                 avf = AccelVectorFactory.getFactory();
-            } catch(UnsatisfiedLinkError ex) {
+            } catch (UnsatisfiedLinkError ex) {
                 System.err.println("[fairSIM] Error: " + ex);
                 System.err.println("[fairSIM] Error: now loading not GPU supported version");
                 avf = Vec.getBasicVectorFactory();
             }
-        }
-        
-        // following Factory for CPU-Reconstruction
+        } // following Factory for CPU-Reconstruction
         else {
             avf = Vec.getBasicVectorFactory();
         }
-        
-        if (arg.length<2) {
-	    System.out.println("Start with: config-file.xml [488] [568] [647] ...");
-	    return;
-	}
-	try {
-	    Conf cfg = Conf.loadFile( arg[0] );
-	    LiveControlPanel lcp = new LiveControlPanel( 
-		cfg.r().cd("vigor-settings"),avf, 
-		Arrays.copyOfRange(arg, 1, arg.length));
-	} catch (Exception e) {
-	    System.err.println("Error loading config or initializing");
-	    e.printStackTrace();
-	    System.exit(-1);
-	}
+
+        if (arg.length < 2) {
+            System.out.println("Start with: config-file.xml [488] [568] [647] ...");
+            return;
+        }
+        try {
+            Conf cfg = Conf.loadFile(arg[0]);
+            LiveControlPanel lcp = new LiveControlPanel(
+                    cfg.r().cd("vigor-settings"), avf,
+                    Arrays.copyOfRange(arg, 1, arg.length));
+        } catch (Exception e) {
+            System.err.println("Error loading config or initializing");
+            e.printStackTrace();
+            System.exit(-1);
+        }
     }
-
-
 
 }

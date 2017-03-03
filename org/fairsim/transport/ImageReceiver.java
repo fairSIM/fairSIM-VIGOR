@@ -40,7 +40,7 @@ import org.fairsim.sim_gui.PlainImageDisplay;
 
 public class ImageReceiver {
 
-    private final int width, height;
+    private int width, height;
     private final BlockingQueue<ImageWrapper> imageQueue; 
     //private final BlockingQueue<ImageWrapper> recycledWrapperQueue; 
     private ConnectionHandler ch = null;
@@ -62,6 +62,10 @@ public class ImageReceiver {
 	//recycledWrapperQueue = new ArrayBlockingQueue<ImageWrapper>(bufferSize);
     }
 
+    public void setImageSize(int width, int height) {
+        this.width = width;
+        this.height = height;
+    }
     
     /** Forks a server thread to receive images. Incoming connections
      *  will fork further threads, so multiple connections are

@@ -49,7 +49,7 @@ public class CameraServer extends AbstractServer {
                 output = "ROI successfully set";
             } catch (DataFormatException ex) {
                 int[] roi = cc.getRoi();
-                output = "ROI was set to: (" + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ")";
+                output = "ROI was set to: (" + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ", " + roi[4] + ")";
             }
             gui.showText(output);
             return output;

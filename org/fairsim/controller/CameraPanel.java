@@ -39,7 +39,8 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
     private StatusUpdateThread updateThread;
     private List<JButton> buttons;
     private List<Component> components;
-    private static final int ROILENGTH = 4, UPDATEDELAY = 2000;
+    int recivingPixelSize;
+    private static final int UPDATEDELAY = 2000;
 
     /**
      * Creates new form CamControllerPanel
@@ -103,10 +104,11 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
     private void updateRoi() {
         sendInstruction("get roi");
         if (instructionDone) {
-            int[] rois = client.roi;
-            roiLabel.setText("ROI: " + rois[0] + ", " + rois[1] + ", " + rois[2] + ", " + rois[3]);
+            int[] roi = client.roi;
+            recivingPixelSize = roi[4];
+            roiLabel.setText("ROI: " + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ", " + roi[4]);
+            motherGui.calculateViewSize();
         }
-
     }
 
     private void updateExposure() {
@@ -252,9 +254,9 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
             updateConfigs(groupId);
         }
     }
-
+    
     int[] getRoi() throws NumberFormatException {
-        int[] roi = new int[ROILENGTH];
+        int[] roi = new int[4];
         roi[0] = Integer.parseInt(roiXField.getText());
         roi[1] = Integer.parseInt(roiYField.getText());
         roi[2] = Integer.parseInt(roiWField.getText());

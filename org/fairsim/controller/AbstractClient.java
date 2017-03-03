@@ -37,15 +37,15 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public abstract class AbstractClient extends Thread {
 
-    protected String serverAdress;
-    protected int serverPort;
-    protected ClientPanel gui;
+    protected final String serverAdress;
+    protected final int serverPort;
+    protected final ClientPanel gui;
     protected Socket serverSocket;
     protected Scanner in;
     protected PrintWriter out;
-    protected final int TIMEOUT = 1000;
+    protected static final int TIMEOUT = 1000;
     private String output;
-    protected BlockingQueue<Instruction> instructions;
+    protected final BlockingQueue<Instruction> instructions;
 
     protected AbstractClient(String serverAdress, int serverPort, ClientPanel gui) {
         this.serverAdress = serverAdress;
@@ -71,7 +71,7 @@ public abstract class AbstractClient extends Thread {
         }
     }
     
-    protected void addInstruction(String command) {
+    protected final void addInstruction(String command) {
         Instruction instruction = new Instruction(command);
         instruction.lock.lock();
         try {
@@ -92,7 +92,7 @@ public abstract class AbstractClient extends Thread {
     protected abstract void handleInterrupt(String command);
 
     @Override
-    public void run() {
+    public final void run() {
         while (!isInterrupted()) {
             try {
                 connectToServer();
@@ -142,7 +142,7 @@ public abstract class AbstractClient extends Thread {
         }
     }
     
-    private class Instruction {
+    private final class Instruction {
         Lock lock;
         Condition condition;
         String command;
