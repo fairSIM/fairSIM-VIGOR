@@ -82,7 +82,7 @@ class AccelVectorReal extends AbstractVectorReal {
     public void syncBuffer() {
 	long buffer = 0;
 	if (ourCopyMode == 2) {
-	    buffer = ourFactory.getNativeHostBuffer();
+            buffer = ourFactory.getNativeHostBuffer();
 	    if (buffer==0)
 		throw new RuntimeException("null pointer (caught in JAVA)");
 	}

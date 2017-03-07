@@ -19,8 +19,6 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 package org.fairsim.cameraplugin;
 
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.DataFormatException;
 import org.fairsim.cameraplugin.CameraPlugin.CameraException;
 import org.fairsim.controller.AbstractServer;
@@ -40,12 +38,12 @@ public class CameraServer extends AbstractServer {
         this.cc = cc;
     }
 
-    private String setRoi(int x, int y, int width, int height) {
+    private String setRoi(int x, int y, int width, int height, int imageSize) {
         //cc.stopAcquisition();
         try {
             String output;
             try {
-                cc.setRoi(x, y, width, height);
+                cc.setRoi(x, y, width, height, imageSize);
                 output = "ROI successfully set";
             } catch (DataFormatException ex) {
                 int[] roi = cc.getRoi();
@@ -56,7 +54,32 @@ public class CameraServer extends AbstractServer {
         } catch (CameraException ex) {
             return ex.toString();
         }
-        
+    }
+    
+    private String setBigRoi() {
+        int[] roi;
+        try {
+            cc.setBigRoi();
+            roi = cc.getRoi();
+            String output = "ROI was set to: (" + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ", " + roi[4] + ")";
+            gui.showText(output);
+            return output;
+        } catch (CameraException | DataFormatException ex) {
+            return ex.toString();
+        } 
+    }
+    
+    private String setSmallRoi() {
+        int[] roi;
+        try {
+            cc.setSmallRoi();
+            roi = cc.getRoi();
+            String output = "ROI was set to: (" + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ", " + roi[4] + ")";
+            gui.showText(output);
+            return output;
+        } catch (CameraException | DataFormatException ex) {
+            return ex.toString();
+        } 
     }
 
     private String getRoi() {
@@ -111,21 +134,21 @@ public class CameraServer extends AbstractServer {
             return ex.toString();
         }
     }
-    
+
     private String startAcquisition() {
         cc.startNetworkAcquisition();
         String output = "Acquisition started";
         gui.showText(output);
         return output;
     }
-    
+
     private String stopAcquisition() {
         cc.stopAcquisition();
         String output = "Acquisition stopped";
         gui.showText(output);
         return output;
     }
-    
+
     private String getStatus() {
         String[] status = new String[3];
         status[0] = String.valueOf(cc.fps);
@@ -160,7 +183,12 @@ public class CameraServer extends AbstractServer {
             int y = Integer.parseInt(sRoi[1]);
             int w = Integer.parseInt(sRoi[2]);
             int h = Integer.parseInt(sRoi[3]);
-            return setRoi(x, y, w, h);
+            int s = Integer.parseInt(sRoi[4]);
+            return setRoi(x, y, w, h, s);
+        } else if (input.equals("set big roi")) {
+            return setBigRoi();
+        } else if (input.equals("set small roi")) {
+            return setSmallRoi();
         } else if (input.startsWith("set exposure")) {
             String exposureString = input.split(";")[1];
             double exposureDouble = Double.parseDouble(exposureString);

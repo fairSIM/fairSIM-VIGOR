@@ -287,7 +287,7 @@ public class BasicVectors extends VectorFactory {
 	@Override
 	public void setFrom16bitPixels( short [] in ){
 	    if ( width*height != in.length )
-		throw new RuntimeException("Short array to vector size mismatch");
+		throw new RuntimeException("Short array to vector size mismatch " + width + "/" + height + "/" + in.length);
 	    final float [] out = this.vectorData();
 	    for (int y=0; y<height; y++) 
 	    for (int x=0; x<width; x++) { 

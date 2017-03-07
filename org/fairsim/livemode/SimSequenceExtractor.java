@@ -26,11 +26,13 @@ import java.awt.Color;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.DataFormatException;
+import org.fairsim.linalg.BasicVectors;
 
 import org.fairsim.transport.ImageReceiver;
 import org.fairsim.transport.ImageWrapper;
 import org.fairsim.utils.Tool;
 import org.fairsim.linalg.MTool;
+import org.fairsim.linalg.Vec2d;
 
 import org.fairsim.utils.Conf;
 
@@ -163,7 +165,6 @@ public class SimSequenceExtractor {
             while (true) {
                 if (!creatingRegFile) {
                     ImageWrapper iw = imgRecv.takeImage();
-
                     int chNr = iw.pos1();	// pos1 holds the data packets image channel
                     PerChannelBuffer pc = channelMapping.get(chNr);
                     if (pc == null) {
@@ -201,7 +202,6 @@ public class SimSequenceExtractor {
                     Tool.trace("Channel joiner interrupted, why?");
                     continue;
                 }
-
                 reconRunner.queueImage(res);
             }
         }

@@ -26,6 +26,7 @@
               <Component id="slmPanel" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="arduinoPanel" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -46,7 +47,7 @@
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                  <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="slmConnectButton" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
@@ -58,16 +59,15 @@
                       </Group>
                       <Component id="slmSelect" alignment="0" min="-2" max="-2" attributes="0"/>
                       <Group type="102" alignment="0" attributes="0">
-                          <Component id="slmActivateButton" min="-2" pref="85" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="slmDeactivateButton" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace type="separate" max="-2" attributes="0"/>
                           <Component id="slmSelectButton" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="slmComboBox" max="32767" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="slmActivateButton" min="-2" pref="85" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="slmDeactivateButton" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
-                  <EmptySpace max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -84,11 +84,14 @@
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="slmComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="slmSelectButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="slmActivateButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="slmDeactivateButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" alignment="3" groupAlignment="3" attributes="0">
+                          <Component id="slmActivateButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="slmDeactivateButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="slmSelect" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -152,7 +155,7 @@
         </Component>
         <Component class="javax.swing.JButton" name="slmSelectButton">
           <Properties>
-            <Property name="text" type="java.lang.String" value="Set Selected"/>
+            <Property name="text" type="java.lang.String" value="Selected"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="slmSelectButtonActionPerformed"/>

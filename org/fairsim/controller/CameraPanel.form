@@ -23,58 +23,46 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
-                      <Component id="roiXField" min="-2" pref="35" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="roiYField" min="-2" pref="35" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="roiWField" min="-2" pref="35" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="roiHField" min="-2" pref="35" max="-2" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="roiBox" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="roiButton" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="exposureField" min="-2" pref="35" max="-2" attributes="0"/>
+                      <EmptySpace min="21" pref="21" max="-2" attributes="0"/>
+                      <Component id="exposureButton" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="msLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="exposureButton" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="groupBox" min="-2" pref="120" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="configBox" min="-2" pref="120" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="configButton" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="27" max="32767" attributes="0"/>
                   </Group>
-                  <Group type="102" attributes="0">
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
-                              <Component id="fpsLabel" min="-2" pref="80" max="-2" attributes="0"/>
-                              <EmptySpace type="separate" max="-2" attributes="0"/>
-                              <Component id="queuingPanel" max="-2" attributes="0"/>
-                              <EmptySpace type="separate" max="-2" attributes="0"/>
-                              <Component id="sendingPanel" max="-2" attributes="0"/>
-                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="channelLabel" max="32767" attributes="0"/>
-                              <EmptySpace type="separate" max="-2" attributes="0"/>
-                              <Component id="roiLabel" max="32767" attributes="0"/>
-                              <EmptySpace type="separate" max="-2" attributes="0"/>
-                              <Component id="exposureLabel" max="32767" attributes="0"/>
-                              <EmptySpace min="-2" pref="86" max="-2" attributes="0"/>
-                              <Component id="startButton" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="stopButton" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                      </Group>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="fpsLabel" max="-2" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Component id="queuingPanel" max="-2" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Component id="sendingPanel" max="-2" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="channelLabel" max="32767" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Component id="roiLabel" max="32767" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Component id="exposureLabel" max="32767" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Component id="startButton" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
+                      <Component id="stopButton" max="-2" attributes="0"/>
                   </Group>
               </Group>
+              <EmptySpace max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -98,16 +86,13 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="roiButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="roiXField" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="roiYField" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="roiWField" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="roiHField" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="exposureButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="exposureField" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="msLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="groupBox" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="configBox" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="configButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="roiBox" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
@@ -219,38 +204,6 @@
         </Component>
       </SubComponents>
     </Container>
-    <Component class="javax.swing.JTextField" name="roiXField">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="765"/>
-      </Properties>
-      <Events>
-        <EventHandler event="keyPressed" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="roiXFieldKeyPressed"/>
-      </Events>
-    </Component>
-    <Component class="javax.swing.JTextField" name="roiYField">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="765"/>
-      </Properties>
-      <Events>
-        <EventHandler event="keyPressed" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="roiYFieldKeyPressed"/>
-      </Events>
-    </Component>
-    <Component class="javax.swing.JTextField" name="roiWField">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="520"/>
-      </Properties>
-      <Events>
-        <EventHandler event="keyPressed" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="roiWFieldKeyPressed"/>
-      </Events>
-    </Component>
-    <Component class="javax.swing.JTextField" name="roiHField">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="520"/>
-      </Properties>
-      <Events>
-        <EventHandler event="keyPressed" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="roiHFieldKeyPressed"/>
-      </Events>
-    </Component>
     <Component class="javax.swing.JButton" name="roiButton">
       <Properties>
         <Property name="text" type="java.lang.String" value="Set ROI"/>
@@ -310,6 +263,19 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="configButtonActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="roiBox">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="2">
+            <StringItem index="0" value="Big Roi: 512"/>
+            <StringItem index="1" value="Small Roi: 256"/>
+          </StringArray>
+        </Property>
+      </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+      </AuxValues>
     </Component>
   </SubComponents>
 </Form>

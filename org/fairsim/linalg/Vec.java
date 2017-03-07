@@ -104,7 +104,7 @@ public final class Vec {
 	int len = v0.vectorSize();
 	for (int i=0;i<v.length;i++)
 	    if (v[i].vectorSize() != len)
-		throw new RuntimeException("Vector len mismatch"
+		throw new RuntimeException("Vector len mismatch "
 		    +i+" "+len+" "+v[i].vectorSize());
 	return len;
     }
@@ -117,7 +117,7 @@ public final class Vec {
 	int len = v0.vectorSize();
 	for (int i=0;i<v.length;i++)
 	    if (v[i].vectorSize() != len)
-		throw new RuntimeException("Vector len mismatch"
+		throw new RuntimeException("Vector len mismatch "
 		    +i+" "+len+" "+v[i].vectorSize());
 	return len;
     }
@@ -130,7 +130,7 @@ public final class Vec {
 	int len = v0.vectorSize();
 	for (int i=0;i<v.length;i++)
 	    if (v[i].vectorSize() != len)
-		throw new RuntimeException("Vector len mismatch"
+		throw new RuntimeException("Vector len mismatch "
 		    +i+" "+len+" "+v[i].vectorSize());
 	return len;
     }
@@ -143,7 +143,7 @@ public final class Vec {
 	int len = v0.vectorSize();
 	for (int i=0;i<v.length;i++)
 	    if (v[i].vectorSize() != len)
-		throw new RuntimeException("Vector len mismatch"
+		throw new RuntimeException("Vector len mismatch "
 		    +i+" "+len+" "+v[i].vectorSize());
 	return len;
     }

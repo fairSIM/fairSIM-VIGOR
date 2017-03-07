@@ -18,19 +18,7 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 
 package org.fairsim.cameraplugin;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.CMMCore;
-import org.fairsim.sim_gui.PlainImageDisplay;
-import org.fairsim.transport.ImageSender;
-import org.fairsim.transport.ImageWrapper;
-import org.fairsim.utils.Tool;
 import org.micromanager.api.ScriptInterface;
 
 /**
@@ -42,7 +30,6 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
     public static String menuName = "Fast SIM Camera Controller";
     public static String tooltipDescription = "Micro manager plugin to controll the cameras of the fast SIM setup";
     private static final int ROILENGTH = 4;
-    ScriptInterface si;
     CMMCore mmc;
     CameraController cc;
     
@@ -210,9 +197,9 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
             System.out.println(ex);
         }
         */
-        this.si = si;
-        mmc = si.getMMCore();
+        
         try {
+            mmc = si.getMMCore();
             cc = new CameraController(this);
         } catch (Exception ex) {
             si.showError(ex);

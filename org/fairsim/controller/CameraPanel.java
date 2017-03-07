@@ -66,10 +66,7 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
         components.add(stopButton);
         components.add(roiButton);
         components.add(exposureField);
-        components.add(roiWField);
-        components.add(roiHField);
-        components.add(roiXField);
-        components.add(roiYField);
+        components.add(roiBox);
         components.add(queuingPanel);
         components.add(sendingPanel);
         disableControllers();
@@ -107,7 +104,7 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
             int[] roi = client.roi;
             recivingPixelSize = roi[4];
             roiLabel.setText("ROI: " + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ", " + roi[4]);
-            motherGui.calculateViewSize();
+            //motherGui.calculateViewSize();
         }
     }
 
@@ -214,9 +211,9 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
 
     void setRoi() {
         try {
-            int[] roi = getRoi();
-            String sRoi = Tool.encodeArray("set roi", roi);
-            sendInstruction(sRoi);
+            int roiId = roiBox.getSelectedIndex();
+            if (roiId == 0) sendInstruction("set big roi");
+            else if (roiId == 1) sendInstruction("set small roi");
             if (instructionDone) {
                 updateRoi();
             }
@@ -253,15 +250,6 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
         if (groupId >= 0) {
             updateConfigs(groupId);
         }
-    }
-    
-    int[] getRoi() throws NumberFormatException {
-        int[] roi = new int[4];
-        roi[0] = Integer.parseInt(roiXField.getText());
-        roi[1] = Integer.parseInt(roiYField.getText());
-        roi[2] = Integer.parseInt(roiWField.getText());
-        roi[3] = Integer.parseInt(roiHField.getText());
-        return roi;
     }
     
     private class StatusUpdateThread extends Thread {
@@ -329,10 +317,6 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
         queuingLabel = new javax.swing.JLabel();
         sendingPanel = new javax.swing.JPanel();
         sendingLabel = new javax.swing.JLabel();
-        roiXField = new javax.swing.JTextField();
-        roiYField = new javax.swing.JTextField();
-        roiWField = new javax.swing.JTextField();
-        roiHField = new javax.swing.JTextField();
         roiButton = new javax.swing.JButton();
         exposureField = new javax.swing.JTextField();
         msLabel = new javax.swing.JLabel();
@@ -340,6 +324,7 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
         groupBox = new javax.swing.JComboBox<>();
         configBox = new javax.swing.JComboBox<>();
         configButton = new javax.swing.JButton();
+        roiBox = new javax.swing.JComboBox<>();
 
         setBorder(javax.swing.BorderFactory.createTitledBorder("Camera"));
 
@@ -403,34 +388,6 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
             .addComponent(sendingLabel)
         );
 
-        roiXField.setText("765");
-        roiXField.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                roiXFieldKeyPressed(evt);
-            }
-        });
-
-        roiYField.setText("765");
-        roiYField.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                roiYFieldKeyPressed(evt);
-            }
-        });
-
-        roiWField.setText("520");
-        roiWField.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                roiWFieldKeyPressed(evt);
-            }
-        });
-
-        roiHField.setText("520");
-        roiHField.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                roiHFieldKeyPressed(evt);
-            }
-        });
-
         roiButton.setText("Set ROI");
         roiButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -467,6 +424,8 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
             }
         });
 
+        roiBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Big Roi: 512", "Small Roi: 256" }));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -475,48 +434,38 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(roiXField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(roiYField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(roiWField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(roiHField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(roiBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(roiButton)
                         .addGap(18, 18, 18)
                         .addComponent(exposureField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(21, 21, 21)
+                        .addComponent(exposureButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(msLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(exposureButton)
                         .addGap(18, 18, 18)
                         .addComponent(groupBox, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(configBox, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(configButton)
-                        .addGap(0, 27, Short.MAX_VALUE))
+                        .addComponent(configButton))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(fpsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(queuingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(sendingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(channelLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addGap(18, 18, 18)
-                                .addComponent(roiLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addGap(18, 18, 18)
-                                .addComponent(exposureLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addGap(86, 86, 86)
-                                .addComponent(startButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(stopButton)))
-                        .addContainerGap())))
+                        .addComponent(fpsLabel)
+                        .addGap(18, 18, 18)
+                        .addComponent(queuingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(sendingPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(channelLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(roiLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(exposureLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(startButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(stopButton)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -536,16 +485,13 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(roiButton)
-                    .addComponent(roiXField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(roiYField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(roiWField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(roiHField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(exposureButton)
                     .addComponent(exposureField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(msLabel)
                     .addComponent(groupBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(configBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(configButton))
+                    .addComponent(configButton)
+                    .addComponent(roiBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -574,30 +520,6 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
         setConfig();
     }//GEN-LAST:event_configButtonActionPerformed
 
-    private void roiXFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_roiXFieldKeyPressed
-        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
-            setRoi();
-        }
-    }//GEN-LAST:event_roiXFieldKeyPressed
-
-    private void roiYFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_roiYFieldKeyPressed
-        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
-            setRoi();
-        }
-    }//GEN-LAST:event_roiYFieldKeyPressed
-
-    private void roiWFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_roiWFieldKeyPressed
-        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
-            setRoi();
-        }
-    }//GEN-LAST:event_roiWFieldKeyPressed
-
-    private void roiHFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_roiHFieldKeyPressed
-        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
-            setRoi();
-        }
-    }//GEN-LAST:event_roiHFieldKeyPressed
-
     private void exposureFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_exposureFieldKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             setExposureTime();
@@ -617,12 +539,9 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
     private javax.swing.JLabel msLabel;
     private javax.swing.JLabel queuingLabel;
     private javax.swing.JPanel queuingPanel;
+    private javax.swing.JComboBox<String> roiBox;
     private javax.swing.JButton roiButton;
-    private javax.swing.JTextField roiHField;
     private javax.swing.JLabel roiLabel;
-    private javax.swing.JTextField roiWField;
-    private javax.swing.JTextField roiXField;
-    private javax.swing.JTextField roiYField;
     private javax.swing.JLabel sendingLabel;
     private javax.swing.JPanel sendingPanel;
     private javax.swing.JButton startButton;

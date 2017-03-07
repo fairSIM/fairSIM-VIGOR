@@ -18,6 +18,7 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 
 package org.fairsim.controller;
 
+import java.awt.event.KeyEvent;
 import org.fairsim.livemode.LiveControlPanel;
 import org.fairsim.livemode.ReconstructionRunner;
 import org.fairsim.livemode.SimSequenceExtractor;
@@ -29,7 +30,7 @@ import org.fairsim.utils.Tool;
  * @author m.lachetta
  */
 public class ControllerGui extends javax.swing.JPanel {
-    
+
     LiveControlPanel motherGui;
     private String controllerAdress;
     private final String[] camAdresses;
@@ -66,7 +67,7 @@ public class ControllerGui extends javax.swing.JPanel {
             Tool.error("[fairSIM] No ControllerAdress found. ControllerAdress set to 'localhost'", false);
         }
         //readin cam adresses
-        
+
         for (int i = 0; i < camCounts; i++) {
             try {
                 Conf.Folder fld = cfg.cd("channel-" + channelNames[i]);
@@ -127,7 +128,8 @@ public class ControllerGui extends javax.swing.JPanel {
     public void showText(String text) {
         logger.append(text + "\n");
     }
-    
+
+    /*
     int calculateViewSize() {
         int[] pixelSize = new int[CAMCOUNTMAX];
         
@@ -150,7 +152,7 @@ public class ControllerGui extends javax.swing.JPanel {
         System.out.println(ps);
         return ps;
     }
-
+     */
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -164,6 +166,7 @@ public class ControllerGui extends javax.swing.JPanel {
         serverLabel = new javax.swing.JLabel();
         logger = new java.awt.TextArea();
         refreshButton = new javax.swing.JButton();
+        refreshField = new javax.swing.JTextField();
         camControllerPanel0 = new org.fairsim.controller.CameraPanel();
         camControllerPanel1 = new org.fairsim.controller.CameraPanel();
         camControllerPanel2 = new org.fairsim.controller.CameraPanel();
@@ -179,10 +182,16 @@ public class ControllerGui extends javax.swing.JPanel {
         logger.setEditable(false);
 
         refreshButton.setText("Refresh View");
-        refreshButton.setEnabled(false);
         refreshButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 refreshButtonActionPerformed(evt);
+            }
+        });
+
+        refreshField.setText("512");
+        refreshField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                refreshFieldKeyPressed(evt);
             }
         });
 
@@ -196,6 +205,8 @@ public class ControllerGui extends javax.swing.JPanel {
                     .addGroup(clientServerPanelLayout.createSequentialGroup()
                         .addComponent(serverLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(refreshField, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(refreshButton))
                     .addComponent(logger, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
@@ -205,7 +216,9 @@ public class ControllerGui extends javax.swing.JPanel {
             .addGroup(clientServerPanelLayout.createSequentialGroup()
                 .addGroup(clientServerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(serverLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(refreshButton))
+                    .addGroup(clientServerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(refreshButton)
+                        .addComponent(refreshField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(logger, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -217,24 +230,28 @@ public class ControllerGui extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(clientServerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(camControllerPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(camControllerPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(camControllerPanel0, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(controllerPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(syncPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(registrationPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                        .addContainerGap())))
+                    .addComponent(camControllerPanel0, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(camControllerPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(camControllerPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(controllerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(syncPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(registrationPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(clientServerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(controllerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(controllerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(syncPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(registrationPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(camControllerPanel0, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -242,19 +259,35 @@ public class ControllerGui extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(camControllerPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(syncPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(registrationPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(clientServerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
-        int ps = calculateViewSize();
-        if (ps > 0) motherGui.refreshView(ps);
+        //int ps = calculateViewSize();
+        try {
+            int ps = Integer.parseInt(refreshField.getText());
+            System.out.println(ps);
+            if (ps > 0) {
+                motherGui.refreshView(ps);
+            }
+        } catch (NumberFormatException ex) {
+        }
     }//GEN-LAST:event_refreshButtonActionPerformed
+
+    private void refreshFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_refreshFieldKeyPressed
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+            try {
+                int ps = Integer.parseInt(refreshField.getText());
+                System.out.println(ps);
+                if (ps > 0) {
+                    motherGui.refreshView(ps);
+                }
+            } catch (NumberFormatException ex) {
+            }
+        }
+    }//GEN-LAST:event_refreshFieldKeyPressed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -265,6 +298,7 @@ public class ControllerGui extends javax.swing.JPanel {
     private org.fairsim.controller.ControllerPanel controllerPanel;
     private java.awt.TextArea logger;
     private javax.swing.JButton refreshButton;
+    private javax.swing.JTextField refreshField;
     private org.fairsim.controller.RegistrationPanel registrationPanel;
     private javax.swing.JLabel serverLabel;
     private org.fairsim.controller.SyncPanel syncPanel;

@@ -220,6 +220,10 @@ public class SimParam implements Vec2d.Size, Vec3d.Size {
 	this.otf( currentOtf2D );	// propagate size to OTF
 	return this;
     }
+    
+    public SimParam setPxlSize(int pxl) {
+        return setPxlSize( pxl, micronsPerPixel );
+    }
 
 
     /** Set the image and stack size */
@@ -301,6 +305,9 @@ public class SimParam implements Vec2d.Size, Vec3d.Size {
 	private final int nrPhases; // how many phases
 	private int thisBand;	    // which band is this
 	
+        private int startImageSize;
+        private double startPhaOff, startPX, startPY;
+        
 	private double pX, pY;	    // shift vector (band1)
 	private double phaOff;	    // global phase offsets
 	private boolean hasIndividualPhases;	// if non-equidist. phases are set
@@ -406,6 +413,43 @@ public class SimParam implements Vec2d.Size, Vec3d.Size {
 	public double getPhaOff(){
 	    return phaOff;
 	}
+        
+        public void calcNew(int newImageSize) {
+            int translationSize = startImageSize / 2 - newImageSize / 2;
+            
+            double firstAngle = getAngle(startPX, startPY);
+            double seconAngle = getAngle(translationSize, translationSize);
+            double sumAngle = firstAngle + seconAngle;
+            double oldOffset = startPhaOff;
+            double translationLen = Math.hypot(translationSize, translationSize);
+            double shiftLen = Math.hypot(startPX, startPY);
+            double tempShiftLen = translationLen * Math.cos(sumAngle);
+            double tempShiftTimes = tempShiftLen / shiftLen;
+            double tempShiftRest = tempShiftTimes % 1;
+            double newOffset_0 = (oldOffset - tempShiftRest) % Math.PI;
+            double newOffset_1 = (oldOffset + tempShiftRest) % Math.PI;
+            
+            System.out.println("startImageSize: " + startImageSize);
+            System.out.println("startPX: " + startPX);
+            System.out.println("startPY: " + startPY);
+            System.out.println("firstAngle: " + firstAngle);
+            System.out.println("secondAngle: " + seconAngle);
+            System.out.println("translationSize: " + translationSize);
+            System.out.println("sumAngle: " + sumAngle);
+            System.out.println("translationLen: " + translationLen);
+            System.out.println("shiftLen: " + shiftLen);
+            System.out.println("tempShiftLen: " + tempShiftLen);
+            System.out.println("tempShiftTimes: " + tempShiftTimes);
+            System.out.println("tempShiftRest: " + tempShiftRest);
+            System.out.println("oldOffset: " + oldOffset);
+            System.out.println("newOffset_0: " + newOffset_0);
+            System.out.println("newOffset_1: " + newOffset_1);
+            
+            double factor = (double)newImageSize / (double)startImageSize;
+            pX = startPX * factor;
+            pY = startPY * factor;
+            SimParam.this.imgSize = newImageSize;
+        }
 
 
 	// --- Shifts ---
@@ -420,6 +464,13 @@ public class SimParam implements Vec2d.Size, Vec3d.Size {
 	    pX = cor[0]/(nrBands-1); 
 	    pY = cor[1]/(nrBands-1); 
 	}
+        
+        private void setStartParam() {
+            startPX = pX;
+            startPY = pY;
+            startPhaOff = phaOff;
+            startImageSize = imgSize;
+        }
 
 	/** Return x for shift of band n. 
 	 *  Bands count from 0.*/
@@ -447,6 +498,10 @@ public class SimParam implements Vec2d.Size, Vec3d.Size {
 	public double getPxPyAngle(int band) {
 	    failBand(band);
 	    return Math.atan2( pY*band, pX*band );
+	}
+        
+        private double getAngle(double x, double y) {
+	    return Math.atan2( y, x );
 	}
 	
 	/** Return length of shift of band n (hypot). 
@@ -575,6 +630,7 @@ public class SimParam implements Vec2d.Size, Vec3d.Size {
 	    
 	    dir.setPxPy( df.getDbl("shift").vals() );
 	    dir.setPhaOff( df.getDbl("phase-offset").val());
+            dir.setStartParam();
 	    double [] mod = df.getDbl("modulations").vals();
 	    for ( int i=0; i< mod.length ; i++)
 		dir.setModulation( i, mod[i]);

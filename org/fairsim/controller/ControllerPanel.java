@@ -228,13 +228,6 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
      */
     void refreshSlmInfo() {
         try {
-            sendSlmInstruction("rolist");
-            if (controllerInstructionDone) {
-                slmComboBox.removeAllItems();
-                for (int i = 0; i < controllerClient.slmList.length; i++) {
-                    slmComboBox.addItem("[" + i + "]    " + controllerClient.slmList[i]);
-                }
-            }
             sendSlmInstruction("info");
             if (controllerInstructionDone) {
                 //slmVersion.setText("SLM-API-Version: " + client.info[0]);
@@ -292,6 +285,13 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
     private void connectSLM() {
         sendSlmInstruction("connect");
         if (controllerInstructionDone) {
+            sendSlmInstruction("rolist");
+            if (controllerInstructionDone) {
+                slmComboBox.removeAllItems();
+                for (int i = 0; i < controllerClient.slmList.length; i++) {
+                    slmComboBox.addItem("[" + i + "]    " + controllerClient.slmList[i]);
+                }
+            }
             refreshSlmInfo();
             enableSlmControllers();
             slmConnectButton.setEnabled(false);
@@ -452,7 +452,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
             }
         });
 
-        slmSelectButton.setText("Set Selected");
+        slmSelectButton.setText("Selected");
         slmSelectButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 slmSelectButtonActionPerformed(evt);
@@ -472,7 +472,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
             slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(slmPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(slmPanelLayout.createSequentialGroup()
                         .addComponent(slmConnectButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -483,14 +483,13 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
                         .addComponent(slmRefreshButton))
                     .addComponent(slmSelect)
                     .addGroup(slmPanelLayout.createSequentialGroup()
-                        .addComponent(slmActivateButton, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(slmDeactivateButton)
-                        .addGap(18, 18, 18)
                         .addComponent(slmSelectButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(slmComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(slmComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(slmActivateButton, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(slmDeactivateButton))))
         );
         slmPanelLayout.setVerticalGroup(
             slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -504,10 +503,12 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
                 .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(slmComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(slmSelectButton)
-                    .addComponent(slmActivateButton)
-                    .addComponent(slmDeactivateButton))
+                    .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(slmActivateButton)
+                        .addComponent(slmDeactivateButton)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(slmSelect))
+                .addComponent(slmSelect)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         arduinoPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Arduino-Controller"));
@@ -645,58 +646,10 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(slmPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(arduinoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(arduinoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void slmConnectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmConnectButtonActionPerformed
-        connectSLM();
-    }//GEN-LAST:event_slmConnectButtonActionPerformed
-
-    private void slmDisconnectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmDisconnectButtonActionPerformed
-        disconnectSLM();
-    }//GEN-LAST:event_slmDisconnectButtonActionPerformed
-
-    private void slmRebootButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmRebootButtonActionPerformed
-        sendSlmInstruction("reboot");
-        if (controllerInstructionDone) {
-            disableSlmControllers();
-            Thread timer = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    int time = 20;
-                    showText("Gui: Wait " + time + " Seconds until reboot finnished...");
-                    for (int i = 0; i < time; i++) {
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException ex) {
-                            throw new RuntimeException("Woken up while rebooting SLM");
-                        }
-                    }
-                    showText("Gui: SLM rebooted");
-                    enableSlmControllers();
-                }
-            });
-            timer.start();
-        }
-    }//GEN-LAST:event_slmRebootButtonActionPerformed
-
-    private void slmActivateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmActivateButtonActionPerformed
-        sendSlmInstruction("activate");
-    }//GEN-LAST:event_slmActivateButtonActionPerformed
-
-    private void slmDeactivateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmDeactivateButtonActionPerformed
-        sendSlmInstruction("deactivate");
-    }//GEN-LAST:event_slmDeactivateButtonActionPerformed
-
-    private void slmSelectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmSelectButtonActionPerformed
-        sendSlmInstruction(Integer.toString(slmComboBox.getSelectedIndex()));
-        refreshSlmInfo();
-    }//GEN-LAST:event_slmSelectButtonActionPerformed
-
-    private void slmRefreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmRefreshButtonActionPerformed
-        refreshSlmInfo();
-    }//GEN-LAST:event_slmRefreshButtonActionPerformed
 
     private void arduinoConnectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoConnectButtonActionPerformed
         connectArduino();
@@ -754,6 +707,55 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
             setRGBButtonSelected(false);
         }
     }//GEN-LAST:event_arduinoPhotoButtonActionPerformed
+
+    private void slmRefreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmRefreshButtonActionPerformed
+        refreshSlmInfo();
+    }//GEN-LAST:event_slmRefreshButtonActionPerformed
+
+    private void slmSelectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmSelectButtonActionPerformed
+        sendSlmInstruction(Integer.toString(slmComboBox.getSelectedIndex()));
+        refreshSlmInfo();
+    }//GEN-LAST:event_slmSelectButtonActionPerformed
+
+    private void slmDeactivateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmDeactivateButtonActionPerformed
+        sendSlmInstruction("deactivate");
+    }//GEN-LAST:event_slmDeactivateButtonActionPerformed
+
+    private void slmActivateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmActivateButtonActionPerformed
+        sendSlmInstruction("activate");
+    }//GEN-LAST:event_slmActivateButtonActionPerformed
+
+    private void slmRebootButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmRebootButtonActionPerformed
+        sendSlmInstruction("reboot");
+        if (controllerInstructionDone) {
+            disableSlmControllers();
+            Thread timer = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    int time = 20;
+                    showText("Gui: Wait " + time + " Seconds until reboot finnished...");
+                    for (int i = 0; i < time; i++) {
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException ex) {
+                            throw new RuntimeException("Woken up while rebooting SLM");
+                        }
+                    }
+                    showText("Gui: SLM rebooted");
+                    enableSlmControllers();
+                }
+            });
+            timer.start();
+        }
+    }//GEN-LAST:event_slmRebootButtonActionPerformed
+
+    private void slmDisconnectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmDisconnectButtonActionPerformed
+        disconnectSLM();
+    }//GEN-LAST:event_slmDisconnectButtonActionPerformed
+
+    private void slmConnectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmConnectButtonActionPerformed
+        connectSLM();
+    }//GEN-LAST:event_slmConnectButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

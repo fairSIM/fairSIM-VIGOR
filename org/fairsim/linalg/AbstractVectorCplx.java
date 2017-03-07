@@ -307,7 +307,7 @@ public abstract class AbstractVectorCplx implements Vec.Cplx {
     public void times(Vec.Real in) {
 	Vec.failSize( this, in );
 	this.readyBuffer();
-
+            
 	float [] x = in.vectorData(), y = data;
 	for (int i=0;i<elemCount;i++) {
 	    y[Rl(i)] *= x[i]; 

@@ -40,15 +40,16 @@ public class CameraController {
     private final CameraPlugin cp;
     private final CameraServerGui gui;
     private AcquisitionThread acquisitionThread;
-    private int channel;
+    private final int channel;
     private final List<String> sendIps;
     private final CameraGroup[] groups;
     private static final int CAMBUFFER = 1000;
     private static final int FPSCOUNTS = 59;
     private int[] roi;
+    private final int[] bigRoi, smallRoi;
     private int imageWidth;
     private int imageHeight;
-    private int sendPixelSize;
+    private int sendImageSize;
     private boolean mirrored;
     private final ImageSender isend;
     double  fps;
@@ -60,27 +61,13 @@ public class CameraController {
         isend = new ImageSender();
         sendIps = new ArrayList<>();
 
-        readinFromXML();
-
-        cp.setBuffer(CAMBUFFER);
-
-        String[] grps = cp.getConfigGroups();
-        groups = new CameraGroup[grps.length];
-        for (int i = 0; i < grps.length; i++) {
-            groups[i] = new CameraGroup(grps[i], cp.getConfigs(grps[i]));
-        }
-
-        this.gui = new CameraServerGui(imageWidth, imageHeight, this);
-    }
-        
-    private void readinFromXML() throws IOException, CameraException {
         String filename = Tool.getFile(System.getProperty("user.home") + "/documents/fastsim-camera.xml").getAbsolutePath();
-
         try {
             Conf.Folder cfg = Conf.loadFile(filename).r().cd("camera-settings");
             channel = cfg.getInt("Channel").val();
             String[] flags = cfg.getStr("Flags").val().split(" ");
-            int[] roi = cfg.getInt("Roi").vals();
+            bigRoi = cfg.getInt("BigRoi").vals();
+            smallRoi = cfg.getInt("SmallRoi").vals();
             String[] ips = cfg.getStr("SendIps").val().split(" ");
             mirrored = false;
             for (String flag : flags) {
@@ -89,7 +76,7 @@ public class CameraController {
                 }
             }
             try {
-                setRoi(roi[0], roi[1], roi[2], roi[3], true);
+                setRoi(bigRoi[0], bigRoi[1], bigRoi[2], bigRoi[3], bigRoi[4], true);
             } catch (DataFormatException ex) {
             }
             for (String ip : ips) {
@@ -101,13 +88,30 @@ public class CameraController {
             throw new IOException("Entry not found: " + filename);
         }
 
+        cp.setBuffer(CAMBUFFER);
+
+        String[] grps = cp.getConfigGroups();
+        groups = new CameraGroup[grps.length];
+        for (int i = 0; i < grps.length; i++) {
+            groups[i] = new CameraGroup(grps[i], cp.getConfigs(grps[i]));
+        }
+
+        this.gui = new CameraServerGui(imageWidth, imageHeight, this);
     }
 
-    void setRoi(int x, int y, int width, int height) throws CameraException, DataFormatException {
-        setRoi(x, y, width, height, false);
+    void setRoi(int x, int y, int width, int height, int sendImageSize) throws CameraException, DataFormatException {
+        setRoi(x, y, width, height, sendImageSize, false);
+    }
+    
+    void setBigRoi() throws CameraException, DataFormatException {
+        setRoi(bigRoi[0], bigRoi[1], bigRoi[2], bigRoi[3], bigRoi[4]);
+    }
+    
+    void setSmallRoi() throws CameraException, DataFormatException {
+        setRoi(smallRoi[0], smallRoi[1], smallRoi[2], smallRoi[3], smallRoi[4]);
     }
 
-    private void setRoi(int x, int y, int width, int height, boolean firstTime) throws CameraException, DataFormatException {
+    private void setRoi(int x, int y, int width, int height, int sendSize, boolean firstTime) throws CameraException, DataFormatException {
         cp.stopSequenceAcquisition();
         cp.setROI(x, y, width, height);
         roi = cp.getRoi();
@@ -116,7 +120,9 @@ public class CameraController {
         if (imageWidth != roi[2] || imageHeight != roi[3]) {
             throw new RuntimeException("This should never happen!");
         }
-        sendPixelSize = (imageWidth < imageHeight) ? imageWidth : imageHeight;
+        sendImageSize = sendSize;
+        if (imageWidth < sendImageSize) sendImageSize = imageWidth;
+        if (imageHeight < sendImageSize) sendImageSize = imageHeight;
         if (!firstTime) {
             gui.refreshView(imageWidth, imageHeight);
         }
@@ -128,12 +134,12 @@ public class CameraController {
     int[] getRoi() throws CameraException {
         int rawRoi[] = cp.getRoi();
         int len = rawRoi.length;
-        int roi[] = new int[len + 1];
+        int[] extendedRoi = new int[len + 1];
         for (int i = 0; i < len; i++) {
-            roi[i] = rawRoi[i];
+            extendedRoi[i] = rawRoi[i];
         }
-        roi[len] = sendPixelSize;
-        return roi;
+        extendedRoi[len] = sendImageSize;
+        return extendedRoi;
     }
 
     void setExposure(double time) throws CameraException {
@@ -189,10 +195,10 @@ public class CameraController {
             ImageWrapper iw;
             //System.out.println(mirrored + "/" + sendPixelSize);
             if (mirrored) {
-                iw = ImageWrapper.copyImageCropMirrorX(imgData, sendPixelSize, sendPixelSize, imageWidth, imageHeight, 0, 0, 0, channel, count);
+                iw = ImageWrapper.copyImageCropMirrorX(imgData, sendImageSize, sendImageSize, imageWidth, imageHeight, 0, 0, 0, channel, count);
                 
             } else {
-                iw = ImageWrapper.copyImageCrop(imgData, sendPixelSize, sendPixelSize, imageWidth, imageHeight, 0, 0, 0, channel, count);
+                iw = ImageWrapper.copyImageCrop(imgData, 512, 512, imageWidth, imageHeight, 0, 0, 0, channel, count);
             }
             iw.setTimeCamera(timeStamp);
             iw.setTimeCapture(System.currentTimeMillis() * 1000);

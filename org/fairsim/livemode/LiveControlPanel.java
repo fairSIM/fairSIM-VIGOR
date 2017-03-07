@@ -35,6 +35,8 @@ import java.awt.event.ActionEvent;
 import java.awt.GridLayout;
 
 import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.fairsim.utils.Conf;
 import org.fairsim.transport.ImageReceiver;
@@ -72,8 +74,7 @@ public class LiveControlPanel {
     public final ReconstructionRunner reconRunner;
     public final SimSequenceExtractor seqDetection;
 
-    PlainImageDisplay wfDisplay;
-    PlainImageDisplay reconDisplay;
+    
 
     final JTextArea statusField;
     final JTextField statusMessage;
@@ -82,6 +83,12 @@ public class LiveControlPanel {
     
     private JFrame hrFr;
     private JFrame lrFr;
+    PlainImageDisplay wfDisplay;
+    PlainImageDisplay reconDisplay;
+    
+    SimpleImageForward sif1;
+    SimpleImageForward sif2;
+    DynamicDisplayUpdate updateThread;
 
     public LiveControlPanel(final Conf.Folder cfg,
             VectorFactory avf, String[] channels)
@@ -264,15 +271,7 @@ public class LiveControlPanel {
         mainFrame.setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         mainFrame.setVisible(true);
 
-        // setup the display-update threads
-        SimpleImageForward sif1 = new SimpleImageForward(false);
-        SimpleImageForward sif2 = new SimpleImageForward(true);
-
-        sif1.start();
-        sif2.start();
-
-        DynamicDisplayUpdate updateThread = new DynamicDisplayUpdate();
-        updateThread.start();
+        startThreads();
 
     }
     
@@ -291,14 +290,47 @@ public class LiveControlPanel {
     }
     
     public void refreshView(int pixelSize) {
+        stopThreads();
         this.wfPixelSize = pixelSize;
-        reconRunner.setImageSize(wfPixelSize, wfPixelSize);
         imageReceiver.setImageSize(wfPixelSize, wfPixelSize);
+        seqDetection.clearBuffers();
+        seqDetection.resetChannelBuffers();
+        reconRunner.setImageSize(wfPixelSize);
+        
         hrFr.dispose();
         lrFr.dispose();
+        wfDisplay = null;
+        reconDisplay = null;
         initView();
         hrFr.toFront();
         lrFr.toFront();
+        startThreads();
+    }
+    
+    private void startThreads() {
+        sif1 = new SimpleImageForward(false);
+        sif2 = new SimpleImageForward(true);
+
+        sif1.start();
+        sif2.start();
+
+        updateThread = new DynamicDisplayUpdate();
+        updateThread.start();
+        Tool.trace("Started DisplayThreads.");
+    }
+    
+    private void stopThreads() {
+        sif1.interrupt();
+        sif2.interrupt();
+        updateThread.interrupt();
+        try {
+            sif1.join();
+            sif2.join();
+            updateThread.join();
+        } catch (InterruptedException ex) {
+            throw new RuntimeException(ex);
+        }
+        Tool.trace("Stopped DisplayThreads.");
     }
 
     /**
@@ -338,7 +370,7 @@ public class LiveControlPanel {
         }
 
         public void run() {
-            while (true) {
+            while (!isInterrupted()) {
                 try {
                     Vec2d.Real[] img;
                     if (doWidefield) {
@@ -359,6 +391,8 @@ public class LiveControlPanel {
                     }
                 } catch (InterruptedException e) {
                     Tool.trace("Display thread interrupted, why?");
+                    interrupt();
+                    continue;
                 }
 
                 if (doWidefield) {
@@ -409,7 +443,7 @@ public class LiveControlPanel {
         else {
             avf = Vec.getBasicVectorFactory();
         }
-
+        
         if (arg.length < 2) {
             System.out.println("Start with: config-file.xml [488] [568] [647] ...");
             return;
