@@ -30,6 +30,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.OutputKeys;
 import java.io.File;
+import java.io.FileInputStream;
 
 // Node manipulation
 import org.w3c.dom.Document;
@@ -593,9 +594,15 @@ public class Conf {
     // ========================================================================
 
     // ------ load / save ------
-
+    
     /** Write the config to an XML file */
     public boolean saveFile( String xmlfile ) 
+	throws SomeIOException {
+	return saveFile( new File( xmlfile ));
+    }
+
+    /** Write the config to an XML file */
+    public boolean saveFile( File xmlfile ) 
 	throws SomeIOException {
 	
 	DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -621,16 +628,22 @@ public class Conf {
 	    tf.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
 	    tf.setOutputProperty(OutputKeys.STANDALONE, "yes");
 	    //tf.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-	    tf.transform( new DOMSource( doc ) , new StreamResult( new File( xmlfile )));
+	    tf.transform( new DOMSource( doc ) , new StreamResult( xmlfile ));
 	} catch (java.lang.Exception e) {
 	    throw new SomeIOException(e);
 	}
 
 	return true;
     }
-
+    
     /** Create a Configuration from an XML file */
     public static Conf loadFile(String xmlfile) 
+	throws SomeIOException {
+	return loadFile( new File(xmlfile));
+    }
+
+    /** Create a Configuration from an XML file */
+    public static Conf loadFile( File xmlfile) 
 	throws SomeIOException {
 
 	// parse the input
@@ -643,7 +656,7 @@ public class Conf {
 
 	    DocumentBuilder builder = dbf.newDocumentBuilder();
 
-	    InputSource is = new InputSource(xmlfile);
+	    InputSource is = new InputSource(new FileInputStream(xmlfile));
 	    doc = builder.parse( is );
 	
 	}

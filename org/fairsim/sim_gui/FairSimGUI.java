@@ -78,8 +78,6 @@ public class FairSimGUI {
 	if ( logo != null) {
 	    baseframe.setIconImage(new ImageIcon( logo ).getImage());
 	}
-	    
-
 
 	imgc = new ImageControl(baseframe, is, imgFactory, sp );
 	simp = new SimParamGUI(baseframe, sp );
@@ -137,7 +135,7 @@ public class FairSimGUI {
 	nrBands.box.setSelectedItem(3);
 	
 	final Tiles.LComboBox<Integer> nrDir = 
-	    new Tiles.LComboBox<Integer>("angles", new Integer [] {2,3,4,5,6,7});
+	    new Tiles.LComboBox<Integer>("angles", new Integer [] {1,2,3,4,5,6,7});
 	nrDir.box.setSelectedItem(3);
 	
 	final Tiles.LComboBox<Integer> nrPha = 
@@ -289,7 +287,7 @@ public class FairSimGUI {
 	    //SimParamGUI.dummySP(), 
 	    sp,
 	    new ImageSelector.Dummy(nImg),
-	    DisplayWrapper.getFactory(),
+	    DisplayWrapper.getTestingFactory(),
 	    load
 	    );
 	a.baseframe.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE);
