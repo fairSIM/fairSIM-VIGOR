@@ -47,6 +47,8 @@ import javax.swing.event.ChangeEvent;
 import java.awt.Dimension;
 
 
+// TODO: see if the override of compiler warnings can be avoided 
+
 /** Various GUI components */
 public class Tiles {
 
@@ -201,19 +203,21 @@ public class Tiles {
 	final Color defaultBackground = this.getBackground();
 
 	/** Access to the ComboBox. */
-	final public TComboBox<T> box;
+	final public JComboBox<T> box;
 	
 	/** 
 	 * @param label Label in front of box
 	 * @param opts  Selectable elements */
+	@SuppressWarnings({"unchecked", "varargs"})
 	public LComboBox(String label, T ... opts ) {
 	    this( label, (java.awt.Component)null, false, opts );
-	}
+	} 
 
 	/** 
 	 * @param label Label in front of box
 	 * @param addComp Additional component, added directly after the box
 	 * @param opts  Selectable elements */
+	@SuppressWarnings({"unchecked", "varargs"})
 	public LComboBox(String label, java.awt.Component addComp, T ... opts ) {
 	    this( label, addComp, false, opts );
 	}
@@ -223,6 +227,7 @@ public class Tiles {
 	 * @param addComp Additional component, added directly after the box
 	 * @param showToolTip if true, display the full text for each entry as tooltip
 	 * @param opts  Selectable elements */
+	@SuppressWarnings({"unchecked", "varargs"})
 	public LComboBox(String label, java.awt.Component addComp, 
 	    boolean showToolTip, T ... opts ) {
 	    
@@ -231,9 +236,9 @@ public class Tiles {
 	    jl = new JLabel(label);
 	    
 	    if ((opts!=null)&&(opts.length>0))
-		box = new TComboBox<T>(opts);
+		box = new JComboBox<T>(opts);
 	    else
-		box = new TComboBox<T>();
+		box = new JComboBox<T>();
 	  
 	    //box.setMaximumSize( box.getPreferredSize() );;
 
@@ -278,9 +283,8 @@ public class Tiles {
 
 	/** Returns the currently selected item. Might return
 	 * 'null' if the list is empty. */
-	@SuppressWarnings("unchecked")
 	public T getSelectedItem() {
-	    return (T)box.getSelectedItem();
+	    return box.getItemAt( getSelectedIndex() );
 	}
 
 	public int getSelectedIndex() {
@@ -319,11 +323,13 @@ public class Tiles {
 	 *  If the currently selected element is contained in the new list,
 	 *  it will be selected again. Otherwise, the first element is selected,
 	 *  and an event is send.*/
+	@SuppressWarnings({"unchecked", "varargs"})
 	public void newElements( T ... opts ) {
 	    newElements(-1, opts );
 	}
 
 	/** Fill the selector box with new elements, select the i'th element. */
+	@SuppressWarnings({"unchecked", "varargs"})
 	public void newElements( int idx, T ... opts ) {
 	    
 	    suppressEvents=true;
@@ -367,7 +373,7 @@ public class Tiles {
    
    /** Provides a type-save combo-box, like in java7.
      *  Wrapper around JComboBox, to fix java-1.6 to java-1.7 issue */
-    public static class TComboBox<T> extends JComboBox {
+    public static class TComboBox<T> extends JComboBox<T> {
 	public TComboBox(T [] e) {
 	    super(e);
 	}
@@ -378,11 +384,11 @@ public class Tiles {
 
     
     /** Provides a list model that allows to implement a presentation function */
-    public static abstract class TList<T> extends JList {
+    public static abstract class TList<T> extends JList<T> {
 	    
 	public TList() {
-	    super( new DefaultListModel() );
-	    this.setCellRenderer( new ListCellRenderer() {
+	    super( new DefaultListModel<T>() );
+	    this.setCellRenderer( new ListCellRenderer<T>() {
 		public Component getListCellRendererComponent(
 		   JList list,           // the list
 		   Object value,            // value to display
@@ -411,16 +417,15 @@ public class Tiles {
 
 	/** add an element to the end of the list */
 	public void addElement( T elem ) {
-	   ListModel lm = this.getModel();
+	   ListModel<T> lm = this.getModel();
 	   if (!( lm instanceof DefaultListModel ))
 	       throw new RuntimeException("Wrong listmodel for this opeartion to work");
-	    DefaultListModel dlm = (DefaultListModel)lm;
+	    DefaultListModel<T> dlm = (DefaultListModel<T>)lm;
 	    dlm.addElement( elem );
 	}
 
 	// emulate Java7 behaviour
 	@Override
-	@SuppressWarnings("unchecked")
 	public T getSelectedValue() {
 	    return (T)super.getSelectedValue();
 	}
