@@ -448,7 +448,6 @@ public class SimParam implements Vec2d.Size, Vec3d.Size {
             double factor = (double)newImageSize / (double)startImageSize;
             pX = startPX * factor;
             pY = startPY * factor;
-            SimParam.this.imgSize = newImageSize;
         }
 
 

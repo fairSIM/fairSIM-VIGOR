@@ -235,14 +235,16 @@ public class ReconstructionRunner {
         //System.out.println("pixelSize: " + pixelSize + "\t startingImageSize: " + startingImageSize + "\t shiftFactor: " + shiftFactor);
         for (int ch = 0; ch < nrChannels; ch++) {
             channels[ch].param.setPxlSize(pixelSize);
+            /*
             for (int i = 0; i < nrDirs; i++) {
                 //System.out.println("shift_start: " + channels[ch].startingPx[i] + "/" + channels[ch].startingPy[i]);
                 //System.out.println("shift_before: " + channels[ch].param.dir(i).getPxPy(1)[0] + "/" + channels[ch].param.dir(i).getPxPy(1)[1]);
                 //channels[ch].param.dir(i).setPxPy(channels[ch].startingPx[i] * shiftFactor * (nrBands-1), channels[ch].startingPy[i] * shiftFactor * (nrBands-1));
                 //System.out.println("shift_end: " + channels[ch].param.dir(i).getPxPy(1)[0] + "/" + channels[ch].param.dir(i).getPxPy(1)[1]);
-                System.out.println();
-                channels[ch].param.dir(i).calcNew(pixelSize);
-            }            
+                //System.out.println();
+                //channels[ch].param.dir(i).calcNew(pixelSize);
+            }
+            */
         }
         startThreads();
     }

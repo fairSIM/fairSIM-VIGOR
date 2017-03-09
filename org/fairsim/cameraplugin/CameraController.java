@@ -14,8 +14,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
-*/
-
+ */
 package org.fairsim.cameraplugin;
 
 import java.awt.Color;
@@ -198,7 +197,7 @@ public class CameraController {
                 iw = ImageWrapper.copyImageCropMirrorX(imgData, sendImageSize, sendImageSize, imageWidth, imageHeight, 0, 0, 0, channel, count);
                 
             } else {
-                iw = ImageWrapper.copyImageCrop(imgData, 512, 512, imageWidth, imageHeight, 0, 0, 0, channel, count);
+                iw = ImageWrapper.copyImageCrop(imgData, sendImageSize, sendImageSize, imageWidth, imageHeight, 0, 0, 0, channel, count);
             }
             iw.setTimeCamera(timeStamp);
             iw.setTimeCapture(System.currentTimeMillis() * 1000);
