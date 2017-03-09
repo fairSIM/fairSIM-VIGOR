@@ -427,6 +427,7 @@ public class ImageWrapper {
     public long timeCapture() { return timeCapture; }
     public long timeRecord() { return timeRecord; }
 
+    public long seqNr() { return seqNr; }
 
     // just a quick test
     public static void main( String [] arg ) {
