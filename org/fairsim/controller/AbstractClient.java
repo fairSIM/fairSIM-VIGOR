@@ -108,7 +108,7 @@ public abstract class AbstractClient extends Thread {
                     input.lock.lock();
                     try {
                         out.println(input.command);
-                        output = in.nextLine();
+                        //output = in.nextLine();
                         //clientGui.showText(output); //Command 'input' successfully transmitted to the server
                         output = in.nextLine();
                         handleServerAnswer(output);

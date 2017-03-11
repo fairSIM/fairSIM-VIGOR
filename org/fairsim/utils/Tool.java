@@ -20,6 +20,7 @@ package org.fairsim.utils;
 
 import java.io.File;
 import java.util.Calendar;
+import java.util.zip.DataFormatException;
 
 /**
  * Logging and Timers
@@ -230,6 +231,16 @@ public final class Tool {
             data[i] = split[i + 1];
         }
         return data;
+    }
+    
+    public static int[] decodeIntArray(String encodedArray) {
+        String[] stringArray = decodeArray(encodedArray);
+        int len = stringArray.length;
+        int[] intArray = new int[len];
+        for (int i = 0; i < len; i++) {
+            intArray[i] = Integer.parseInt(stringArray[i]);
+        }
+        return intArray;
     }
 
     private static String encodeArray(String prefix, String[] array) {

@@ -56,7 +56,7 @@ public abstract class AbstractServer extends Thread {
         try {
             while (!interrupted) {
                 input = in.nextLine();
-                out.println("Server: Command '" + input + "' successfully transmitted to the server.");
+                //out.println("Server: Command '" + input + "' successfully transmitted to the server.");
                 out.println(handleCommand(input));
             }
         } catch (NoSuchElementException ex) {

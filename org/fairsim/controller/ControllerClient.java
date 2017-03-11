@@ -29,6 +29,7 @@ import org.fairsim.utils.Tool;
 public class ControllerClient extends AbstractClient {
     String[] slmInfo;
     String[] slmList;
+    ArduinoRunningOrder[] arduinoRos;
 
     /**
      * Constructor for the Client
@@ -53,6 +54,13 @@ public class ControllerClient extends AbstractClient {
             slmInfo = Tool.decodeArray(answer);
         } else if (answer.startsWith("Slm: Transfering rolist")) {
             slmList = Tool.decodeArray(answer);
+        } else if (answer.startsWith("Arduino: Transfering rolist")) {
+            String[] stringRos = Tool.decodeArray(answer);
+            int len = stringRos.length;
+            arduinoRos = new ArduinoRunningOrder[len];
+            for (int i = 0; i < len; i++) {
+                arduinoRos[i] = new ArduinoRunningOrder(stringRos[i]);
+            }
         } else if (answer.startsWith("Slm: Error: ") || answer.startsWith("Arduino: Error: ")) {
             gui.handleError(answer);
         } else {
@@ -70,5 +78,21 @@ public class ControllerClient extends AbstractClient {
     protected void handleInterrupt(String command) {
         gui.showText("Interrupt for command: " + command);
         gui.interruptInstruction();
+    }
+    
+    class ArduinoRunningOrder {
+        
+        String name;
+        int syncDelay;
+        int syncFreq;
+        int readoutTime;
+        
+        ArduinoRunningOrder(String encodedRo) {
+            String[] stringArray = encodedRo.split(",");
+            name = stringArray[0];
+            syncDelay = Integer.parseInt(stringArray[1]);
+            syncFreq = Integer.parseInt(stringArray[2]);
+            readoutTime = Integer.parseInt(stringArray[3]);
+        }
     }
 }

@@ -15,7 +15,13 @@ import gnu.io.SerialPortEvent;
 import gnu.io.SerialPortEventListener;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import org.fairsim.utils.Tool;
 
 /**
  * Class to controll the Arduino.
@@ -24,8 +30,12 @@ import java.util.Enumeration;
  */
 public class ArduinoController implements SerialPortEventListener {
 
-    SerialPort serialPort;
-    ControllerServerGui serverGui;
+    private SerialPort serialPort;
+    private final ControllerServerGui serverGui;
+    private final BlockingQueue<String> arduinoAnswers;
+    private final BlockingQueue<String> arduinoCommands;
+    private SendingThread sendingThread;
+    private boolean ready;
     /**
      * The port we're normally going to use.
      */
@@ -33,7 +43,7 @@ public class ArduinoController implements SerialPortEventListener {
         "/dev/tty.usbserial-A9007UX1", // Mac OS X
         "/dev/ttyACM0", // Raspberry Pi
         "/dev/ttyUSB0", // Linux
-        "COM3", // Windows
+        "COM0", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", // Windows
     };
     /**
      * A BufferedReader which will be fed by a InputStreamReader converting the
@@ -54,11 +64,17 @@ public class ArduinoController implements SerialPortEventListener {
     private static final int DATA_RATE = 19200;
 
     private ArduinoController() throws Exception {
+        serverGui = null;
+        arduinoAnswers = null;
+        arduinoCommands = null;
         initialize();
     }
 
     ArduinoController(ControllerServerGui serverGui) {
         this.serverGui = serverGui;
+        arduinoAnswers = new LinkedBlockingQueue<>();
+        arduinoCommands = new LinkedBlockingQueue<>();
+        ready = false;
     }
 
     private void initialize() throws Exception {
@@ -104,7 +120,7 @@ public class ArduinoController implements SerialPortEventListener {
      * This should be called when you stop using the port. This will prevent
      * port locking on platforms like Linux.
      */
-    public synchronized void close() {
+    private synchronized void close() {
         if (serialPort != null) {
             serialPort.removeEventListener();
             serialPort.close();
@@ -114,56 +130,109 @@ public class ArduinoController implements SerialPortEventListener {
     /**
      * Handle an event on the serial port. Read the data and print it.
      */
+    @Override
     public synchronized void serialEvent(SerialPortEvent oEvent) {
         if (oEvent.getEventType() == SerialPortEvent.DATA_AVAILABLE) {
             try {
                 String inputLine = input.readLine();
-                try {
-                    serverGui.showText("Arduino: " + inputLine);
-                } catch (NullPointerException ex) {
-                    System.out.println("Arduino: " + inputLine);
+                if (inputLine.equals("ready")) ready = true;
+                else {
+                    if (inputLine.startsWith("Movie started: ")) ready = true;
+                    try {
+                        serverGui.showText("Arduino: " + inputLine);
+                        arduinoAnswers.add(inputLine);
+                    } catch (NullPointerException ex) {
+                        System.out.println("Arduino: " + inputLine);
+                    }
                 }
             } catch (Exception e) {
-                System.err.println("Arduino: " + e.toString());
-                //close();
-                try {
-                    serverGui.showText("Arduino: Error: " + e.toString());
-                } catch (NullPointerException ex) {
+                if (e instanceof IOException && e.getMessage().equals("Underlying input stream returned zero bytes")) {
+                    //do nothing
+                } else {
+                    System.err.println("Arduino: Error:" + e.toString());
+                    try {
+                        serverGui.showText("Arduino: Error: " + e.toString());
+                    } catch (NullPointerException ex) {
+                    }
                 }
             }
         }
         // Ignore all the other eventTypes, but you should consider the other ones.
     }
-
-    synchronized String sendCommand(String input) {
-        byte[] command = input.getBytes(Charset.forName("UTF-8"));
+    
+    public String getRoList() {
+        String error = "Error: ArduinoController.getRoList()";
+        arduinoCommands.add("list");
+        String firstAnswer = getArduinoAnswer();
+        if (!firstAnswer.startsWith("list:start:")) return error;
         try {
-            output.write(command);
-            output.flush();
-            return "Command '" + new String(command) + "' transmitted to the arduino";
-        } catch (NullPointerException ex) {
-            return "Error: No Connection to the arduino";
-        } catch (Exception ex) {
+            int roMax = Integer.parseInt(firstAnswer.split(":")[2]);
+            String[] runningOrders = new String[roMax];
+            for (int i = 0; i < roMax; i++) {
+                runningOrders[i] = getArduinoAnswer();
+            }
+            String lastAnswer = getArduinoAnswer();
+            if (!lastAnswer.equals("list:end")) return error;
+            return Tool.encodeArray("Transfering rolist", runningOrders);
+        } catch (NumberFormatException ex) {
+            return error;
+        }
+    }
+    
+    private String getArduinoAnswer() {
+        try {
+            String answer = arduinoAnswers.poll(1000, TimeUnit.MILLISECONDS);
+            if (answer != null) return answer;
+            else return "Error: No answer from arduino";
+        } catch (InterruptedException ex) {
             return "Error: " + ex.toString();
         }
     }
+    
+    //only for commandline input
+    private void sendCommand(String toSend) throws IOException {
+        byte[] command = toSend.getBytes(Charset.forName("UTF-8"));
+        output.write(command);
+        output.flush();
+    }
 
-    synchronized String connect() {
+    public String connect() {
         try {
             initialize();
+            sendingThread = new SendingThread();
+            sendingThread.start();
             return "Connected to the arduino";
         } catch (Exception e) {
             return "Error: " + e.toString();
         }
     }
 
-    synchronized String disconnect() {
+    public String disconnect() {
         try {
+            sendingThread.interrupt();
+            arduinoCommands.clear();
+            arduinoAnswers.clear();
+            sendingThread.join();
             close();
             return "Disconnected from the arduino";
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
             return "Error: " + e.toString();
         }
+    }
+    
+    public String sendChar(char c) {
+        arduinoCommands.add(String.valueOf(c));
+        return getArduinoAnswer();
+    }
+    
+    public String takePhoto(int runningOrder) {
+        arduinoCommands.add("p;" + runningOrder);
+        return getArduinoAnswer();
+    }
+    
+    public String startMovie(int runningOrder, int breakTime) {
+        arduinoCommands.add("m;" + runningOrder + ";" + breakTime);
+        return getArduinoAnswer();
     }
 
     public static void main(String[] args) throws IOException, InterruptedException {
@@ -177,9 +246,34 @@ public class ArduinoController implements SerialPortEventListener {
                 input = in.readLine();
                 main.sendCommand(input);
             }
-            //main.close();
         } catch (Exception ex) {
             System.err.println(ex);
         }
     }
+    
+    private class SendingThread extends Thread {
+
+        @Override
+        public void run() {
+            while (!isInterrupted()) {
+                try {
+                    if (ready) {
+                        ready = false;
+                        String toSend = arduinoCommands.take();
+                        byte[] command = toSend.getBytes(Charset.forName("UTF-8"));
+                        output.write(command);
+                        output.flush();
+                    } else {
+                        sleep(100);
+                    }
+                } catch (IOException ex) {
+                    arduinoAnswers.add("SendingThread: " + ex.toString());
+                } catch (InterruptedException ex) {
+                    interrupt();
+                    continue;
+                }
+            }
+        }
+    }
 }
+

@@ -66,6 +66,7 @@
                           <Component id="slmActivateButton" min="-2" pref="85" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="slmDeactivateButton" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace min="-2" pref="47" max="-2" attributes="0"/>
                       </Group>
                   </Group>
               </Group>
@@ -84,10 +85,8 @@
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="slmComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="slmSelectButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Group type="103" alignment="3" groupAlignment="3" attributes="0">
-                          <Component id="slmActivateButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="slmDeactivateButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                      </Group>
+                      <Component id="slmActivateButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="slmDeactivateButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="slmSelect" min="-2" max="-2" attributes="0"/>
@@ -206,7 +205,7 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="arduinoPhotoButton" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="arduinoComboBox" min="-2" pref="100" max="-2" attributes="0"/>
+                          <Component id="arduinoComboBox" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="arduinoBreakTimeTextField" min="-2" pref="50" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>

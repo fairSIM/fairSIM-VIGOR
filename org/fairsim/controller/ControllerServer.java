@@ -24,6 +24,10 @@ import java.net.*;
 import java.nio.charset.Charset;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.zip.DataFormatException;
+import org.fairsim.utils.Tool;
 
 /**
  * Class for the Server in the communikation chain <br>
@@ -84,8 +88,19 @@ public class ControllerServer extends AbstractServer {
                 serverOut = arduino.connect();
             } else if (input.equals("disconnect")) {
                 serverOut = arduino.disconnect();
+            } else if (input.equals("rolist")) {
+                serverOut = arduino.getRoList();
+            } else if (input.startsWith("movie;")) {
+                int[] movieArray = Tool.decodeIntArray(input);
+                serverOut = arduino.startMovie(movieArray[0], movieArray[1]);
+            } else if (input.startsWith("photo;")) {
+                int runningOrder = Integer.parseInt(input.split(";")[1]);
+                serverOut = arduino.takePhoto(runningOrder);
+            } else if (input.length() == 1) {
+                char c = input.charAt(0);
+                serverOut = arduino.sendChar(c);
             } else {
-                serverOut = arduino.sendCommand(input);
+                serverOut = "Arduino-Server do not know what to do with '" + input + "'";
             }
         }
         return serverOut;
