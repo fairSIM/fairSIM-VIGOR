@@ -28,7 +28,7 @@ import org.fairsim.utils.Conf;
 import org.fairsim.utils.Tool;
 
 /**
- *
+ * Class to register images to each other
  * @author m.lachetta
  */
 public class Registration {
@@ -45,21 +45,23 @@ public class Registration {
     private Vec2d.Real wfYTransVec;
     static private int threads;
     //static private String regFolder;
-    static private final List<Registration> REGISTRATIONS;
+    static private final List<Registration> registrations = new ArrayList<>();
     static private boolean widefield;
     static private boolean recon;
-
+    /*
     static {
-        REGISTRATIONS = new ArrayList<Registration>();
+        REGISTRATIONS = new ArrayList<>();
     }
+    */
     
     /**
      * Constructor for a registration object
      * @param file raw registration file of bUnwrappedJ
-     * @throws IOException is throwen if the inputfile does not exist or not
-     * have the cerrect structure/format
+     * @throws IOException is thrown if the input file does not exist or not
+     * have the correct structure/format
      */
-    public Registration(String file) throws IOException {
+    private Registration(String file, String channelName) throws IOException {
+        this.channelName = channelName;
         vf = Vec.getBasicVectorFactory();
         reconWidth = -1;
         reconHeight = -1;
@@ -98,35 +100,44 @@ public class Registration {
 
     /**
      * Creates a new Registration and adds it to the list of registrations
-     * @param cfg configuration to get the folder for the .txt files with the
-     * raw registrations
-     * @param channelName channel (wavelenght) of the fairsim-software and registration
+     * @param regFolder folder for registration files
+     * @param channelName channel (wavelength) of the registration
+     * @return true if registration could be created, else false
      */
-    public static void createRegistration(final String regFolder, final String channelName) {
+    public static boolean createRegistration(String regFolder, String channelName) {
         try {
             String filename = Tool.getFile(regFolder + channelName + ".txt").getAbsolutePath();
-            Registration reg = new Registration(filename);
-            reg.channelName = channelName;
-            REGISTRATIONS.add(reg);
-            Tool.trace("Registration: Registrering channel: " + channelName);
+            Registration reg = new Registration(filename, channelName);
+            registrations.add(reg);
+            System.out.println("Registration: Registrering channel: " + channelName);
+            return true;
         } catch (IOException ex) {
-            Tool.trace("Registration: No registration for channel: " + channelName);
-            //System.out.println("[fairSIM] " + ex);
+            System.out.println("Registration: No registration for channel: " + channelName);
+            return false;
         }
     }
     
+    /**
+     * Removes the registration for a specified channel
+     * @param channelName channel for which the registration should be removed
+     */
     public static void clearRegistration(String channelName) {
         try {
             Registration reg = getRegistration(channelName);
             int channelId = reg.getRegId();
-            REGISTRATIONS.remove(channelId);
+            registrations.remove(channelId);
         } catch (NoSuchFieldException ex) {}
     }
     
+    /**
+     * 
+     * @return the id of this registration
+     * @throws NoSuchFieldException if this registration is not in the registration list
+     */
     private int getRegId() throws NoSuchFieldException {
         Registration reg;
-        for (int i = 0; i < REGISTRATIONS.size(); i++) {
-            reg = REGISTRATIONS.get(i);
+        for (int i = 0; i < registrations.size(); i++) {
+            reg = registrations.get(i);
             if (reg.channelName.equals(this.channelName)) {
                 return i;
             }
@@ -134,13 +145,20 @@ public class Registration {
         throw new NoSuchFieldException("There is no registration for: " + channelName);
     }
     
+    /**
+     * Reads the directory for registrations from an Conf.Folder if no registration
+     * folder is set 
+     * @param cfg Conf.Folder for read in
+     * @return directory for registrations
+     * @throws FileNotFoundException if the registration folder does not exists
+     */
     public static String getRegFolder(final Conf.Folder cfg) throws FileNotFoundException {
         String regFolder;// = "(not found)";
         try {
             regFolder = Tool.getFile(cfg.getStr("RegistrationFolder").val()).getAbsolutePath();
         } catch (Conf.EntryNotFoundException ex) {
             regFolder = System.getProperty("user.dir");
-            System.out.println("[fairSIM] Registration: No registration folder found. Registration Folder was set to: " + regFolder);
+            Tool.error("Registration: No registration folder found. Registration Folder was set to: " + regFolder, false);
         }
         File file = new File(regFolder);
         if (file.exists()) {
@@ -153,12 +171,12 @@ public class Registration {
     /**
      * Finds the required registration of the specific channel
      * @param channelName channel of the required registration
-     * @return registration objekt for a specific channel
+     * @return registration object for a specific channel
      * @throws NoSuchFieldException is thrown if the required registration
      * does not exists
      */
     public static Registration getRegistration(String channelName) throws NoSuchFieldException {
-        for (Registration reg : REGISTRATIONS) {
+        for (Registration reg : registrations) {
             if (reg.channelName.equals(channelName)) {
                 return reg;
             }
@@ -167,7 +185,7 @@ public class Registration {
     }
     
     /**
-     * (de)activates the registration in widefield
+     * (de)activates the registration in wide field
      * @param b 
      */
     public static void setWidefield(boolean b) {
@@ -184,7 +202,7 @@ public class Registration {
     
     /**
      * 
-     * @return is registration in widefield active?
+     * @return is registration in wide field active?
      */
     public static boolean isWidefield() {
         return widefield;
@@ -192,236 +210,16 @@ public class Registration {
     
     /**
      * 
-     * @return is registration in widefield ative?
+     * @return is registration in wide field active?
      */
     public static boolean isRecon() {
         return recon;
     }
     
-    /*
-    public Vec2d.Real registerImageOld(final Vec2d.Real sourceVec, final char type) {
-       final int width;
-       final int height;
-       
-        switch (type) {
-            case 'r':
-                width = reconWidth;
-                height = reconHeight;
-                break;
-            case 'w':
-                width = wfWidth;
-                height = wfHeight;
-                break;
-            default:
-                throw new IllegalArgumentException("Only 'r' and 'w' allowed as type");
-        }
-       
-        
-        if (sourceVec.vectorWidth() != width || sourceVec.vectorHeight() != height) {
-            Tool.trace("Image registration '" + type + "' failed, because of differences in diminsions");
-            if (type == 'r') {
-                //setRecon(false);
-            } else if (type == 'w') {
-                //setWidefield(false);
-            }
-        }
-        final Vec2d.Real regVec = vf.createReal2D(width, height); 
-        
-        //Multi-Threaded way
-        final int blockSize = height / threads;
-        Thread[] blocks = new Thread[threads];
-
-        for (int threadId = 0; threadId < threads; threadId++) {
-            final int tId = threadId;
-            blocks[tId] = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    for (int y = blockSize * tId; y < blockSize * (tId + 1); y++) {
-                        for (int x = 0; x < width; x++) {
-                            transPixelOld(regVec, sourceVec, x, y, type);
-                        }
-                    }
-                }
-            });
-            blocks[tId].start();
-        }
-
-        
-        for (int y = blockSize * threads; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                transPixelOld(regVec, sourceVec, x, y, type);
-            }
-        } 
-        
-        for (int threadId = 0; threadId < threads; threadId++) {
-            try {
-                blocks[threadId].join();
-            } catch (InterruptedException ex) {
-                System.err.println("Registration thread interrupted!");
-                Logger.getLogger(Registration.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-        
-        return regVec;
-    }
-    
-    private void transPixelOld(Vec2d.Real regVec, Vec2d.Real sourceVec, int sourceX, int sourceY, char type) {
-        float sourceValue = sourceVec.get(sourceX, sourceY);
-        float targetX;
-        float targetY;
-        int width;
-        int height;
-        
-        switch (type) {
-            case 'r':
-                width = reconWidth;
-                height = reconHeight;
-                targetX = reconXTransVec.get(sourceX, sourceY);
-                targetY = reconYTransVec.get(sourceX, sourceY);
-                break;
-            case 'w':
-                width = wfWidth;
-                height = wfHeight;
-                targetX = wfXTransVec.get(sourceX, sourceY);
-                targetY = wfYTransVec.get(sourceX, sourceY);
-                break;
-            default:
-                throw new IllegalArgumentException("Only 'r' and 'w' allowed as type");
-        }
-
-        if (targetX >= 0 && targetY >= 0 && targetX < width - 1 && targetY < height - 1) {
-            int left = (int) targetX;
-            int top = (int) targetY;
-            int right = (int) targetX + 1;
-            int bottom = (int) targetY + 1;
-
-            float xFragment = targetX - left;
-            float yFragment = targetY - top;
-
-            float tlFactor = (1 - xFragment) * (1 - yFragment);
-            float trFactor = xFragment * (1 - yFragment);
-            float blFactor = (1 - xFragment) * yFragment;
-            float brFactor = xFragment * yFragment;
-            
-            float tlValue = regVec.get(left, top);
-            float trValue = regVec.get(right, top);
-            float blValue = regVec.get(left, bottom);
-            float brValue = regVec.get(right, bottom);
-            
-            tlValue += sourceValue * tlFactor;
-            trValue += sourceValue * trFactor;
-            blValue += sourceValue * blFactor;
-            brValue += sourceValue * brFactor;
-            
-            regVec.set(left, top, tlValue);
-            regVec.set(right, top, trValue);
-            regVec.set(left, bottom, blValue);
-            regVec.set(right, bottom, brValue);
-        }
-    }
-    
-    public Vec2d.Real registerWfImageNew(Vec2d.Real sourceVec) {
-        if (sourceVec.vectorWidth() != wfWidth || sourceVec.vectorHeight() != wfHeight) {
-            Tool.trace("Image registration failed, because of differences in diminsions");
-            //setWidefield(false);
-            return sourceVec;
-        }
-        return registerImageNew(sourceVec, wfXTransVec, wfYTransVec, wfWidth, wfHeight);
-    }
-    
-    public Vec2d.Real registerReconImageNew(Vec2d.Real sourceVec) {
-        if (sourceVec.vectorWidth() != reconWidth || sourceVec.vectorHeight() != reconHeight) {
-            Tool.trace("Image registration failed, because of differences in diminsions");
-            //setRecon(false);
-            return sourceVec;
-        }
-        return registerImageNew(sourceVec, reconXTransVec, reconYTransVec, reconWidth, reconHeight);
-    }
-    
-    private Vec2d.Real registerImageNew(final Vec2d.Real sourceVec, 
-	final Vec2d.Real xTransVec, final Vec2d.Real yTransVec, 
-	final int width, final int height) {
-        
-        final Vec2d.Real regVec = vf.createReal2D(width, height); 
-        
-        //Multi-Threaded way
-        final int blockSize = height / threads;
-        final Thread[] blocks = new Thread[threads];
-
-        for (int threadId = 0; threadId < threads; threadId++) {
-            final int tId = threadId;
-            blocks[tId] = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    for (int y = blockSize * tId; y < blockSize * (tId + 1); y++) {
-                        for (int x = 0; x < width; x++) {
-                            transPixelNew(regVec, sourceVec, xTransVec, yTransVec, width, height, x, y);
-                        }
-                    }
-                }
-            });
-            blocks[tId].start();
-        }
-
-        for (int y = blockSize * threads; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                transPixelNew(regVec, sourceVec, xTransVec, yTransVec, width, height, x, y);
-            }
-        } 
-        
-        for (int threadId = 0; threadId < threads; threadId++) {
-            try {
-                blocks[threadId].join();
-            } catch (InterruptedException ex) {
-                System.err.println("Registration thread interrupted!");
-                Logger.getLogger(Registration.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-        
-        return regVec;
-    }
-    
-    private void transPixelNew(Vec2d.Real regVec, Vec2d.Real sourceVec, Vec2d.Real xTransVec, Vec2d.Real yTransVec, int width, int height, int sourceX, int sourceY) {
-        float sourceValue = sourceVec.get(sourceX, sourceY);
-        float targetX = xTransVec.get(sourceX, sourceY);
-        float targetY = yTransVec.get(sourceX, sourceY);;
-
-        if (targetX >= 0 && targetY >= 0 && targetX < width - 1 && targetY < height - 1) {
-            int left = (int) targetX;
-            int top = (int) targetY;
-            int right = (int) targetX + 1;
-            int bottom = (int) targetY + 1;
-
-            float xFragment = targetX - left;
-            float yFragment = targetY - top;
-
-            float tlFactor = (1 - xFragment) * (1 - yFragment);
-            float trFactor = xFragment * (1 - yFragment);
-            float blFactor = (1 - xFragment) * yFragment;
-            float brFactor = xFragment * yFragment;
-            
-            float tlValue = regVec.get(left, top);
-            float trValue = regVec.get(right, top);
-            float blValue = regVec.get(left, bottom);
-            float brValue = regVec.get(right, bottom);
-            
-            tlValue += sourceValue * tlFactor;
-            trValue += sourceValue * trFactor;
-            blValue += sourceValue * blFactor;
-            brValue += sourceValue * brFactor;
-            
-            regVec.set(left, top, tlValue);
-            regVec.set(right, top, trValue);
-            regVec.set(left, bottom, blValue);
-            regVec.set(right, bottom, brValue);
-        }
-    }
-    */
-    
     /**
-     * Registers a widefield image
-     * @param sourceVec input vektor for the registration
-     * @return output vektor from the registration
+     * Registers a wide field image
+     * @param sourceVec input vector for the registration
+     * @return output vector from the registration
      */
     public Vec2d.Real registerWfImage(Vec2d.Real sourceVec) throws IllegalStateException {
         if (sourceVec.vectorWidth() != wfWidth || sourceVec.vectorHeight() != wfHeight) {
@@ -434,9 +232,9 @@ public class Registration {
     }
     
     /**
-     * Registers a reconstructed Vektor
-     * @param sourceVec input vektor for the registration
-     * @return output vektor from the registration
+     * Registers a reconstructed vector
+     * @param sourceVec input vector for the registration
+     * @return output vector from the registration
      */
     public Vec2d.Real registerReconImage(Vec2d.Real sourceVec) throws IllegalStateException {
         if (sourceVec.vectorWidth() != reconWidth || sourceVec.vectorHeight() != reconHeight) {
@@ -449,13 +247,13 @@ public class Registration {
     }
     
     /**
-     * Registers a Vektor
-     * @param sourceVec input Vektor for the registration
-     * @param xTransVec transformation Vector in X
-     * @param yTransVec transformatio Vector in Y
-     * @param width width of the Vector
-     * @param height height of the Vector
-     * @return output vektor from the registration
+     * Registers a vector
+     * @param sourceVec input vector for the registration
+     * @param xTransVec transformation matrix in X
+     * @param yTransVec transformation matrix in Y
+     * @param width width of the vector
+     * @param height height of the vector
+     * @return output vector from the registration
      */
     Vec2d.Real registerImage(final Vec2d.Real sourceVec, 
 	final Vec2d.Real xTransVec, final Vec2d.Real yTransVec, 
@@ -501,11 +299,11 @@ public class Registration {
     }
     
     /**
-     * Registers a single pixel in the output vektor from the registration
+     * Registers a single pixel in the output vector from the registration
      * @param regVec output vector from the registration
-     * @param sourceVec input Vektor for the registration
-     * @param xTransVec transformation Vector in X
-     * @param yTransVec transformatio Vector in Y
+     * @param sourceVec input vector for the registration
+     * @param xTransVec transformation matrix in X
+     * @param yTransVec transformation matrix in Y
      * @param width width of the Vector
      * @param height height of the Vector
      * @param targetX x value of the target pixel
@@ -540,7 +338,7 @@ public class Registration {
 
     /**
      * reads the transformation vector from a buffered reader
-     * @param br buffered filereader
+     * @param br buffered FileReader
      * @throws IOException 
      */
     private void readInTransVector(BufferedReader br) throws IOException {
@@ -578,8 +376,8 @@ public class Registration {
     /**
      * writes a line into transformation vectors
      * @param line line from the transformation file
-     * @param reconTransVec transformation vector for recunstructed images
-     * @param wfTransVec transformation vector for widefield images
+     * @param reconTransVec transformation vector for reconstructed images
+     * @param wfTransVec transformation vector for wide field images
      * @param row Y-Value of the line
      */
     private void writeRowToTransVec(String line, Vec2d.Real reconTransVec, Vec2d.Real wfTransVec, int row) {

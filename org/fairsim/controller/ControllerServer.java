@@ -19,14 +19,6 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 package org.fairsim.controller;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.*;
-import java.nio.charset.Charset;
-import java.util.NoSuchElementException;
-import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.zip.DataFormatException;
 import org.fairsim.utils.Tool;
 
 /**

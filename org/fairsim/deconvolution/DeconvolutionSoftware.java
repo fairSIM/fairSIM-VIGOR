@@ -27,7 +27,6 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.logging.Level;
@@ -53,8 +52,9 @@ public class DeconvolutionSoftware extends javax.swing.JFrame {
         initComponents();
 
         try {
-            reg = new Registration(jTfTransformationMatrix.getText());
-        } catch (IOException ex) {
+            Registration.createRegistration(jTfTransformationMatrix.getText() , "0");
+            reg = Registration.getRegistration("0");
+        } catch (NoSuchFieldException ex) {
             Logger.getLogger(DeconvolutionSoftware.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -533,8 +533,9 @@ public class DeconvolutionSoftware extends javax.swing.JFrame {
             jTfTransformationMatrix.setText(fc.getSelectedFile().getAbsolutePath());
 
             try {
-                reg = new Registration(jTfTransformationMatrix.getText());
-            } catch (IOException ex) {
+                Registration.createRegistration(jTfTransformationMatrix.getText() , "0");
+                reg = Registration.getRegistration("0");
+            } catch (NoSuchFieldException ex) {
                 Logger.getLogger(DeconvolutionSoftware.class.getName()).log(Level.SEVERE, null, ex);
             }
 

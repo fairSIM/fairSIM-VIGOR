@@ -25,16 +25,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import java.nio.file.StandardCopyOption;
 import java.util.zip.DataFormatException;
 import org.fairsim.fiji.Converter;
 import org.fairsim.linalg.Vec2d;
 import org.fairsim.livemode.ReconstructionRunner;
-import org.fairsim.livemode.SimSequenceExtractor;
 import org.fairsim.utils.Tool;
 
 /**
- *
+ * Class for building new registration files, supported by BUnwarpJ
  * @author m.lachetta
  */
 public class RegFileCreator {
@@ -52,6 +51,11 @@ public class RegFileCreator {
     double consistencyWeight;
     double stopThreshold;
     
+    /**
+     * Constructor
+     * @param regFolder Folder for reading/saving files
+     * @param channelNames String array of live mode channels
+     */
     RegFileCreator(String regFolder, String[] channelNames) {
         this.regFolder = regFolder;
         this.channelNames = channelNames;
@@ -67,44 +71,48 @@ public class RegFileCreator {
         stopThreshold = 0.01;
     }
     
+    /**
+     * Creates a new raw registration file with the BUnwarpJ algorithm and saves it
+     * @param sourceVec source image for registration with BUnwarpJ
+     * @param targetVec target image for registration with BUnwarpJ
+     * @param targetChannelName  channel which the registration is for
+     */
     void createRegFile(Vec2d.Real sourceVec, Vec2d.Real targetVec, String targetChannelName) {
         ImagePlus targetImg = Converter.converteVecImg(targetVec, "targetVec");
         ImageProcessor targetProcessor = targetImg.getProcessor();
         ImagePlus sourceImg = Converter.converteVecImg(sourceVec, "sourceVec");
         ImageProcessor sourceProcessor = sourceImg.getProcessor();
         
-        //System.out.println("[RegFileCreator]: Starting transformation");
         
         Transformation elasticTransf = bUnwarpJ_.computeTransformationBatch(targetImg, sourceImg, targetProcessor,
                 sourceProcessor, mode, img_subsamp_fact, min_scale_deformation,
                 max_scale_deformation, divWeight, curlWeight, landmarkWeight,
                 imageWeight, consistencyWeight, stopThreshold);
         
-        //System.out.println("[RegFileCreator]: Transformation finished, try to save elastic transformation");
         
         elasticTransf.saveDirectTransformation(Tool.getFile(regFolder + targetChannelName + "Elastic.txt").getAbsolutePath());
         
-        //System.out.println("[RegFileCreator]: Elastic Transformation saved, try to save Images");
         
         Converter.saveImage(targetImg, Tool.getFile(regFolder + "targetImg.tif").getAbsolutePath());
         Converter.saveImage(sourceImg, Tool.getFile(regFolder + "sourceImg.tif").getAbsolutePath());
         
-        //System.out.println("[RegFileCreator]: Images saved, try to converte elastic transformation to raw");
         
         Tool.getFile(regFolder + targetChannelName + ".txt").delete();
         bUnwarpJ_.convertToRawTransformationMacro(Tool.getFile(regFolder + "targetImg.tif").getAbsolutePath(),
                 Tool.getFile(regFolder + "sourceImg.tif").getAbsolutePath(), Tool.getFile(regFolder + targetChannelName + "Elastic.txt").getAbsolutePath(),
                 Tool.getFile(regFolder + targetChannelName + ".txt").getAbsolutePath());
         
-        //System.out.println("[RegFileCreator]: Saved raw transformation, try to delete uselessfiles");
         
         Tool.getFile(regFolder + targetChannelName + "Elastic.txt").delete();
         Tool.getFile(regFolder + "targetImg.tif").delete();
         Tool.getFile(regFolder + "sourceImg.tif").delete();
-        
-        //System.out.println("[RegFileCreator]: Finished all");
     }
     
+    /**
+     * Sets fields for registering of this class.
+     * Names are chosen equal to the BUnwarpJ GUI.
+     * @throws DataFormatException if input values are impossible to set
+     */
     void setOptions(int mode, int img_subsamp_fact, int min_scale_deformation,
             int max_scale_deformation, double divWeight, double curlWeight,
             double landmarkWeight, double imageWeight, double consistencyWeight,
@@ -129,6 +137,14 @@ public class RegFileCreator {
         }
     }
     
+    /**
+     * Creates a registration file in live mode
+     * @param targetId id of target image
+     * @param sourceId is of source image
+     * @param recRunner reconstruction ReconstructionRunner of live mode
+     * @throws DataFormatException if target- and source-id are equal
+     * @throws IOException if copying goes wrong
+     */
     void createChannelRegFile(int targetId, int sourceId, ReconstructionRunner recRunner) throws DataFormatException, IOException {
         if (targetId == sourceId) {
             throw new DataFormatException("Target and source can not be equal");
@@ -154,10 +170,15 @@ public class RegFileCreator {
 
         Path targetPath = Paths.get(Tool.getFile(regFolder + targetChannelName + ".txt").getAbsolutePath());
         Path sourcePath = Paths.get(Tool.getFile(regFolder + targetChannelName + "to" + sourcChannelName + "-" + Tool.readableTimeStampMillis(System.currentTimeMillis(), false) + ".txt").getAbsolutePath());
-        Files.copy(targetPath, sourcePath, REPLACE_EXISTING);
+        Files.copy(targetPath, sourcePath, StandardCopyOption.REPLACE_EXISTING);
     }
     
-    void deleteRegFile(String channelName) {
-        Tool.getFile(regFolder + channelName + ".txt").delete();
+    /**
+     * deletes the registration file for a specified channel
+     * @param channelName channel of the registration file that should be deleted
+     * @return only true if the to deleted file exists and was successfully deleted
+     */
+    boolean deleteRegFile(String channelName) {
+        return Tool.getFile(regFolder + channelName + ".txt").delete();
     }
 }

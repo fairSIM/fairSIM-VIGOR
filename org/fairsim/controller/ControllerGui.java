@@ -166,7 +166,7 @@ public class ControllerGui extends javax.swing.JPanel {
         serverLabel = new javax.swing.JLabel();
         logger = new java.awt.TextArea();
         refreshButton = new javax.swing.JButton();
-        refreshField = new javax.swing.JTextField();
+        refreshBox = new javax.swing.JComboBox<>();
         camControllerPanel0 = new org.fairsim.controller.CameraPanel();
         camControllerPanel1 = new org.fairsim.controller.CameraPanel();
         camControllerPanel2 = new org.fairsim.controller.CameraPanel();
@@ -188,12 +188,7 @@ public class ControllerGui extends javax.swing.JPanel {
             }
         });
 
-        refreshField.setText("512");
-        refreshField.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                refreshFieldKeyPressed(evt);
-            }
-        });
+        refreshBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "512", "256" }));
 
         javax.swing.GroupLayout clientServerPanelLayout = new javax.swing.GroupLayout(clientServerPanel);
         clientServerPanel.setLayout(clientServerPanelLayout);
@@ -205,7 +200,7 @@ public class ControllerGui extends javax.swing.JPanel {
                     .addGroup(clientServerPanelLayout.createSequentialGroup()
                         .addComponent(serverLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(refreshField, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(refreshBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(refreshButton))
                     .addComponent(logger, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -218,7 +213,7 @@ public class ControllerGui extends javax.swing.JPanel {
                     .addComponent(serverLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(clientServerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(refreshButton)
-                        .addComponent(refreshField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(refreshBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(logger, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -267,27 +262,13 @@ public class ControllerGui extends javax.swing.JPanel {
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
         //int ps = calculateViewSize();
         try {
-            int ps = Integer.parseInt(refreshField.getText());
-            System.out.println(ps);
+            int ps = Integer.parseInt(refreshBox.getSelectedItem().toString());
             if (ps > 0) {
                 motherGui.refreshView(ps);
             }
         } catch (NumberFormatException ex) {
         }
     }//GEN-LAST:event_refreshButtonActionPerformed
-
-    private void refreshFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_refreshFieldKeyPressed
-        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
-            try {
-                int ps = Integer.parseInt(refreshField.getText());
-                System.out.println(ps);
-                if (ps > 0) {
-                    motherGui.refreshView(ps);
-                }
-            } catch (NumberFormatException ex) {
-            }
-        }
-    }//GEN-LAST:event_refreshFieldKeyPressed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -297,8 +278,8 @@ public class ControllerGui extends javax.swing.JPanel {
     private javax.swing.JPanel clientServerPanel;
     private org.fairsim.controller.ControllerPanel controllerPanel;
     private java.awt.TextArea logger;
+    private javax.swing.JComboBox<String> refreshBox;
     private javax.swing.JButton refreshButton;
-    private javax.swing.JTextField refreshField;
     private org.fairsim.controller.RegistrationPanel registrationPanel;
     private javax.swing.JLabel serverLabel;
     private org.fairsim.controller.SyncPanel syncPanel;

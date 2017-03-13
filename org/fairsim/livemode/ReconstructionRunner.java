@@ -29,8 +29,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.fairsim.registration.Registration;
 
 /**
@@ -161,16 +159,6 @@ public class ReconstructionRunner {
         for (int i = 0; i < nrChannels; i++) {
             Conf.Folder fld = cfg.cd("channel-" + whichChannels[i]);
             channels[i] = new PerChannel(fld, startingImageSize, microns, whichChannels[i], nrDirs);
-            /*
-            // TODO: this should be moved to a "PerChannel" constructor
-            channels[i].param = SimParam.loadConfig(fld);
-            channels[i].param.setPxlSize(startingImageSize, microns);
-            OtfProvider otf = OtfProvider.loadFromConfig(fld);
-            channels[i].param.otf(otf);
-            channels[i].offset = (float) fld.getDbl("offset").val();
-            channels[i].chNumber = fld.getInt("ChannelNumber").val();
-            channels[i].label = whichChannels[i];
-            */
         }
 
         // create and start reconstruction threads
@@ -179,6 +167,9 @@ public class ReconstructionRunner {
         startThreads();
     }
     
+    /**
+     * Starts all threads of the ReconstructionRunner
+     */
     private void startThreads() {
         stopReconThreads = false;
         for (int i = 0; i < nrThreads; i++) {
@@ -204,6 +195,9 @@ public class ReconstructionRunner {
         }
     }
 
+    /**
+     * Stops all threads of the ReconstructionRunner
+     */
     private void stopThreads() {
         stopReconThreads = true;
         if (fut != null) {
@@ -224,59 +218,32 @@ public class ReconstructionRunner {
         Tool.trace("Stopped ReconstructionThreads.");
     }
 
+    /**
+     * Sets all necessary fields of this ReconstructionRunner for a new image
+     * size and restarts threads
+     * @param pixelSize 
+     */
     public void setImageSize(int pixelSize) {
         stopThreads();
         this.width = pixelSize;
         this.height = pixelSize;
         imgsToReconstruct.clear();
         initLatestReconVec();
-        //double shiftFactor = (double)pixelSize / (double)startingImageSize;
-        
-        //System.out.println("pixelSize: " + pixelSize + "\t startingImageSize: " + startingImageSize + "\t shiftFactor: " + shiftFactor);
         for (int ch = 0; ch < nrChannels; ch++) {
             channels[ch].param.setPxlSize(pixelSize);
             /*
             for (int i = 0; i < nrDirs; i++) {
-                //System.out.println("shift_start: " + channels[ch].startingPx[i] + "/" + channels[ch].startingPy[i]);
-                //System.out.println("shift_before: " + channels[ch].param.dir(i).getPxPy(1)[0] + "/" + channels[ch].param.dir(i).getPxPy(1)[1]);
-                //channels[ch].param.dir(i).setPxPy(channels[ch].startingPx[i] * shiftFactor * (nrBands-1), channels[ch].startingPy[i] * shiftFactor * (nrBands-1));
-                //System.out.println("shift_end: " + channels[ch].param.dir(i).getPxPy(1)[0] + "/" + channels[ch].param.dir(i).getPxPy(1)[1]);
-                //System.out.println();
                 //channels[ch].param.dir(i).calcNew(pixelSize);
             }
             */
         }
         startThreads();
     }
-    /*
-    private void initThreads(int pixelSize) {
-        for (int i = 0; i < nrThreads; i++) {
-            if (reconThreads[i] != null) reconThreads[i].interrupt();
-            reconThreads[i] = new ReconstructionThread(avf);
-            if (autostart) {
-                reconThreads[i].start();
-                Tool.trace("Started recon thread: " + i);
-            }
-        }
-
-        // precompute filters for all threads
-        if (fut != null) fut.interrupt();
-        fut = new FilterUpdateThread();
-        for (int ch = 0; ch < nrChannels; ch++) {
-            channels[ch].param.setPxlSize(pixelSize);
-            fut.setupFilters(ch);
-        }
-
-        if (prt != null) prt.interrupt();
-        prt = new ParameterRefitThread();
-
-        if (autostart) {
-            fut.start();
-            prt.start();
-            Tool.trace("Started parameter fit/update thread: ");
-        }
-    }
-    */
+    
+    /**
+     * Initialises the lastReconVec field.
+     * Necessary for registration
+     */
     private void initLatestReconVec() {
         for (int c = 0; c < nrChannels; c++) {
             latestReconVec[c] = avf.createReal2D(width * 2, height * 2);

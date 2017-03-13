@@ -71,16 +71,6 @@ public class RegistrationPanel extends javax.swing.JPanel {
             }).start();
         }
     }
-    
-    /**
-     * Initialises the GUI for the Registration
-     *
-     * @param cfg Configuration
-     * @param channels Camera channels
-     */
-    private void init(Conf.Folder cfg) {
-        
-    }
 
     /**
      * This method is called from within the constructor to initialize the form.

@@ -21,44 +21,31 @@ package org.fairsim.sim_gui;
 import javax.swing.JFrame;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-
 import java.awt.Dimension;
 import java.awt.Graphics;
-
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
-
 import javax.swing.JSlider;
-import javax.swing.JSpinner;
 import javax.swing.JLabel;
 import javax.swing.JButton;
 import javax.swing.JTabbedPane;
-
-
-
 import java.awt.GridBagLayout;
 import javax.swing.BoxLayout;
 import java.awt.GridBagConstraints;
-
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
 import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-
-import org.fairsim.transport.ImageReceiver;
-import org.fairsim.transport.ImageWrapper;
-
+import javax.swing.JCheckBox;
 import org.fairsim.linalg.Vec2d;
-
 import org.fairsim.utils.Tool;
 
 public class PlainImageDisplay {
 
-    private final JPanel mainPanel ;
-    private final ImageComponent ic ;
+    protected final JPanel mainPanel ;
+    protected final ImageComponent ic ;
 
     public PlainImageDisplay(int w, int h) {
 	this(1,w,h);
@@ -214,6 +201,7 @@ public class PlainImageDisplay {
 	    sliders.add( bGamma2 ,c );
 
 	    // Lut selector
+            
 	    Tiles.LComboBox<LUT> lutSelector = 
 		new Tiles.LComboBox<LUT>("LUT", LUT.values()); 
 	    lutSelector.addSelectListener( new Tiles.SelectListener<LUT>() {
@@ -228,6 +216,16 @@ public class PlainImageDisplay {
 	    
 	    c.gridx=2; c.gridy=3; c.gridwidth=4;
 	    sliders.add(lutSelector,c);
+            
+            // show checkBox
+            JCheckBox showCheckBox = new JCheckBox("Show Channel", true);
+            showCheckBox.addActionListener( new ActionListener() {
+		public void actionPerformed( ActionEvent e ) {
+		    ic.show[channel] = showCheckBox.isSelected();
+		}
+	    });
+            c.gridx=6; c.gridy=3; c.gridwidth=0;
+            sliders.add(showCheckBox,c);
 	   
 	    String chName="Ch "+channel;
 	    if ( names.length > channel )
@@ -242,7 +240,7 @@ public class PlainImageDisplay {
 	JPanel labelPanel = new JPanel();
 	labelPanel.add( imageInfoLabel );
 	
-	ic.setUpdateListener( new ImageComponent.IUpdate() {
+	ic.setUpdateListener( new IUpdate() {
 	    @Override
 	    public void newZoom( int zoomLevel, int zoomX, int zoomY){
 		imageInfoLabel.setText(
@@ -285,7 +283,7 @@ public class PlainImageDisplay {
 
 
     /** Internal class for the actual image display */
-    private static class ImageComponent extends JComponent{
+    static class ImageComponent extends JComponent{
          
         BufferedImage bufferedImage = null;
 	final int width, height;
@@ -298,6 +296,7 @@ public class PlainImageDisplay {
 	int [] scalMax, scalMin;
 	int [] currentImgMin, currentImgMax;
 	double [] gamma;
+        final boolean[] show;
 
 	final float [][] imgBuffer ;
 	final byte  [] imgData   ;
@@ -328,11 +327,13 @@ public class PlainImageDisplay {
 	    currentImgMin = new int[ch];
 	    currentImgMax = new int[ch];
 	    gamma = new double[ch];
+            show = new boolean[ch];
 
 	    for (int c=0; c<nrChannels; c++) {
 		scalMin[c]=0; scalMax[c]=255;
 		currentImgMin[c]=0; currentImgMax[c]=1;
 		recalcGammaTable(c,1);
+                show[c] = true;
 	    }
 
 	    // init color lookup
@@ -443,23 +444,25 @@ public class PlainImageDisplay {
 		short r=0,g=0,b=0;
 
 		for (int ch=0; ch<nrChannels; ch++) {
-		    // scale
-		    float val = imgBuffer[ch][ x + y*width ];
-		    if (val> currentImgMax[ch]) currentImgMax[ch] = (int)val;
-		    if (val< currentImgMin[ch]) currentImgMin[ch] = (int)val;
-		    float out=0;
-		    if ( val >= scalMax[ch] ) out=1;
-		    if ( val <  scalMin[ch] ) out=0;
-		    if ( val >= scalMin[ch] && val < scalMax[ch] ) 
-			out = 1.f*(val - scalMin[ch]) / (scalMax[ch]-scalMin[ch]) ;
-		   
-		    // correct for gamma
-		    short pxl = gammaLookupTable[ch][ (int)(out*(gammaLookupTableSize-1)) ];
+                    if(show[ch]) {
+                        // scale
+                        float val = imgBuffer[ch][ x + y*width ];
+                        if (val> currentImgMax[ch]) currentImgMax[ch] = (int)val;
+                        if (val< currentImgMin[ch]) currentImgMin[ch] = (int)val;
+                        float out=0;
+                        if ( val >= scalMax[ch] ) out=1;
+                        if ( val <  scalMin[ch] ) out=0;
+                        if ( val >= scalMin[ch] && val < scalMax[ch] ) 
+                            out = 1.f*(val - scalMin[ch]) / (scalMax[ch]-scalMin[ch]) ;
 
-		    // apply lookup
-		    b+= colorLookupTable[ch][pxl][0];
-		    g+= colorLookupTable[ch][pxl][1];
-		    r+= colorLookupTable[ch][pxl][2];
+                        // correct for gamma
+                        short pxl = gammaLookupTable[ch][ (int)(out*(gammaLookupTableSize-1)) ];
+
+                        // apply lookup
+                        b+= colorLookupTable[ch][pxl][0];
+                        g+= colorLookupTable[ch][pxl][1];
+                        r+= colorLookupTable[ch][pxl][2];
+                    }
 		}
 		
 		// clip to 0..255
@@ -518,14 +521,11 @@ public class PlainImageDisplay {
 		ourUpdateListener.newZoom( zoomLevel, zoomX, zoomY);
 	}
 
-	public interface IUpdate {
-	    public void newZoom( int level, int xPos, int yPos );
-	}
+	
     
 	public void setUpdateListener( IUpdate l ) {
 	    ourUpdateListener = l;
 	}
-
         @Override
         public Dimension getPreferredSize() {
             return new Dimension(width, height);
@@ -546,6 +546,10 @@ public class PlainImageDisplay {
             g.drawImage(bufferedImage, 0, 0, null);
         }
     }
+    
+    public interface IUpdate {
+	    public void newZoom( int level, int xPos, int yPos );
+	}
 
 
     /** Main method for easy testing */

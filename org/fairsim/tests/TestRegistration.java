@@ -30,14 +30,14 @@ import org.fairsim.linalg.Vec2d;
 import org.fairsim.registration.Registration;
 
 /**
- * Class for testing and timing the Registrationprocess
+ * Class for testing and timing the registration process
  * @author Mario
  */
 public class TestRegistration {    
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) throws IOException, DataFormatException {
+    public static void main(String[] args) throws IOException, DataFormatException, NoSuchFieldException {
         ImagePlus imgPlus = new ImagePlus("D:/vigor-registration/Recon_original.jpg");
         imgPlus.setSlice(-1);
         ImageProcessor imgProcessor = imgPlus.getProcessor();
@@ -50,7 +50,8 @@ public class TestRegistration {
                 source.set(x, y, imgProcessor.get(x, y));
             }
         }
-        Registration reg = new Registration("D:/vigor-registration/test.txt");
+        Registration.createRegistration("D:/vigor-registration/test.txt" , "0");
+        Registration reg = Registration.getRegistration("0");
         Registration.setRecon(true);
         if (Registration.isRecon()) {
             

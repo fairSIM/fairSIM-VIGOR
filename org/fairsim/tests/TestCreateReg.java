@@ -36,7 +36,7 @@ public class TestCreateReg {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, NoSuchFieldException {
         ImagePlus sourceImg = new ImagePlus("D:/vigor-registration/Recon_shifted.jpg");
         ImageProcessor sourceProcessor = sourceImg.getProcessor();
         ImagePlus targetImg = new ImagePlus("D:/vigor-registration/Recon_original.jpg");
@@ -47,7 +47,8 @@ public class TestCreateReg {
         testTransformation.saveDirectTransformation("D:/vigor-registration/regTest.txt");
         bUnwarpJ_.convertToRawTransformationMacro("D:/vigor-registration/Recon_original.jpg", "D:/vigor-registration/Recon_shifted.jpg", "D:/vigor-registration/regTest.txt", "D:/vigor-registration/regTestRaw.txt");
         
-        Registration reg = new Registration("D:/vigor-registration/regTestRaw.txt");
+        Registration.createRegistration("D:/vigor-registration/regTestRaw.txt" , "0");
+        Registration reg = Registration.getRegistration("0");
         
         VectorFactory vf = BasicVectors.getFactory();
         Vec2d.Real sourceVec = vf.createReal2D(sourceProcessor.getWidth(), sourceProcessor.getHeight());

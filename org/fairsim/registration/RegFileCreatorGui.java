@@ -24,7 +24,7 @@ import org.fairsim.livemode.ReconstructionRunner;
 import org.fairsim.livemode.SimSequenceExtractor;
 
 /**
- *
+ * GUI for the RegFileCreator in live mode
  * @author m.lachetta
  */
 public class RegFileCreatorGui extends javax.swing.JFrame {
@@ -340,21 +340,37 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * Sets a new black colored status line
+     * @param text Text which will be set
+     */
     private void setBlackStatus(String text) {
         statusLabel.setText(text);
         statusLabel.setForeground(Color.BLACK);
     }
     
+    /**
+     * Sets a new Red colored status line
+     * @param text Text which will be set
+     */
     private void setRedStatus(String text) {
         statusLabel.setText(text);
         statusLabel.setForeground(Color.RED);
     }
     
+    /**
+     * Sets a new blue colored status line
+     * @param text Text which will be set
+     */
     private void setBlueStatus(String text) {
         statusLabel.setText(text);
         statusLabel.setForeground(Color.BLUE);
     }
     
+    /**
+     * Readout registration options from the GUI and sets them in the RegFileCreator
+     * @throws DataFormatException if values are impossible to set
+     */
     private void setCreatorOptions() throws DataFormatException {
         int mode = Integer.parseInt(modeField.getText());
         int img_subsamp_fact = Integer.parseInt(subsampleField.getText());
@@ -371,8 +387,9 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
                 imageWeight, consistencyWeight, stopThreshold);
     }
     
-    
-    
+    /**
+     * Creates a new RegistrationFile
+     */
     private void createButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createButtonActionPerformed
         new Thread(new Runnable() {
             @Override
@@ -414,6 +431,9 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
         
     }//GEN-LAST:event_createButtonActionPerformed
 
+    /**
+     * Deletes a registration
+     */
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
             new Thread(new Runnable() {
             @Override
@@ -421,8 +441,9 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
                 try {
                     String deleteChannelName = channelNames[targetComboBox.getSelectedIndex()];
                     Registration.clearRegistration(deleteChannelName);
-                    creator.deleteRegFile(deleteChannelName);
-                    setBlueStatus("Registration for '" + deleteChannelName + "' deleted");
+                    boolean foo = creator.deleteRegFile(deleteChannelName);
+                    if (foo) setBlueStatus("Registration for '" + deleteChannelName + "' deleted");
+                    else setBlackStatus("Registration for '" + deleteChannelName + "' does net exist");
                 } catch (Exception ex) {
                     setRedStatus("Error: " + ex.getMessage());
                 }
