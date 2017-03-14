@@ -109,10 +109,10 @@ public class Registration {
             String filename = Tool.getFile(regFolder + channelName + ".txt").getAbsolutePath();
             Registration reg = new Registration(filename, channelName);
             registrations.add(reg);
-            System.out.println("Registration: Registrering channel: " + channelName);
+            Tool.trace("Registration: Registrering channel: " + channelName);
             return true;
         } catch (IOException ex) {
-            System.out.println("Registration: No registration for channel: " + channelName);
+            Tool.trace("Registration: No registration for channel: " + channelName);
             return false;
         }
     }

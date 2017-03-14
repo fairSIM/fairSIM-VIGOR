@@ -117,22 +117,18 @@ public abstract class AbstractClient extends Thread {
                         input.lock.unlock();
                     }
                 }
-            } catch (UnknownHostException e) {
-                gui.showText("Client: Error: UnknownHostException");
-            } catch (ConnectException e) {
-                gui.showText("Client: Error: Connection failed to : " + serverAdress + ":" + serverPort);
+            } catch (IOException ex) {
+                gui.showText(ex + ";\t in: " + getClass());
                 try {
                     Thread.sleep(2000);
-                } catch (InterruptedException ex) {
+                } catch (InterruptedException e) {
                     interrupt();
-                    gui.showText("Client: Error: InterruptedException 1");
+                    gui.showText(ex + ";\t in: " + getClass());
                 }
-            } catch (IOException e) {
-                gui.showText("Client: Error: IOException");
-            } catch (NoSuchElementException e) {
-                gui.showText("Client: Error: Connection lost to: " + serverAdress + ":" + serverPort);
+            } catch (NoSuchElementException ex) {
+                gui.showText(getClass() + ": Connection lost to: " + serverAdress + ":" + serverPort);
             } catch (InterruptedException ex) {
-                gui.showText("Client: Error: InterruptedException 2");
+                gui.showText(ex + ";\t in: " + getClass());
             } finally {
                 gui.unregisterClient();
                 if (this != null) {

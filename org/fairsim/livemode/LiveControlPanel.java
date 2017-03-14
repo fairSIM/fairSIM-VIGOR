@@ -35,8 +35,6 @@ import java.awt.event.ActionEvent;
 import java.awt.GridLayout;
 
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.fairsim.utils.Conf;
 import org.fairsim.transport.ImageReceiver;
@@ -48,6 +46,7 @@ import org.fairsim.sim_gui.PlainImageDisplay;
 
 import org.fairsim.linalg.Vec2d;
 import org.fairsim.controller.ControllerGui;
+import org.fairsim.sim_gui.RawImageDisplay;
 import org.fairsim.utils.Tool;
 import org.fairsim.utils.SimpleMT;
 
@@ -276,7 +275,8 @@ public class LiveControlPanel {
     }
     
     private void initView() {
-        wfDisplay = new PlainImageDisplay(nrCh, wfPixelSize, wfPixelSize, channels);
+        if (reconRunner != null) wfDisplay = new RawImageDisplay(this.reconRunner, channels);
+        else wfDisplay = new PlainImageDisplay(nrCh, wfPixelSize, wfPixelSize, channels);
         reconDisplay = new PlainImageDisplay(nrCh, 2 * wfPixelSize, 2 * wfPixelSize, channels);
         hrFr = new JFrame("Reconstruction");
         lrFr = new JFrame("Widefiled");
@@ -376,9 +376,6 @@ public class LiveControlPanel {
                     if (doWidefield) {
                         img = reconRunner.finalWidefield.take();
                     } else {
-                        //reconRunner.finalRecon.take();
-                        //reconRunner.finalRecon.take();
-                        //reconRunner.finalRecon.take();
                         img = reconRunner.finalRecon.take();
                     }
 

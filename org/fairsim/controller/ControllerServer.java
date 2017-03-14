@@ -22,7 +22,7 @@ import java.io.IOException;
 import org.fairsim.utils.Tool;
 
 /**
- * Class for the Server in the communikation chain <br>
+ * Class for the Server in the communication chain <br>
  * SLM - Server - Client - GUI
  *
  * @author m.lachetta

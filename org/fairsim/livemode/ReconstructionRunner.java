@@ -37,7 +37,7 @@ import org.fairsim.registration.Registration;
 public class ReconstructionRunner {
 
     private final int startingImageSize;
-    public int width, height;
+    public int width, height, rawOutput;
     public final int nrChannels;
     public final int nrDirs, nrPhases, nrBands;
     public final int nrThreads;
@@ -136,7 +136,8 @@ public class ReconstructionRunner {
 
         nrThreads = cfg.getInt("ReconThreads").val();
         imgsToReconstruct = new ArrayBlockingQueue<short[][][]>(maxInReconQueue());
-
+        
+        rawOutput = -1;
         finalWidefield = new ArrayBlockingQueue<Vec2d.Real[]>(maxInWidefieldQueue());
         finalRecon = new ArrayBlockingQueue<Vec2d.Real[]>(maxInFinalQueue());
 
@@ -241,7 +242,7 @@ public class ReconstructionRunner {
     }
     
     /**
-     * Initialises the lastReconVec field.
+     * Initializes the lastReconVec field.
      * Necessary for registration
      */
     private void initLatestReconVec() {
@@ -369,7 +370,6 @@ public class ReconstructionRunner {
                 for (int c = 0; c < nrChannels; c++) {
 
                     int count = 0;
-
                     // REMARK: Change order of these loops to
                     // set if 'angle then phase' or 'phase then angle'
                     // in input. Remember to do this ALSO in the
@@ -379,7 +379,6 @@ public class ReconstructionRunner {
 
                             short[] inImg = imgs[c][count++];
                             inFFT[c][a][p].setFrom16bitPixels(inImg);
-
                             // fade borders
                             inFFT[c][a][p].times(dampBorder);
                             // TODO: this would be a place to add the compensation 
@@ -391,7 +390,11 @@ public class ReconstructionRunner {
 
                     // copy back wide-field
                     widefield[c].scal(1.f / (nrDirs * nrPhases));
-                    cpuWidefield[c].copy(widefield[c]);
+                    if (rawOutput < 0 || rawOutput > count) {
+                        cpuWidefield[c].copy(widefield[c]);
+                    } else {
+                        cpuWidefield[c].setFrom16bitPixels(imgs[c][rawOutput]);
+                    }
                     // registers wide-fild images
                     if (Registration.isWidefield()) {
                         try {
