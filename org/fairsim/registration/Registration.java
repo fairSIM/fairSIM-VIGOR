@@ -21,8 +21,6 @@ package org.fairsim.registration;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.fairsim.linalg.*;
 import org.fairsim.utils.Conf;
 import org.fairsim.utils.Tool;
@@ -33,26 +31,20 @@ import org.fairsim.utils.Tool;
  */
 public class Registration {
 
-    private String channelName;
-    private final VectorFactory vf;
-    private int reconWidth;
-    private int reconHeight;
-    private int wfWidth;
-    private int wfHeight;
-    private Vec2d.Real reconXTransVec;
-    private Vec2d.Real reconYTransVec;
-    private Vec2d.Real wfXTransVec;
-    private Vec2d.Real wfYTransVec;
+    private final String channelName;
+    private static final VectorFactory vf = Vec.getBasicVectorFactory();
+    private int reconMaxW;
+    private int reconMaxH;
+    private int wfMaxW;
+    private int wfMaxH;
+    private final Vec2d.Real reconXTransVec;
+    private final Vec2d.Real reconYTransVec;
+    private final Vec2d.Real wfXTransVec;
+    private final Vec2d.Real wfYTransVec;
     static private int threads;
-    //static private String regFolder;
-    static private final List<Registration> registrations = new ArrayList<>();
-    static private boolean widefield;
-    static private boolean recon;
-    /*
-    static {
-        REGISTRATIONS = new ArrayList<>();
-    }
-    */
+    private static final List<Registration> registrations = new ArrayList<>();
+    private static boolean widefield;
+    private static boolean recon;
     
     /**
      * Constructor for a registration object
@@ -62,36 +54,31 @@ public class Registration {
      */
     private Registration(String file, String channelName) throws IOException {
         this.channelName = channelName;
-        vf = Vec.getBasicVectorFactory();
-        reconWidth = -1;
-        reconHeight = -1;
-        wfWidth = -1;
-        wfHeight = -1;
-        reconXTransVec = null;
-        reconYTransVec = null;
-        wfXTransVec = null;
-        wfYTransVec = null;
+        reconMaxW = -1;
+        reconMaxH = -1;
+        wfMaxW = -1;
+        wfMaxH = -1;
 
         BufferedReader br = new BufferedReader(new FileReader(file));
         Tool.trace("Registration: readin file: " + file);
 
-        reconWidth = Integer.parseInt(br.readLine().split("=")[1]);
-        reconHeight = Integer.parseInt(br.readLine().split("=")[1]);
-        wfWidth = reconWidth / 2;
-        wfHeight = reconHeight / 2;
+        reconMaxW = Integer.parseInt(br.readLine().split("=")[1]);
+        reconMaxH = Integer.parseInt(br.readLine().split("=")[1]);
+        wfMaxW = reconMaxW / 2;
+        wfMaxH = reconMaxH / 2;
 
-        reconXTransVec = vf.createReal2D(reconWidth, reconHeight);
-        reconYTransVec = vf.createReal2D(reconWidth, reconHeight);
-        wfXTransVec = vf.createReal2D(wfWidth, wfHeight);
-        wfYTransVec = vf.createReal2D(wfWidth, wfHeight);
+        reconXTransVec = vf.createReal2D(reconMaxW, reconMaxH);
+        reconYTransVec = vf.createReal2D(reconMaxW, reconMaxH);
+        wfXTransVec = vf.createReal2D(wfMaxW, wfMaxH);
+        wfYTransVec = vf.createReal2D(wfMaxW, wfMaxH);
         readInTransVector(br);
 
         br.close();
         Tool.trace("Registration: readin done for: " + file);
 
         threads = Runtime.getRuntime().availableProcessors();
-        if (threads > wfHeight) {
-            threads = wfHeight;
+        if (threads > wfMaxH) {
+            threads = wfMaxH;
         }
         if (threads < 1) {
             threads = 1;
@@ -222,13 +209,15 @@ public class Registration {
      * @return output vector from the registration
      */
     public Vec2d.Real registerWfImage(Vec2d.Real sourceVec) throws IllegalStateException {
-        if (sourceVec.vectorWidth() != wfWidth || sourceVec.vectorHeight() != wfHeight) {
+        int width = sourceVec.vectorWidth();
+        int height = sourceVec.vectorHeight();
+        if (width != wfMaxW || height != wfMaxH) {
             Tool.trace("Image registration failed, because of differences in diminsions");
             setWidefield(false);
             return sourceVec;
             //throw new IllegalStateException("Image registration failed, because of differences in diminsions");
         }
-        return registerImage(sourceVec, wfXTransVec, wfYTransVec, wfWidth, wfHeight);
+        return registerImage(sourceVec, wfXTransVec, wfYTransVec, width, height);
     }
     
     /**
@@ -237,13 +226,15 @@ public class Registration {
      * @return output vector from the registration
      */
     public Vec2d.Real registerReconImage(Vec2d.Real sourceVec) throws IllegalStateException {
-        if (sourceVec.vectorWidth() != reconWidth || sourceVec.vectorHeight() != reconHeight) {
+        int width = sourceVec.vectorWidth();
+        int height = sourceVec.vectorHeight();
+        if (width != reconMaxW || height != reconMaxH) {
             Tool.trace("Image registration failed, because of differences in diminsions");
             setRecon(false);
             //return sourceVec;
             throw new IllegalStateException("Image registration failed, because of differences in diminsions");
         }
-        return registerImage(sourceVec, reconXTransVec, reconYTransVec, reconWidth, reconHeight);
+        return registerImage(sourceVec, reconXTransVec, reconYTransVec, width, height);
     }
     
     /**
@@ -259,8 +250,12 @@ public class Registration {
 	final Vec2d.Real xTransVec, final Vec2d.Real yTransVec, 
 	final int width, final int height) {
         
-        final Vec2d.Real regVec = vf.createReal2D(width, height); 
-        
+        final Vec2d.Real regVec = vf.createReal2D(width, height);
+        int maxWidth = xTransVec.vectorWidth();
+        int maxHeight = yTransVec.vectorHeight();
+        int offsetX = (maxWidth - width) / 2;
+        int offsetY = (maxHeight - height) / 2;
+
         //Multi-Threaded way
         final int blockSize = height / threads;
         final Thread[] blocks = new Thread[threads];
@@ -270,8 +265,8 @@ public class Registration {
             blocks[tId] = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    for (int y = blockSize * tId; y < blockSize * (tId + 1); y++) {
-                        for (int x = 0; x < width; x++) {
+                    for (int y = blockSize*tId+offsetY; y < blockSize*(tId + 1)+offsetY; y++) {
+                        for (int x = offsetX; x+offsetX < width; x++) {
                             transPixel(regVec, sourceVec, xTransVec, yTransVec, width, height, x, y);
                         }
                     }
@@ -290,8 +285,7 @@ public class Registration {
             try {
                 blocks[threadId].join();
             } catch (InterruptedException ex) {
-                System.err.println("Registration thread interrupted!");
-                Logger.getLogger(Registration.class.getName()).log(Level.SEVERE, null, ex);
+                Tool.error("Registration thread interrupted!", false);
             }
         }
         

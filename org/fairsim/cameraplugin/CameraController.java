@@ -194,10 +194,10 @@ public class CameraController {
             ImageWrapper iw;
             //System.out.println(mirrored + "/" + sendPixelSize);
             if (mirrored) {
-                iw = ImageWrapper.copyImageCropMirrorX(imgData, sendImageSize, sendImageSize, imageWidth, imageHeight, 0, 0, 0, channel, count);
+                iw = ImageWrapper.copyImageCropMirrorXCentered(imgData, sendImageSize, sendImageSize, imageWidth, imageHeight, 0, 0, 0, channel, count);
                 
             } else {
-                iw = ImageWrapper.copyImageCrop(imgData, sendImageSize, sendImageSize, imageWidth, imageHeight, 0, 0, 0, channel, count);
+                iw = ImageWrapper.copyImageCropCentered(imgData, sendImageSize, sendImageSize, imageWidth, imageHeight, 0, 0, 0, channel, count);
             }
             iw.setTimeCamera(timeStamp);
             iw.setTimeCapture(System.currentTimeMillis() * 1000);

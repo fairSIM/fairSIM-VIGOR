@@ -68,19 +68,25 @@ public class ImageWrapper {
 
     /** Create an ImageWrapper from 2-byte pxl data */
     public void copyCrop( short [] dat, int w, int h, int origW, int origH) {
+	copyCrop(dat, w, h, origW, origH, 0, 0);
+    }
+    
+    public void copyCrop( short [] dat, int w, int h, int origW, int origH, int offsetX, int offsetY) {
 	width=w; height=h; bpp=2;
 
+        if (offsetX<0 || offsetY<0)
+            throw new RuntimeException("Offset is negative");
 	if (origW*origH>dat.length)
 	    throw new RuntimeException("Input data too short");
-	if (w>maxWidth || h>maxHeight)
+	if ((w+offsetX)>maxWidth || (h+offsetY)>maxHeight)
 	    throw new RuntimeException("Input image larger than maximum size");
 
 	ByteBuffer bb = ByteBuffer.wrap( buffer, 128, buffer.length-128);
 	bb.order( ByteOrder.LITTLE_ENDIAN );
 	ShortBuffer sb = bb.asShortBuffer();
     
-	for (int y=0; y<h; y++) {
-	    sb.put( dat, y*origW, w); 
+	for (int y=offsetY; y<h+offsetY; y++) {
+	    sb.put( dat, (y*origW)+offsetX, w); 
 	}
     }
 
@@ -107,8 +113,14 @@ public class ImageWrapper {
 
     /** Create an ImageWrapper from 2-byte pxl data, mirroring the input in x */
     public void copyCropMirrorX( short [] dat, int w, int h, int origW, int origH) {
+	copyCropMirrorX(dat, w, h, origW, origH, 0, 0);
+    }
+
+    public void copyCropMirrorX( short [] dat, int w, int h, int origW, int origH, int offsetX, int offsetY) {
 	width=w; height=h; bpp=2;
 
+        if (offsetX<0 || offsetY<0)
+            throw new RuntimeException("Offset is negative");
 	if (w*h>dat.length)
 	    throw new RuntimeException("Input data too short");
 	if (w>maxWidth || h>maxHeight)
@@ -118,15 +130,13 @@ public class ImageWrapper {
 	bb.order( ByteOrder.LITTLE_ENDIAN );
 	ShortBuffer sb = bb.asShortBuffer();
 
-	for (int y=0; y<h; y++) {
-	    for (int x=0; x<w; x++) {
-		//sb.put( dat, y*origW, w); 
+	for (int y=offsetY; y<h+offsetY; y++) {
+	    for (int x=offsetX; x<w+offsetX; x++) {
+                //sb.put( dat, y*origW, w); 
 		sb.put( dat[ y*origW + (w-x-1) ] );
 	    }
 	}
     }
-
-
 
 
 
@@ -311,6 +321,16 @@ public class ImageWrapper {
 	ret.setPos012( pos0, pos1, pos2 );
 	return ret;
     }
+    
+    public static ImageWrapper copyImageCropCentered( short [] pxl, int w, int h, int origW, int origH, 
+	int posA, int posB, int pos0, int pos1, int pos2 ) {
+
+	ImageWrapper ret = new ImageWrapper( w, h );
+	ret.copyCrop( pxl, w,h, origW, origH, (origW - w) / 2, (origH - h) / 2 );
+	ret.setPosAB(  posA, posB );
+	ret.setPos012( pos0, pos1, pos2 );
+	return ret;
+    }
 
     /** Create a wrapped, cropped image. Convenience method. */
     public static ImageWrapper copyImageCropMirrorX( short [] pxl, int w, int h, int origW, int origH, 
@@ -318,6 +338,16 @@ public class ImageWrapper {
 
 	ImageWrapper ret = new ImageWrapper( w, h );
 	ret.copyCropMirrorX( pxl, w,h, origW, origH );
+	ret.setPosAB(  posA, posB );
+	ret.setPos012( pos0, pos1, pos2 );
+	return ret;
+    }
+    
+    public static ImageWrapper copyImageCropMirrorXCentered( short [] pxl, int w, int h, int origW, int origH, 
+	int posA, int posB, int pos0, int pos1, int pos2 ) {
+
+	ImageWrapper ret = new ImageWrapper( w, h );
+	ret.copyCropMirrorX( pxl, w,h, origW, origH, (origW - w) / 2, (origH - h) / 2 );
 	ret.setPosAB(  posA, posB );
 	ret.setPos012( pos0, pos1, pos2 );
 	return ret;
