@@ -20,7 +20,8 @@ package org.fairsim.utils;
 
 import java.io.File;
 import java.util.Calendar;
-import java.util.zip.DataFormatException;
+import java.util.logging.Level;
+import javax.swing.JOptionPane;
 
 /**
  * Logging and Timers
@@ -31,6 +32,7 @@ public final class Tool {
     private Tool() {}
     /** The tool implementation in use*/
     static private Tool.Logger currentLogger;
+    static private boolean errorShown = false;
 
     /** Simple logger */
     public interface Logger {
@@ -84,6 +86,15 @@ public final class Tool {
    
     /** Write an error message */
     static public final void error(String message, boolean fatal ) {
+        new Thread(new Runnable() {
+            public void run() {
+                if (!errorShown) {
+                    errorShown = true;
+                    JOptionPane.showMessageDialog(null, message, "fairSIM Error", JOptionPane.ERROR_MESSAGE);
+                    errorShown = false;
+                }
+            }
+        }).start();
 	if (currentLogger!=null)
 	    currentLogger.writeError( message, fatal );
     }

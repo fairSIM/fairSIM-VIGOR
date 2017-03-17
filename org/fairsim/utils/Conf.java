@@ -41,7 +41,6 @@ import org.w3c.dom.NodeList;
 // Data structure
 import java.util.Map;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Locale;
@@ -50,17 +49,16 @@ import java.util.Locale;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.DoubleBuffer;
-import javax.xml.bind.DatatypeConverter;
-
-// Time stamps
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 
 /** Wrappers around entries to a configuration file */
 public class Conf {
 
     final String namespace;
     final Folder root;
+    
+    static {
+        Locale.setDefault(Locale.ENGLISH);
+    }
 
     /** Create a new configuration with a namespace */
     public Conf(String namespace) {
@@ -604,7 +602,7 @@ public class Conf {
     /** Write the config to an XML file */
     public boolean saveFile( File xmlfile ) 
 	throws SomeIOException {
-	
+        
 	DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 	dbf.setNamespaceAware(false);
 	dbf.setValidating(false);
@@ -632,7 +630,7 @@ public class Conf {
 	} catch (java.lang.Exception e) {
 	    throw new SomeIOException(e);
 	}
-
+        
 	return true;
     }
     

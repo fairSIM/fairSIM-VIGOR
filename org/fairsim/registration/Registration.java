@@ -21,6 +21,7 @@ package org.fairsim.registration;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.DataFormatException;
 import org.fairsim.linalg.*;
 import org.fairsim.utils.Conf;
 import org.fairsim.utils.Tool;
@@ -208,14 +209,11 @@ public class Registration {
      * @param sourceVec input vector for the registration
      * @return output vector from the registration
      */
-    public Vec2d.Real registerWfImage(Vec2d.Real sourceVec) throws IllegalStateException {
+    public Vec2d.Real registerWfImage(Vec2d.Real sourceVec) throws DataFormatException {
         int width = sourceVec.vectorWidth();
         int height = sourceVec.vectorHeight();
-        if (width != wfMaxW || height != wfMaxH) {
-            Tool.trace("Image registration failed, because of differences in diminsions");
-            setWidefield(false);
-            return sourceVec;
-            //throw new IllegalStateException("Image registration failed, because of differences in diminsions");
+        if (width > wfMaxW || height > wfMaxH) {
+            throw new DataFormatException("Image registration failed, because of differences in diminsions");
         }
         return registerImage(sourceVec, wfXTransVec, wfYTransVec, width, height);
     }
@@ -225,14 +223,11 @@ public class Registration {
      * @param sourceVec input vector for the registration
      * @return output vector from the registration
      */
-    public Vec2d.Real registerReconImage(Vec2d.Real sourceVec) throws IllegalStateException {
+    public Vec2d.Real registerReconImage(Vec2d.Real sourceVec) throws DataFormatException {
         int width = sourceVec.vectorWidth();
         int height = sourceVec.vectorHeight();
-        if (width != reconMaxW || height != reconMaxH) {
-            Tool.trace("Image registration failed, because of differences in diminsions");
-            setRecon(false);
-            //return sourceVec;
-            throw new IllegalStateException("Image registration failed, because of differences in diminsions");
+        if (width > reconMaxW || height > reconMaxH) {
+            throw new DataFormatException("Image registration failed, because of differences in diminsions");
         }
         return registerImage(sourceVec, reconXTransVec, reconYTransVec, width, height);
     }
@@ -252,22 +247,26 @@ public class Registration {
         
         final Vec2d.Real regVec = vf.createReal2D(width, height);
         int maxWidth = xTransVec.vectorWidth();
-        int maxHeight = yTransVec.vectorHeight();
+        int maxHeight = xTransVec.vectorHeight();
+        if (maxWidth != yTransVec.vectorWidth() || maxHeight != yTransVec.vectorHeight()) {
+            throw new RuntimeException("missmatch in dimensions");
+        }
         int offsetX = (maxWidth - width) / 2;
         int offsetY = (maxHeight - height) / 2;
+        
+        
 
         //Multi-Threaded way
         final int blockSize = height / threads;
         final Thread[] blocks = new Thread[threads];
-
         for (int threadId = 0; threadId < threads; threadId++) {
             final int tId = threadId;
             blocks[tId] = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    for (int y = blockSize*tId+offsetY; y < blockSize*(tId + 1)+offsetY; y++) {
-                        for (int x = offsetX; x+offsetX < width; x++) {
-                            transPixel(regVec, sourceVec, xTransVec, yTransVec, width, height, x, y);
+                    for (int y = blockSize*tId + offsetY; y < blockSize*(tId + 1) + offsetY; y++) {
+                        for (int x = offsetX; x < width + offsetX; x++) {
+                            transPixel(regVec, sourceVec, xTransVec, yTransVec, width, height, x, y, offsetX, offsetY);
                         }
                     }
                 }
@@ -277,7 +276,7 @@ public class Registration {
 
         for (int y = blockSize * threads; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                transPixel(regVec, sourceVec, xTransVec, yTransVec, width, height, x, y);
+                transPixel(regVec, sourceVec, xTransVec, yTransVec, width, height, x, y, offsetX, offsetY);
             }
         } 
         
@@ -303,10 +302,12 @@ public class Registration {
      * @param targetX x value of the target pixel
      * @param targetY y value of the target pixel
      */
-    private void transPixel(Vec2d.Real regVec, Vec2d.Real sourceVec, Vec2d.Real xTransVec, Vec2d.Real yTransVec, int width, int height, int targetX, int targetY) {
-        float sourceX = xTransVec.get(targetX, targetY);
-        float sourceY = yTransVec.get(targetX, targetY);
-
+    private void transPixel(Vec2d.Real regVec, Vec2d.Real sourceVec,
+            Vec2d.Real xTransVec, Vec2d.Real yTransVec, int width, int height,
+            int targetX, int targetY, int offsetX, int offsetY) {
+        float sourceX = xTransVec.get(targetX, targetY) - offsetX;
+        float sourceY = yTransVec.get(targetX, targetY) - offsetY;
+        //System.out.println(sourceX + "/" + sourceY + "/" + width + "/" + height);
         if (sourceX >= 0 && sourceY >= 0 && sourceX < width - 1 && sourceY < height - 1) {
             int left = (int) sourceX;
             int top = (int) sourceY;
@@ -325,8 +326,8 @@ public class Registration {
             float trValue = sourceVec.get(right, top) * trFactor;
             float blValue = sourceVec.get(left, bottom) * blFactor;
             float brValue = sourceVec.get(right, bottom) * brFactor;
-            
-            regVec.set(targetX, targetY, tlValue + trValue + blValue + brValue);
+            //System.out.println(tlValue + trValue + blValue + brValue);
+            regVec.set(targetX - offsetX, targetY - offsetY, tlValue + trValue + blValue + brValue);
         }
     }
 

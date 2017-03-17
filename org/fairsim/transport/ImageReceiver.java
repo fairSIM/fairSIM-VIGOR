@@ -25,12 +25,9 @@ import java.net.Socket;
 import java.net.ServerSocket;
 import java.net.InetAddress;
 
-import java.util.List;
-import java.util.ArrayList;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 import javax.swing.JFrame;
 
@@ -150,7 +147,7 @@ public class ImageReceiver {
 			r1 = recvImage.readData( inStr );	
 		} catch ( Exception e ) {
 		    Tool.error("failed to receive image: "+e,false);
-		    return;
+                    return;
 		}
 		if (r0<0 || r1<0) {
 		    //reopen port

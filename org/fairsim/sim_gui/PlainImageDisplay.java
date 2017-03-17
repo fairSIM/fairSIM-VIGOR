@@ -401,13 +401,13 @@ public class PlainImageDisplay {
 
 	public void setImage( int ch, float [] img ) {
 	    if (img.length != width*height )
-		throw new RuntimeException("Input array size does not match" + img.length + "/" + width + "/" + height);
+		throw new RuntimeException("Input array size does not match " + img.length + "/" + width + "/" + height);
 	    System.arraycopy( img, 0, imgBuffer[ch], 0, width*height);
 	}
 	
 	public void setImage( int ch, Vec2d.Real img ) {
 	    if (img.vectorWidth() != width || img.vectorHeight()!=height)
-		throw new RuntimeException("Input vector size mismatch" + width + "/" + height);
+		throw new RuntimeException("Input vector size mismatch " + width + "/" + height);
 	    setImage( ch, img.vectorData());
 	}
 		

@@ -23,16 +23,12 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.Map;
 import java.util.TreeMap;
 import java.awt.Color;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.DataFormatException;
-import org.fairsim.linalg.BasicVectors;
 
 import org.fairsim.transport.ImageReceiver;
 import org.fairsim.transport.ImageWrapper;
 import org.fairsim.utils.Tool;
 import org.fairsim.linalg.MTool;
-import org.fairsim.linalg.Vec2d;
 
 import org.fairsim.utils.Conf;
 
@@ -54,7 +50,7 @@ public class SimSequenceExtractor {
     private Map< Integer, PerChannelBuffer> channelMapping;
     final private LiveControlPanel livePanel;
 
-    private boolean creatingRegFile;
+    private boolean pause;
 
     /**
      * Links ir to rr
@@ -71,7 +67,7 @@ public class SimSequenceExtractor {
         this.syncFrameAvr = cfg.getInt("SyncFrameAvr").val();
         this.syncFrameDelay = cfg.getInt("SyncFrameDelay").val();
 
-        creatingRegFile = false;
+        pause = false;
 
         channelMapping = new TreeMap<Integer, PerChannelBuffer>();
         channels = new PerChannelBuffer[nrChannels];
@@ -150,8 +146,8 @@ public class SimSequenceExtractor {
         }
     }
 
-    public void setCreatingRegFile(boolean b) {
-        creatingRegFile = b;
+    public void pause(boolean b) {
+        pause = b;
     }
 
     /**
@@ -163,7 +159,7 @@ public class SimSequenceExtractor {
         public void run() {
 
             while (true) {
-                if (!creatingRegFile) {
+                if (!pause) {
                     ImageWrapper iw = imgRecv.takeImage();
                     int chNr = iw.pos1();	// pos1 holds the data packets image channel
                     PerChannelBuffer pc = channelMapping.get(chNr);
@@ -174,7 +170,7 @@ public class SimSequenceExtractor {
                     }
                 } else {
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(500);
                     } catch (InterruptedException ex) {
                     }
                 }

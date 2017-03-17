@@ -50,6 +50,7 @@ public class RegFileCreator {
     double imageWeight;
     double consistencyWeight;
     double stopThreshold;
+    private static final int REGISTRATIONSIZE = 1024;
     
     /**
      * Constructor
@@ -164,6 +165,12 @@ public class RegFileCreator {
         } finally {
             recRunner.latestReconLock[targetId].unlock();
             recRunner.latestReconLock[sourceId].unlock();
+        }
+        
+        if (targetVec.vectorWidth() != REGISTRATIONSIZE || targetVec.vectorHeight() != REGISTRATIONSIZE
+                || sourceVec.vectorWidth() != REGISTRATIONSIZE
+                || sourceVec.vectorHeight() != REGISTRATIONSIZE) {
+            throw new DataFormatException("Need pixel size: " + REGISTRATIONSIZE);
         }
         
         createRegFile(targetVec, sourceVec, targetChannelName);

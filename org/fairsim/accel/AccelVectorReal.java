@@ -23,8 +23,6 @@ import org.fairsim.linalg.Vec;
 import org.fairsim.linalg.Vec2d;
 import org.fairsim.linalg.Vec3d;
 
-import java.nio.ByteBuffer;
-
 
 /** Vectors in native C code through JNI */
 class AccelVectorReal extends AbstractVectorReal {
@@ -54,7 +52,7 @@ class AccelVectorReal extends AbstractVectorReal {
     /** tells the native code to deallocate its memory */
     @Override
     protected void finalize() {
-	dealloc( natData );
+        dealloc( natData );
     }
 
     @Override

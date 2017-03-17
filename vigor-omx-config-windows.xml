@@ -156,7 +156,7 @@
 
 <offset type="decimal">200</offset>
 <ChannelNumber type="int">569</ChannelNumber>
-<CamAdress type="string">localhost</CamAdress>
+<CamAdress type="string">orca-pc</CamAdress>
 
 <sim-param>
 <nr-angles type="int"> 3 </nr-angles>

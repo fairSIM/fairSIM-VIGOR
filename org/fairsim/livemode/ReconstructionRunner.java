@@ -29,6 +29,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.zip.DataFormatException;
 import org.fairsim.registration.Registration;
 
 /**
@@ -137,7 +140,7 @@ public class ReconstructionRunner {
         nrThreads = cfg.getInt("ReconThreads").val();
         imgsToReconstruct = new ArrayBlockingQueue<short[][][]>(maxInReconQueue());
         
-        rawOutput = -1;
+        rawOutput = 0;
         finalWidefield = new ArrayBlockingQueue<Vec2d.Real[]>(maxInWidefieldQueue());
         finalRecon = new ArrayBlockingQueue<Vec2d.Real[]>(maxInFinalQueue());
 
@@ -210,11 +213,22 @@ public class ReconstructionRunner {
         try {
             fut.join();
             prt.join();
+            fut = null;
+            prt = null;
             for (ReconstructionThread rt : reconThreads) {
                 rt.join();
+                rt = null;
             }
         } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
+        }
+        System.gc();
+        finalRecon.clear();
+        finalWidefield.clear();
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException ex) {
+            Tool.error("Waiting for garbage collection interreupted", false);
         }
         Tool.trace("Stopped ReconstructionThreads.");
     }
@@ -234,7 +248,7 @@ public class ReconstructionRunner {
             channels[ch].param.setPxlSize(pixelSize);
             /*
             for (int i = 0; i < nrDirs; i++) {
-                //channels[ch].param.dir(i).calcNew(pixelSize);
+                channels[ch].param.dir(i).calcNew(pixelSize);
             }
             */
         }
@@ -390,10 +404,10 @@ public class ReconstructionRunner {
 
                     // copy back wide-field
                     widefield[c].scal(1.f / (nrDirs * nrPhases));
-                    if (rawOutput < 0 || rawOutput > count) {
+                    if (rawOutput <= 0 || rawOutput - 1 > count) {
                         cpuWidefield[c].copy(widefield[c]);
                     } else {
-                        cpuWidefield[c].setFrom16bitPixels(imgs[c][rawOutput]);
+                        cpuWidefield[c].setFrom16bitPixels(imgs[c][rawOutput - 1]);
                     }
                     // registers wide-fild images
                     if (Registration.isWidefield()) {
@@ -401,6 +415,10 @@ public class ReconstructionRunner {
                             Registration reg = Registration.getRegistration(channels[c].label);
                             cpuWidefield[c] = reg.registerWfImage(cpuWidefield[c]);
                         } catch (NoSuchFieldException ex) {
+                            //do nothing
+                        } catch (DataFormatException ex) {
+                            Registration.setWidefield(false);
+                            Tool.error(ex.getMessage(), false);
                         }
                     }
                 }
@@ -466,6 +484,9 @@ public class ReconstructionRunner {
                             cpuRes[channel] = reg.registerReconImage(cpuRes[channel]);
                         } catch (NoSuchFieldException ex) {
                             //do nothing
+                        } catch (DataFormatException ex) {
+                            Registration.setRecon(false);
+                            Tool.error(ex.getMessage(), false);
                         }
                     }
                 } // end per-channel loop
@@ -493,8 +514,12 @@ public class ReconstructionRunner {
                 }
 
             }
+            fullResult = null;
+            widefield = null;
+            inFFT = null;
+            separate = null;
+            shifted = null;
         }
-
     }
 
     /**

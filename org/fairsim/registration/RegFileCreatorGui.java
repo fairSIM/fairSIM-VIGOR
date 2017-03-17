@@ -102,7 +102,6 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
         consistencyType = new javax.swing.JLabel();
         thresholdType = new javax.swing.JLabel();
         createButton = new javax.swing.JButton();
-        registerButton = new javax.swing.JButton();
         statusLabel = new javax.swing.JLabel();
         deleteButton = new javax.swing.JButton();
 
@@ -181,9 +180,6 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
             }
         });
 
-        registerButton.setText("Register with new file");
-        registerButton.setEnabled(false);
-
         statusLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         statusLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         statusLabel.setText("---------");
@@ -244,7 +240,6 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(imageField, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addComponent(registerButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(createButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                     .addComponent(thresholdLabel)
@@ -330,11 +325,9 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
                     .addComponent(thresholdType))
                 .addGap(18, 18, 18)
                 .addComponent(createButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(registerButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(18, 18, 18)
                 .addComponent(statusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                .addGap(28, 28, 28))
         );
 
         pack();
@@ -401,7 +394,7 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
                     int targetId = targetComboBox.getSelectedIndex();
                     int sourceId = sourceComboBox.getSelectedIndex();
                     setBlackStatus("Creating registration file...");
-                    seqDetection.setCreatingRegFile(true);
+                    seqDetection.pause(true);
                     
                     creator.createChannelRegFile(targetId, sourceId, recRunner);
                     setBlackStatus("New file created, load new file...");
@@ -418,7 +411,7 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
                     Registration.setRecon(reconTemp);
                     wfButton.setEnabled(true);
                     reconButton.setEnabled(true);
-                    seqDetection.setCreatingRegFile(false);
+                    seqDetection.pause(false);
                     setBlueStatus("New file loaded");
                     
                 } catch (Exception ex) {
@@ -481,7 +474,6 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
     private javax.swing.JTextField modeField;
     private javax.swing.JLabel modeLabel;
     private javax.swing.JLabel modeType;
-    private javax.swing.JButton registerButton;
     private javax.swing.JComboBox<String> sourceComboBox;
     private javax.swing.JLabel sourceLabel;
     private javax.swing.JLabel statusLabel;

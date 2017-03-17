@@ -23,9 +23,6 @@ import org.fairsim.linalg.Vec;
 import org.fairsim.linalg.Vec2d;
 import org.fairsim.linalg.Vec3d;
 import org.fairsim.linalg.Cplx;
-import org.fairsim.utils.Tool;
-
-import java.nio.ByteBuffer;
 
 
 /** Vectors in native C code through JNI */
@@ -45,12 +42,14 @@ class AccelVectorCplx extends AbstractVectorCplx {
 	super(n);
 	ourFactory = vf;
 	ourCopyMode = vf.defaultCopyMode();
-	
-	natData = alloc( vf, n );
-
-
+        long nD = 0;
+	try {
+            nD = alloc( vf, n );
+        } catch (Exception ex) {
+        }
+        natData = nD;
 	if (natData == 0) {
-	    throw new java.lang.OutOfMemoryError("No memory for"+
+	    throw new java.lang.OutOfMemoryError("No memory for "+
 		"allocating native vector");
 	}
     }
@@ -58,7 +57,7 @@ class AccelVectorCplx extends AbstractVectorCplx {
     /** tells the native code to deallocate its memory */
     @Override
     protected void finalize() {
-	dealloc( natData );
+        dealloc( natData );
     }
 
     @Override

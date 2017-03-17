@@ -73,7 +73,7 @@ public class ImageWrapper {
     
     public void copyCrop( short [] dat, int w, int h, int origW, int origH, int offsetX, int offsetY) {
 	width=w; height=h; bpp=2;
-
+        
         if (offsetX<0 || offsetY<0)
             throw new RuntimeException("Offset is negative");
 	if (origW*origH>dat.length)
@@ -131,7 +131,7 @@ public class ImageWrapper {
 	ShortBuffer sb = bb.asShortBuffer();
 
 	for (int y=offsetY; y<h+offsetY; y++) {
-	    for (int x=offsetX; x<w+offsetX; x++) {
+	    for (int x=-offsetX; x<w-offsetX; x++) {
                 //sb.put( dat, y*origW, w); 
 		sb.put( dat[ y*origW + (w-x-1) ] );
 	    }
@@ -325,7 +325,7 @@ public class ImageWrapper {
     public static ImageWrapper copyImageCropCentered( short [] pxl, int w, int h, int origW, int origH, 
 	int posA, int posB, int pos0, int pos1, int pos2 ) {
 
-	ImageWrapper ret = new ImageWrapper( w, h );
+	ImageWrapper ret = new ImageWrapper( origW, origH );
 	ret.copyCrop( pxl, w,h, origW, origH, (origW - w) / 2, (origH - h) / 2 );
 	ret.setPosAB(  posA, posB );
 	ret.setPos012( pos0, pos1, pos2 );
@@ -336,7 +336,7 @@ public class ImageWrapper {
     public static ImageWrapper copyImageCropMirrorX( short [] pxl, int w, int h, int origW, int origH, 
 	int posA, int posB, int pos0, int pos1, int pos2 ) {
 
-	ImageWrapper ret = new ImageWrapper( w, h );
+	ImageWrapper ret = new ImageWrapper( origW, origH );
 	ret.copyCropMirrorX( pxl, w,h, origW, origH );
 	ret.setPosAB(  posA, posB );
 	ret.setPos012( pos0, pos1, pos2 );

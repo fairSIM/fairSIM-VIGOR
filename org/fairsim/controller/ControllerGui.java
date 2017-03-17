@@ -264,7 +264,9 @@ public class ControllerGui extends javax.swing.JPanel {
         try {
             int ps = Integer.parseInt(refreshBox.getSelectedItem().toString());
             if (ps > 0) {
+                refreshButton.setEnabled(false);
                 motherGui.refreshView(ps);
+                refreshButton.setEnabled(true);
             }
         } catch (NumberFormatException ex) {
         }
