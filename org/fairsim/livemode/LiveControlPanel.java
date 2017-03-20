@@ -35,6 +35,7 @@ import java.awt.event.ActionEvent;
 import java.awt.GridLayout;
 
 import java.util.Arrays;
+import java.util.concurrent.BlockingQueue;
 import javax.swing.Box;
 import javax.swing.JLabel;
 import javax.swing.JSlider;
@@ -81,7 +82,7 @@ public class LiveControlPanel {
 
     final JTextArea statusField;
     final JTextField statusMessage;
-
+    ParameterTab[] pTab;
     JButton[] syncButtons;
     
     private JFrame hrFr;
@@ -264,9 +265,10 @@ public class LiveControlPanel {
         tabbedPane.addTab("main", mainPanel);
         tabbedPane.addTab("controller", new ControllerGui(cfg, channels, this));
 
+        pTab = new ParameterTab[nrCh];
         for (int ch = 0; ch < nrCh; ch++) {
-            ParameterTab pTab = new ParameterTab(reconRunner, ch, cfg);
-            tabbedPane.addTab(channels[ch], pTab.getPanel());
+            pTab[ch] = new ParameterTab(reconRunner, ch, cfg);
+            tabbedPane.addTab(channels[ch], pTab[ch].getPanel());
         }
 
         mainFrame.add(tabbedPane);
@@ -299,7 +301,7 @@ public class LiveControlPanel {
         this.wfPixelSize = pixelSize;
         imageReceiver.setImageSize(wfPixelSize, wfPixelSize);
         seqDetection.clearBuffers();
-        seqDetection.resetChannelBuffers();
+        seqDetection.resetChannelBufferThreads();
         reconRunner.setImageSize(wfPixelSize);
         
         hrFr.dispose();
@@ -343,9 +345,19 @@ public class LiveControlPanel {
      * Thread updating dynamic display
      */
     class DynamicDisplayUpdate extends Thread {
+        
+        private int getQueuePercent(BlockingQueue queue) {
+            int used = queue.size();
+            int free = queue.remainingCapacity();
+            return used * 100 / (used + free);
+        }
 
         public void run() {
             while (true) {
+                networkBufferBar.setValue(imageReceiver.getQueuePercent());
+                for(int ch = 0; ch < nrCh; ch++) {
+                    pTab[ch].bufferBar.setValue(getQueuePercent(seqDetection.channels[ch].rawImgs));
+                }
                 // update save buffer state
                 fileBufferBar.setString(String.format("%7.0f MB / %7.0f sec left",
                         (float) liveStreamWriter.getSpace() / (2*wfPixelSize) / (2*wfPixelSize),

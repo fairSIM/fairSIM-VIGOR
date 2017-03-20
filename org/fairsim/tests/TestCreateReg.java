@@ -22,6 +22,7 @@ import ij.ImagePlus;
 import ij.io.FileSaver;
 import ij.process.ImageProcessor;
 import java.io.IOException;
+import java.util.zip.DataFormatException;
 import org.fairsim.linalg.BasicVectors;
 import org.fairsim.linalg.Vec2d;
 import org.fairsim.linalg.VectorFactory;
@@ -36,7 +37,7 @@ public class TestCreateReg {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) throws IOException, NoSuchFieldException {
+    public static void main(String[] args) throws IOException, NoSuchFieldException, DataFormatException {
         ImagePlus sourceImg = new ImagePlus("D:/vigor-registration/Recon_shifted.jpg");
         ImageProcessor sourceProcessor = sourceImg.getProcessor();
         ImagePlus targetImg = new ImagePlus("D:/vigor-registration/Recon_original.jpg");

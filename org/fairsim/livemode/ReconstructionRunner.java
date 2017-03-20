@@ -407,7 +407,11 @@ public class ReconstructionRunner {
                     if (rawOutput <= 0 || rawOutput - 1 > count) {
                         cpuWidefield[c].copy(widefield[c]);
                     } else {
-                        cpuWidefield[c].setFrom16bitPixels(imgs[c][rawOutput - 1]);
+                        try {
+                            cpuWidefield[c].setFrom16bitPixels(imgs[c][rawOutput - 1]);
+                        } catch (RuntimeException ex) {
+                            Tool.error(ex.toString(), false);
+                        }
                     }
                     // registers wide-fild images
                     if (Registration.isWidefield()) {

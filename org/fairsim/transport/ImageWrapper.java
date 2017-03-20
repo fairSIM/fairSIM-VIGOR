@@ -42,7 +42,7 @@ public class ImageWrapper {
 
     byte []	buffer;
     ByteBuffer	header;
-
+    
     /** Create a new ImageWrapper, for images sized maxBytes */
     public ImageWrapper( int maxWidth, int maxHeight ) {
 	this.maxWidth = maxWidth;

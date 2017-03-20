@@ -37,11 +37,12 @@ public class ImageSender {
 
 
     // buffer for images to send
-    BlockingQueue<ImageWrapper> imageQueue = new ArrayBlockingQueue<ImageWrapper>(2048);
+    public BlockingQueue<ImageWrapper> imageQueue = new ArrayBlockingQueue<ImageWrapper>(2048);
    
     // list of TCP connections to use
     List<SendingThread> connection = new ArrayList<SendingThread>();
-
+    
+    long seqNr = (long)(Math.random() * Math.pow(2, 30)) << 32;
 
     /** Start ImageSender without initial connection */
     public ImageSender() {
@@ -86,8 +87,9 @@ public class ImageSender {
     /** Non-blocking image send. Returns if the image was sucessfully
      * queued for sending. */
     public boolean queueImage( ImageWrapper img ) {
-	if (img==null)
-	    return false;
+	if (img==null) return false;
+        img.seqNr = seqNr;
+        seqNr++;
 	return imageQueue.offer( img);
     }
 

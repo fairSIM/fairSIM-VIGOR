@@ -31,6 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.DataFormatException;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.Timer;
@@ -400,12 +401,16 @@ public class DeconvolutionSoftware extends javax.swing.JFrame {
                 }
 
                 if (Registration.isRecon()) {
-                    Vec2d.Real regVec = reg.registerReconImage(source);
-
-                    for (int y = 0; y < imgProcessor.getHeight(); y++) {
-                        for (int x = 0; x < imgProcessor.getWidth(); x++) {
-                            imgProcessor.set(x, y, (int) regVec.get(x, y));
+                    try {
+                        Vec2d.Real regVec = reg.registerReconImage(source);
+                        
+                        for (int y = 0; y < imgProcessor.getHeight(); y++) {
+                            for (int x = 0; x < imgProcessor.getWidth(); x++) {
+                                imgProcessor.set(x, y, (int) regVec.get(x, y));
+                            }
                         }
+                    } catch (DataFormatException ex) {
+                        Logger.getLogger(DeconvolutionSoftware.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
 
@@ -442,12 +447,16 @@ public class DeconvolutionSoftware extends javax.swing.JFrame {
             }
 
             if (Registration.isRecon()) {
-                Vec2d.Real regVec = reg.registerReconImage(source);
-
-                for (int y = 0; y < imgProcessor.getHeight(); y++) {
-                    for (int x = 0; x < imgProcessor.getWidth(); x++) {
-                        imgProcessor.set(x, y, (int) regVec.get(x, y));
+                try {
+                    Vec2d.Real regVec = reg.registerReconImage(source);
+                    
+                    for (int y = 0; y < imgProcessor.getHeight(); y++) {
+                        for (int x = 0; x < imgProcessor.getWidth(); x++) {
+                            imgProcessor.set(x, y, (int) regVec.get(x, y));
+                        }
                     }
+                } catch (DataFormatException ex) {
+                    Logger.getLogger(DeconvolutionSoftware.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
             Registration.setRecon(false);

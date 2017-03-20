@@ -23,6 +23,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.Map;
 import java.util.TreeMap;
 import java.awt.Color;
+import java.nio.BufferOverflowException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.DataFormatException;
 
 import org.fairsim.transport.ImageReceiver;
@@ -97,7 +100,7 @@ public class SimSequenceExtractor {
     /**
      * Clears all receive and sort buffers for resyncing to the stream
      */
-    public void resetChannelBuffers() {
+    public void resetChannelBufferThreads() {
         for (int i = 0; i < nrChannels; i++) {
             channels[i].restartThread = true;
             channels[i].interrupt();
@@ -154,7 +157,7 @@ public class SimSequenceExtractor {
      * Take images for the gereral queue, sort them by channel
      */
     class ImageSorter extends Thread {
-
+        
         @Override
         public void run() {
 
@@ -164,7 +167,7 @@ public class SimSequenceExtractor {
                     int chNr = iw.pos1();	// pos1 holds the data packets image channel
                     PerChannelBuffer pc = channelMapping.get(chNr);
                     if (pc == null) {
-                        Tool.trace("ImgSort: received data packet w/o channel: " + chNr);
+                        Tool.error("ImgSort: received data packet w/o channel: " + chNr, false);
                     } else {
                         pc.pushImg(iw);
                     }
@@ -212,6 +215,8 @@ public class SimSequenceExtractor {
 
         BlockingQueue<ImageWrapper> rawImgs;
         BlockingQueue<short[][]> simSeq;
+        private final SortBuffer sortBuffer;
+        
         final int queueSize, chNumber, chIndex;
         boolean restartThread;
 
@@ -219,6 +224,7 @@ public class SimSequenceExtractor {
         int missedSim = 0;
         int noSyncSince = 0;
         long syncFrameCount = 0;
+        long seqNr = Long.MAX_VALUE;
 
         int queryRaw() {
             return rawImgs.size();
@@ -232,8 +238,9 @@ public class SimSequenceExtractor {
             this.queueSize = queueSize;
             this.chNumber = chNumber;
             this.chIndex = chIndex;
-            rawImgs = new ArrayBlockingQueue<ImageWrapper>(queueSize);
+            rawImgs = new ArrayBlockingQueue<>(queueSize);
             simSeq = new ArrayBlockingQueue<short[][]>(queueSize);
+            sortBuffer = new SortBuffer(10);
             restartThread = false;
         }
 
@@ -241,6 +248,38 @@ public class SimSequenceExtractor {
             boolean ok = rawImgs.offer(iw);
             if (!ok) {
                 missedRaw++;
+                Tool.error("missing raw frame at PerChannelBuffer.pushImg", false);
+            }
+        }
+        
+        private ImageWrapper getSorted() throws InterruptedException {
+            ImageWrapper image = null;
+            if (sortBuffer.isEmpty()) {
+                return sortFromQueue();
+            } else {
+                image = sortBuffer.getNext();
+                if (image != null) {
+                    seqNr++;
+                    return image;
+                } else {
+                    return sortFromQueue();
+                }
+            }
+        }
+        
+        private ImageWrapper sortFromQueue() throws InterruptedException {
+            ImageWrapper image = rawImgs.take();
+            if (image.seqNr() == seqNr) {
+                seqNr++;
+                return image;
+            } else {
+                try {
+                    sortBuffer.add(image);
+                } catch (BufferOverflowException ex) {
+                    seqNr++;
+                    Tool.error("missing raw frame at PerChannelBuffer.getSorted " + sortBuffer.buffer.size() + " " + image.pos2(), false);
+                }
+                return getSorted();
             }
         }
 
@@ -257,70 +296,120 @@ public class SimSequenceExtractor {
         public void run() {
 
             final int nrRawPerSeq = reconRunner.nrDirs * reconRunner.nrPhases;
-
-            while (true) {
-
+            while (!sortBuffer.isFull()) {
                 try {
-
-                    long lastTimeStamp = 0;
-
-                    // first, loop over incoming images until we find a sync frame
-                    while (true) {
-
-                        // take a frame, get it's timestamp
-                        ImageWrapper iwSync = rawImgs.take();
-                        long curTimeStamp = iwSync.timeCamera();
-
-                        // version 1 (for camera with precise time-stamp, like PCO)
-                        if (Math.abs(curTimeStamp - lastTimeStamp - syncFrameDelay) < 50) {
-                            //Tool.tell("SYNC "+chNumber+": via timestamp/PCO");
-                            syncFrameCount++;
-                            long count = syncFrameCount / 5;
-                            Color bg = (count % 2 == 0) ? (Color.BLACK) : (Color.GREEN);
-                            livePanel.syncButtons[chIndex].setBackground(bg);
-                            break;
-                        }
-                        //System.out.println( "time diff: " + (curTimeStamp - lastTimeStamp) );
-                        lastTimeStamp = curTimeStamp;
-
-                        // version 2 (for camera w/o timestamp, bright LED):
-                        short pxl[] = iwSync.getPixels();
-                        if (MTool.avr_ushort(pxl) > syncFrameAvr) {
-                            syncFrameCount++;
-                            long count = syncFrameCount / 5;
-                            Color bg = (count % 2 == 0) ? (Color.BLACK) : (Color.GREEN);
-                            livePanel.syncButtons[chIndex].setBackground(bg);
-                            //Tool.tell("SYNC "+chNumber+": via bright frame");
-                            rawImgs.take(); // ignore the next frame
-                            break;
-                        }
-
+                    ImageWrapper iw = rawImgs.take();
+                    sortBuffer.add(iw);
+                    if (iw.seqNr() < seqNr) {
+                        seqNr = iw.seqNr();
                     }
-
-                    // then, copy the next n x m frames
-                    for (int k = 0; k < seqCount; k++) {
-
-                        short[][] simPxls = new short[nrRawPerSeq][];
-
-                        for (int i = 0; i < nrRawPerSeq; i++) {
-                            ImageWrapper iw = rawImgs.take();
-                            simPxls[i] = iw.getPixels();
-                        }
-
-                        boolean ok = simSeq.offer(simPxls);
-                        if (!ok) {
-                            missedSim++;
-                        }
-                    }
-
-                } catch (InterruptedException e) {
-                    if (restartThread) {
-                        restartThread = false;
+                } catch (InterruptedException ex) {
+                    if (!restartThread) {
+                        Tool.error("Image sorting thread [" + this.chIndex + "] interupted, why?", false);
                     } else {
-                        Tool.trace("Image sorting thread [" + this.chIndex + "] interupted, why?");
+                        restartThread = false;
+                        continue;
                     }
                 }
+                if (seqNr == Long.MAX_VALUE) {
+                    throw new RuntimeException("seqNr was not set");
+                }
 
+                while (true) {
+
+                    try {
+
+                        long lastTimeStamp = 0;
+
+                        // first, loop over incoming images until we find a sync frame
+                        while (true) {
+
+                            // take a frame, get it's timestamp
+                            ImageWrapper iwSync = getSorted();
+                            long curTimeStamp = iwSync.timeCamera();
+
+                            // version 1 (for camera with precise time-stamp, like PCO)
+                            if (Math.abs(curTimeStamp - lastTimeStamp - syncFrameDelay) < 50) {
+                                //Tool.tell("SYNC "+chNumber+": via timestamp/PCO");
+                                syncFrameCount++;
+                                long count = syncFrameCount / 5;
+                                Color bg = (count % 2 == 0) ? (Color.BLACK) : (Color.GREEN);
+                                livePanel.syncButtons[chIndex].setBackground(bg);
+                                break;
+                            }
+                            //System.out.println( "time diff: " + (curTimeStamp - lastTimeStamp) );
+                            lastTimeStamp = curTimeStamp;
+
+                            // version 2 (for camera w/o timestamp, bright LED):
+                            short pxl[] = iwSync.getPixels();
+                            if (MTool.avr_ushort(pxl) > syncFrameAvr) {
+                                syncFrameCount++;
+                                long count = syncFrameCount / 5;
+                                Color bg = (count % 2 == 0) ? (Color.BLACK) : (Color.GREEN);
+                                livePanel.syncButtons[chIndex].setBackground(bg);
+                                //Tool.tell("SYNC "+chNumber+": via bright frame");
+                                getSorted(); // ignore the next frame
+                                break;
+                            }
+
+                        }
+
+                        // then, copy the next n x m frames
+                        for (int k = 0; k < seqCount; k++) {
+
+                            short[][] simPxls = new short[nrRawPerSeq][];
+
+                            for (int i = 0; i < nrRawPerSeq; i++) {
+                                ImageWrapper iw = getSorted();
+                                simPxls[i] = iw.getPixels();
+                            }
+
+                            boolean ok = simSeq.offer(simPxls);
+                            if (!ok) {
+                                missedSim++;
+                            }
+                        }
+
+                    } catch (InterruptedException e) {
+                        if (!restartThread) {
+                            Tool.error("Image sorting thread [" + this.chIndex + "] interupted, why?", false);
+                        } else {
+                            restartThread = false;
+                            continue;
+                        }
+                    }
+                }
+            }
+        }
+        
+        private class SortBuffer {
+
+            final int MAXSIZE;
+            Map<Long, ImageWrapper> buffer;
+
+            SortBuffer(int maxSize) {
+                MAXSIZE = maxSize;
+                buffer = new TreeMap<>();
+            }
+            
+            ImageWrapper getNext() {
+                return buffer.remove(seqNr);
+            }
+            
+            void add(ImageWrapper image) throws BufferOverflowException{
+                if (!isFull()) {
+                    ImageWrapper nullCheck = buffer.put(image.seqNr(), image);
+                    if (nullCheck != null) throw new RuntimeException("Same seqNr " + nullCheck.seqNr() + " " + image.seqNr());
+                }
+                else throw new BufferOverflowException();
+            }
+            
+            boolean isEmpty() {
+                return buffer.isEmpty();
+            }
+            
+            boolean isFull() {
+                return buffer.size() >= MAXSIZE;
             }
 
         }

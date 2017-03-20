@@ -78,6 +78,7 @@ public class ParameterTab {
     final private ReconstructionRunner		  ourReconRunner;
 
     final File paramDir;
+    JProgressBar bufferBar;
 
     /** Create a parameter tab linked to the (live) reconstruction channel c */
     ParameterTab( ReconstructionRunner rr, int chIdx, Conf.Folder cfg ) 
@@ -95,10 +96,16 @@ public class ParameterTab {
     
 	fp = new FilterParameters();
 	rp = new ReconParameters();
+        
+        bufferBar = new JProgressBar();
+        bufferBar.setString("Channel Buffer");
+        bufferBar.setStringPainted(true);
+        bufferBar.setBorder(BorderFactory.createTitledBorder("Channel Buffer") );
 
 	mainPanel.setLayout( new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
-
+        
 	mainPanel.add( fp.panel );
+        mainPanel.add(bufferBar);
 	mainPanel.add( rp.panel );
     }
    

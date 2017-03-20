@@ -265,7 +265,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
     }
 
     private void startArduinoProgramm(String command) {
-        seqDetection.resetChannelBuffers();
+        seqDetection.resetChannelBufferThreads();
         sendArduinoInstruction(command);
         if (controllerInstructionDone) {
             arduinoStartButton.setEnabled(false);
@@ -709,7 +709,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
     }//GEN-LAST:event_arduinoBlueButtonActionPerformed
 
     private void arduinoPhotoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoPhotoButtonActionPerformed
-        seqDetection.resetChannelBuffers();
+        seqDetection.resetChannelBufferThreads();
         sendArduinoInstruction("photo;" + arduinoComboBox.getSelectedIndex());
         if (controllerInstructionDone) {
             setRGBButtonSelected(false);

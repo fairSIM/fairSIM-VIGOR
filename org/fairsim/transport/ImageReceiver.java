@@ -182,7 +182,12 @@ public class ImageReceiver {
 	return iw;
     }
     
-
+    public int getQueuePercent() {
+         int used = imageQueue.size();
+         int free = imageQueue.remainingCapacity();
+         return used*100/(used+free);
+    }
+    
     /* Queues an ImageWrapper for recycling 
     public void recycleWrapper( ImageWrapper iw ) {
 	recycledWrapperQueue.offer( iw );
