@@ -31,10 +31,10 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
     private ControllerGui motherGui;
     private ControllerClient controllerClient;
     private List<Component> slmControllers, arduinoControllers;
-    //private List<String> arduinoCommands;
     private boolean controllerInstructionDone;
     SimSequenceExtractor seqDetection;
     ReconstructionRunner recRunner;
+    
     /**
      * Creates new form ArduinoPanel
      */
@@ -74,35 +74,6 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
      * Initialises the GUI for the arduino
      */
     private void initArduino() {
-        /*
-        arduinoCommands = new ArrayList<>();
-        arduinoCommands.add("m3n");
-        arduinoCommands.add("m3o");
-        arduinoCommands.add("m21r");
-        arduinoCommands.add("m21g");
-        arduinoCommands.add("m21b");
-        arduinoCommands.add("m22r");
-        arduinoCommands.add("m22g");
-        arduinoCommands.add("m22b");
-        arduinoCommands.add("m2Xr");
-        arduinoCommands.add("m2Xg");
-        arduinoCommands.add("m2Xb");
-        arduinoCommands.add("m11r");
-        arduinoCommands.add("m11g");
-        arduinoCommands.add("m11b");
-        arduinoCommands.add("m12r");
-        arduinoCommands.add("m12g");
-        arduinoCommands.add("m12b");
-        arduinoCommands.add("m1Vr");
-        arduinoCommands.add("m1Vg");
-        arduinoCommands.add("m1Vb");
-        arduinoCommands.add("m1Xr");
-        arduinoCommands.add("m1Xg");
-        arduinoCommands.add("m1Xb");
-        for (String command : arduinoCommands) {
-            arduinoComboBox.addItem(command);
-        }
-        */
         arduinoControllers = new ArrayList<>();
         arduinoControllers.add(arduinoComboBox);
         arduinoControllers.add(arduinoDisconnectButton);
@@ -158,7 +129,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
      *
      * @param command
      */
-    void sendSlmInstruction(String command) {
+    private void sendSlmInstruction(String command) {
         sendControllerInstruction("slm->" + command);
     }
 
@@ -167,7 +138,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
      *
      * @param command
      */
-    void sendArduinoInstruction(String command) {
+    private void sendArduinoInstruction(String command) {
         sendControllerInstruction("arduino->" + command);
     }
 
@@ -176,7 +147,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
      *
      * @param command command for the server
      */
-    void sendControllerInstruction(String command) {
+    private void sendControllerInstruction(String command) {
         controllerInstructionDone = true;
         controllerClient.addInstruction(command);
     }
@@ -190,15 +161,15 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
         controllerInstructionDone = false;
         int code = Integer.parseInt(error.split("  ;  ")[1].split(": ")[1]);
         if (code == 12) {
-            disconnectSLM();
+            slmDissconnect();
             showText("Gui: Reconnect to the SLM is necessary");
         } else if (code == 7) {
             disableSlmControllers();
             slmConnectButton.setEnabled(true);
             showText("Gui: No connection to the SLM");
         } else if (code == 8) {
-            disconnectSLM();
-            connectSLM();
+            slmDissconnect();
+            slmConnect();
         }
     }
 
@@ -214,9 +185,9 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
             arduinoConnectButton.setEnabled(true);
             showText("Gui: No connection to the arduino");
         } else if (error.contains("IOException")) {
-            disconnectArduino();
+            arduinoDisconnect();
             showText("Gui: Reconnect to the arduino is necessary");
-            connectArduino();
+            arduinoConnect();
         } else if (error.contains("PortInUseException")) {
             disableArduinoControllers();
             arduinoConnectButton.setEnabled(true);
@@ -227,7 +198,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
     /**
      * refreshes the informations shown in the GUI
      */
-    void refreshSlmInfo() {
+    void slmRefresh() {
         try {
             sendSlmInstruction("info");
             if (controllerInstructionDone) {
@@ -244,13 +215,13 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
         }
     }
     
-    void setRGBButtonSelected(boolean b) {
+    private void setRGBButtonSelected(boolean b) {
         arduinoRedButton.setSelected(b);
         arduinoGreenButton.setSelected(b);
         arduinoBlueButton.setSelected(b);
     }
 
-    private void stopArduinoProgramm() {
+    private void arduinoStop() {
         sendArduinoInstruction("x");
         if (controllerInstructionDone) {
             arduinoStartButton.setEnabled(true);
@@ -283,7 +254,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
     /**
      * Connects server and SLM
      */
-    private void connectSLM() {
+    private void slmConnect() {
         sendSlmInstruction("connect");
         if (controllerInstructionDone) {
             sendSlmInstruction("rolist");
@@ -293,7 +264,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
                     slmComboBox.addItem("[" + i + "]    " + controllerClient.slmList[i]);
                 }
             }
-            refreshSlmInfo();
+            slmRefresh();
             enableSlmControllers();
             slmConnectButton.setEnabled(false);
         }
@@ -302,7 +273,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
     /**
      * Disconnects server and SLM
      */
-    private void disconnectSLM() {
+    private void slmDissconnect() {
         sendSlmInstruction("disconnect");
         if (controllerInstructionDone) {
             disableSlmControllers();
@@ -310,7 +281,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
         }
     }
 
-    private void connectArduino() {
+    private void arduinoConnect() {
         sendArduinoInstruction("connect");
         if (controllerInstructionDone) {
             setRGBButtonSelected(false);
@@ -348,12 +319,42 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
             }
     }
 
-    private void disconnectArduino() {
+    private void arduinoDisconnect() {
         sendArduinoInstruction("disconnect");
         if (controllerInstructionDone) {
             disableArduinoControllers();
             arduinoConnectButton.setEnabled(true);
         }
+    }
+    
+    void arduinoStart() {
+        int breakTime = 0;
+        try {
+            breakTime = Integer.parseInt(arduinoBreakTimeTextField.getText());
+        } catch (NumberFormatException ex) {}
+        if (breakTime < 0) breakTime = 0;
+        startArduinoProgramm("movie;" + arduinoComboBox.getSelectedIndex() + ";" + breakTime);
+    }
+    
+    void arduinoPhoto() {
+        seqDetection.resetChannelBufferThreads();
+        sendArduinoInstruction("photo;" + arduinoComboBox.getSelectedIndex());
+        if (controllerInstructionDone) {
+            setRGBButtonSelected(false);
+        }
+    }
+    
+    void slmSetSelected() {
+        sendSlmInstruction(Integer.toString(slmComboBox.getSelectedIndex()));
+        slmRefresh();
+    }
+    
+    void slmDeactivate() {
+        sendSlmInstruction("deactivate");
+    }
+    
+    void slmActivate() {
+        sendSlmInstruction("activate");
     }
     
     @Override
@@ -450,7 +451,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
 
         slmSelect.setText("Selected running order: -");
 
-        slmActivateButton.setText("Aktivate");
+        slmActivateButton.setText("Activate");
         slmActivateButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 slmActivateButtonActionPerformed(evt);
@@ -664,24 +665,19 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
     }// </editor-fold>//GEN-END:initComponents
 
     private void arduinoConnectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoConnectButtonActionPerformed
-        connectArduino();
+        arduinoConnect();
     }//GEN-LAST:event_arduinoConnectButtonActionPerformed
 
     private void arduinoDisconnectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoDisconnectButtonActionPerformed
-        disconnectArduino();
+        arduinoDisconnect();
     }//GEN-LAST:event_arduinoDisconnectButtonActionPerformed
 
     private void arduinoStartButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoStartButtonActionPerformed
-        int breakTime = 0;
-        try {
-            breakTime = Integer.parseInt(arduinoBreakTimeTextField.getText());
-        } catch (NumberFormatException ex) {}
-        if (breakTime < 0) breakTime = 0;
-        startArduinoProgramm("movie;" + arduinoComboBox.getSelectedIndex() + ";" + breakTime);
+        arduinoStart();
     }//GEN-LAST:event_arduinoStartButtonActionPerformed
 
     private void arduinoStopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoStopButtonActionPerformed
-        stopArduinoProgramm();
+        arduinoStop();
     }//GEN-LAST:event_arduinoStopButtonActionPerformed
 
     private void arduinoRedButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoRedButtonActionPerformed
@@ -709,28 +705,23 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
     }//GEN-LAST:event_arduinoBlueButtonActionPerformed
 
     private void arduinoPhotoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoPhotoButtonActionPerformed
-        seqDetection.resetChannelBufferThreads();
-        sendArduinoInstruction("photo;" + arduinoComboBox.getSelectedIndex());
-        if (controllerInstructionDone) {
-            setRGBButtonSelected(false);
-        }
+        arduinoPhoto();
     }//GEN-LAST:event_arduinoPhotoButtonActionPerformed
 
     private void slmRefreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmRefreshButtonActionPerformed
-        refreshSlmInfo();
+        slmRefresh();
     }//GEN-LAST:event_slmRefreshButtonActionPerformed
 
     private void slmSelectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmSelectButtonActionPerformed
-        sendSlmInstruction(Integer.toString(slmComboBox.getSelectedIndex()));
-        refreshSlmInfo();
+        slmSetSelected();
     }//GEN-LAST:event_slmSelectButtonActionPerformed
 
     private void slmDeactivateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmDeactivateButtonActionPerformed
-        sendSlmInstruction("deactivate");
+        slmDeactivate();
     }//GEN-LAST:event_slmDeactivateButtonActionPerformed
 
     private void slmActivateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmActivateButtonActionPerformed
-        sendSlmInstruction("activate");
+        slmActivate();
     }//GEN-LAST:event_slmActivateButtonActionPerformed
 
     private void slmRebootButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmRebootButtonActionPerformed
@@ -758,11 +749,11 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
     }//GEN-LAST:event_slmRebootButtonActionPerformed
 
     private void slmDisconnectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmDisconnectButtonActionPerformed
-        disconnectSLM();
+        slmDissconnect();
     }//GEN-LAST:event_slmDisconnectButtonActionPerformed
 
     private void slmConnectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmConnectButtonActionPerformed
-        connectSLM();
+        slmConnect();
     }//GEN-LAST:event_slmConnectButtonActionPerformed
 
 

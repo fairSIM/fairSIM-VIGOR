@@ -320,7 +320,7 @@ public class SimSequenceExtractor {
                     try {
 
                         long lastTimeStamp = 0;
-
+                        int counter = 0;
                         // first, loop over incoming images until we find a sync frame
                         while (true) {
 
@@ -351,7 +351,11 @@ public class SimSequenceExtractor {
                                 getSorted(); // ignore the next frame
                                 break;
                             }
-
+                            counter++;
+                            if (counter >= nrRawPerSeq * seqCount) {
+                                Tool.error("No sync frame found", false);
+                                counter = 0;
+                            }
                         }
 
                         // then, copy the next n x m frames

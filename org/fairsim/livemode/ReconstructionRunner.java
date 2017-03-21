@@ -52,7 +52,7 @@ public class ReconstructionRunner {
     private Vec2d.Real[] latestReconVec;
     public Lock[] latestReconLock;
 
-    private BlockingQueue<short[][][]> imgsToReconstruct;
+    BlockingQueue<short[][][]> imgsToReconstruct;
     private int missedDueToQueueFull;
     final private PerChannel[] channels;
 

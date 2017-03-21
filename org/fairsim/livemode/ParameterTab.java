@@ -96,16 +96,10 @@ public class ParameterTab {
     
 	fp = new FilterParameters();
 	rp = new ReconParameters();
-        
-        bufferBar = new JProgressBar();
-        bufferBar.setString("Channel Buffer");
-        bufferBar.setStringPainted(true);
-        bufferBar.setBorder(BorderFactory.createTitledBorder("Channel Buffer") );
 
 	mainPanel.setLayout( new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
         
 	mainPanel.add( fp.panel );
-        mainPanel.add(bufferBar);
 	mainPanel.add( rp.panel );
     }
    

@@ -21,7 +21,7 @@ package org.fairsim.controller;
 import org.fairsim.utils.Tool;
 
 /**
- * Class of the Client in the communikation chain <br>
+ * Class of the Client in the communication chain <br>
  * SLM - Server - Client - GUI
  *
  * @author m.lachetta

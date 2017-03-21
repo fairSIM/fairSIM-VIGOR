@@ -69,6 +69,7 @@ public class LiveControlPanel {
     final JProgressBar networkBufferBar;
     final JProgressBar reconBufferInputBar;
     final JProgressBar reconBufferOutputBar;
+    final JProgressBar[] channelBufferBar;
 
     final JProgressBar fileBufferBar;
 
@@ -97,9 +98,12 @@ public class LiveControlPanel {
     public LiveControlPanel(final Conf.Folder cfg,
             VectorFactory avf, String[] channels)
             throws Conf.EntryNotFoundException, java.io.IOException {
+        
+        this.channels = channels;
+        nrCh = channels.length;
 
         // get parameters
-        final int imgSize = cfg.getInt("NetworkBuffer").val();
+        //final int imgSize = cfg.getInt("NetworkBuffer").val();
 
         //  ------- 
         //  initialize the GUI
@@ -112,18 +116,18 @@ public class LiveControlPanel {
         JPanel reconBuffersPanel = new JPanel();
         reconBuffersPanel.setBorder(BorderFactory.createTitledBorder(
                 "Reconstruction buffers"));
-        reconBuffersPanel.setLayout(new GridLayout(3, 1, 2, 2));
+        reconBuffersPanel.setLayout(new GridLayout(3 + nrCh, 1, 2, 2));
 
         networkBufferBar = new JProgressBar();
-        networkBufferBar.setString("network input buffer");
+        networkBufferBar.setString("network input buffer: 0%");
         networkBufferBar.setStringPainted(true);
 
         reconBufferInputBar = new JProgressBar();
-        reconBufferInputBar.setString("recon input buffer");
+        reconBufferInputBar.setString("recon input buffer: 0%");
         reconBufferInputBar.setStringPainted(true);
 
         reconBufferOutputBar = new JProgressBar();
-        reconBufferOutputBar.setString("recon output buffer");
+        reconBufferOutputBar.setString("recon output buffer: 0%");
         reconBufferOutputBar.setStringPainted(true);
 
         reconBuffersPanel.add(networkBufferBar);
@@ -131,7 +135,7 @@ public class LiveControlPanel {
         reconBuffersPanel.add(reconBufferOutputBar);
 
         mainPanel.add(reconBuffersPanel);
-
+        
         // GUI - image record function
         JPanel recorderPanel = new JPanel();
         recorderPanel.setBorder(BorderFactory.createTitledBorder(
@@ -201,16 +205,18 @@ public class LiveControlPanel {
         mainPanel.add(statusPanel);
 
         wfPixelSize = cfg.getInt("RawPxlCount").val();
-        this.channels = channels;
-        nrCh = channels.length;
 
         JPanel statusPanel2 = new JPanel();
         syncButtons = new JButton[nrCh];
-
+        channelBufferBar = new JProgressBar[nrCh];
         for (int c = 0; c < nrCh; c++) {
             syncButtons[c] = new JButton("");
             syncButtons[c].setEnabled(false);
             statusPanel2.add(syncButtons[c]);
+            channelBufferBar[c] = new JProgressBar();
+            channelBufferBar[c].setString(channels[c] + " channel buffer: 0%");
+            channelBufferBar[c].setStringPainted(true);
+            reconBuffersPanel.add(channelBufferBar[c]);
         }
 
         statusMessage = new JTextField(40);
@@ -354,9 +360,19 @@ public class LiveControlPanel {
 
         public void run() {
             while (true) {
-                networkBufferBar.setValue(imageReceiver.getQueuePercent());
+                int bufferPercent = imageReceiver.getQueuePercent();
+                networkBufferBar.setString("network input buffer: " + bufferPercent + '%');
+                networkBufferBar.setValue(bufferPercent);
+                bufferPercent = getQueuePercent(reconRunner.imgsToReconstruct);
+                reconBufferInputBar.setString("recon input buffer: " + bufferPercent + '%');
+                reconBufferInputBar.setValue(bufferPercent);
+                bufferPercent = getQueuePercent(reconRunner.finalRecon);
+                reconBufferOutputBar.setString("recon output buffer: " + bufferPercent + '%');
+                reconBufferOutputBar.setValue(bufferPercent);
                 for(int ch = 0; ch < nrCh; ch++) {
-                    pTab[ch].bufferBar.setValue(getQueuePercent(seqDetection.channels[ch].rawImgs));
+                    int percent = getQueuePercent(seqDetection.channels[ch].rawImgs);
+                    channelBufferBar[ch].setString(channels[ch] + " channel buffer: " + percent + "%");
+                    channelBufferBar[ch].setValue(percent);
                 }
                 // update save buffer state
                 fileBufferBar.setString(String.format("%7.0f MB / %7.0f sec left",
