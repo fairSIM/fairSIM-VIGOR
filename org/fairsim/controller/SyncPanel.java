@@ -25,7 +25,7 @@ import org.fairsim.livemode.SimSequenceExtractor;
  *
  * @author m.lachetta
  */
-public class SyncPanel extends javax.swing.JPanel {
+public class SyncPanel extends javax.swing.JPanel implements EasyGui.Sync{
     SimSequenceExtractor seqDetection;
     /**
      * Creates new form SyncPanel
@@ -44,7 +44,7 @@ public class SyncPanel extends javax.swing.JPanel {
         syncFreqTextField.setText(Integer.toString(seqDetection.getSyncFreq()));
     }
     
-    void setDelay() {
+    private void setDelay() {
         try {
             seqDetection.setSyncDelay(Integer.parseInt(syncDelayTextField.getText()));
         } catch (NumberFormatException | DataFormatException e) {
@@ -52,7 +52,7 @@ public class SyncPanel extends javax.swing.JPanel {
         syncDelayLabel.setText("Delay: " + seqDetection.getSyncDelay());
     }
     
-    void setAvr() {
+    private void setAvr() {
         try {
             seqDetection.setSyncAvr(Integer.parseInt(syncAvrTextField.getText()));
         } catch (NumberFormatException | DataFormatException e) {
@@ -60,12 +60,22 @@ public class SyncPanel extends javax.swing.JPanel {
         syncAvrLabel.setText("Average: " + seqDetection.getSyncAvr());
     }
     
-    void setFreq() {
+    private void setFreq() {
         try {
             seqDetection.setSyncFreq(Integer.parseInt(syncFreqTextField.getText()));
         } catch (NumberFormatException | DataFormatException e) {
         }
         syncFreqLabel.setText("Frequency: " + seqDetection.getSyncFreq());
+    }
+    
+    @Override
+    public void setSync(int delay, int avr, int freq) {
+        syncDelayTextField.setText(String.valueOf(delay));
+        syncAvrTextField.setText(String.valueOf(avr));
+        syncFreqTextField.setText(String.valueOf(freq));
+        setDelay();
+        setAvr();
+        setFreq();
     }
 
     /**

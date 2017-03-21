@@ -26,13 +26,13 @@ import org.fairsim.utils.Tool;
  */
 public class CameraClient extends AbstractClient {
 
-    ClientPanel gui;
+    AdvancedGui.ClientGui gui;
     int[] roi;
     double exposure, fps;
     boolean queued, sended;
     private CameraGroup[] groups;
 
-    public CameraClient(String serverAdress, int serverPort, ClientPanel gui) {
+    public CameraClient(String serverAdress, int serverPort, AdvancedGui.ClientGui gui) {
         super(serverAdress, serverPort, gui);
         this.gui = gui;
     }

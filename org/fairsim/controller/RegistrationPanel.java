@@ -29,7 +29,7 @@ import org.fairsim.utils.Tool;
  *
  * @author m.lachetta
  */
-public class RegistrationPanel extends javax.swing.JPanel {
+public class RegistrationPanel extends javax.swing.JPanel implements EasyGui.Reg {
     String regFolder;
     String[] channelNames;
     SimSequenceExtractor seqDetection;
@@ -70,6 +70,12 @@ public class RegistrationPanel extends javax.swing.JPanel {
                 }
             }).start();
         }
+    }
+    
+    @Override
+    public void register(boolean b) {
+        if (b != regWfButton.isSelected()) regWfButton.doClick();
+        if (b != regReconButton.isSelected()) regReconButton.doClick();
     }
 
     /**
@@ -152,7 +158,7 @@ public class RegistrationPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton regCreatorButton;
-    public javax.swing.JToggleButton regReconButton;
-    public javax.swing.JToggleButton regWfButton;
+    private javax.swing.JToggleButton regReconButton;
+    private javax.swing.JToggleButton regWfButton;
     // End of variables declaration//GEN-END:variables
 }

@@ -38,7 +38,7 @@ public class ControllerClient extends AbstractClient {
      * @param serverPort for the Connection
      * @param clientGui Gui for the SLM
      */
-    protected ControllerClient(String serverAdress, int serverPort, ClientPanel controllerPanel) {
+    protected ControllerClient(String serverAdress, int serverPort, AdvancedGui.ClientGui controllerPanel) {
         super(serverAdress, serverPort, controllerPanel);
     }
     
@@ -85,14 +85,14 @@ public class ControllerClient extends AbstractClient {
         String name;
         int syncDelay;
         int syncFreq;
-        int readoutTime;
+        int exposureTime;
         
         ArduinoRunningOrder(String encodedRo) {
             String[] stringArray = encodedRo.split(",");
             name = stringArray[0];
             syncDelay = Integer.parseInt(stringArray[1]);
             syncFreq = Integer.parseInt(stringArray[2]);
-            readoutTime = Integer.parseInt(stringArray[3]);
+            exposureTime = Integer.parseInt(stringArray[3]);
         }
     }
 }

@@ -29,18 +29,20 @@ import org.fairsim.utils.Tool;
  *
  * @author m.lachetta
  */
-public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
+public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.ClientGui, EasyGui.Movie {
 
-    private ControllerGui motherGui;
+    private AdvancedGui motherGui;
     private CameraClient client;
     private String channelName;
-    boolean instructionDone;
+    private boolean instructionDone;
     private Color defaultColor;
     private StatusUpdateThread updateThread;
     private List<JButton> buttons;
     private List<Component> components;
-    int recivingPixelSize;
+    //int recivingPixelSize;
     private static final int UPDATEDELAY = 2000;
+    
+    boolean enabled;
 
     /**
      * Creates new form CamControllerPanel
@@ -81,7 +83,7 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
         
     }
     
-    void enablePanel(ControllerGui motherGui, String adress, int port, String channelName) {
+    void enablePanel(AdvancedGui motherGui, String adress, int port, String channelName) {
         init();
         this.motherGui = motherGui;
         this.channelName = channelName;
@@ -89,6 +91,7 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
         if (adress != null) {
             client = new CameraClient(adress, port, this);
             client.start();
+            enabled = true;
         }
     }
     
@@ -96,13 +99,14 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
         init();
         disableControllers();
         this.setEnabled(false);
+        enabled = false;
     }
 
     private void updateRoi() {
         sendInstruction("get roi");
         if (instructionDone) {
             int[] roi = client.roi;
-            recivingPixelSize = roi[4];
+            //recivingPixelSize = roi[4];
             roiLabel.setText("ROI: " + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ", " + roi[4]);
             //motherGui.calculateViewSize();
         }
@@ -152,7 +156,7 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
         }
     }
 
-    void resetCamStatus() {
+    private void resetCamStatus() {
         if (updateThread != null) {
             updateThread.interrupt();
         }
@@ -161,30 +165,30 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
         sendingPanel.setBackground(defaultColor);
     }
 
-    void sendInstruction(String command) {
+    private void sendInstruction(String command) {
         instructionDone = true;
         client.addInstruction(command);
     }
 
-    void enableButtons() {
+    private void enableButtons() {
         for (JButton b : buttons) {
             b.setEnabled(true);
         }
     }
 
-    void disableButtons() {
+    private void disableButtons() {
         for (JButton b : buttons) {
             b.setEnabled(false);
         }
     }
 
-    void enableControllers() {
+    private void enableControllers() {
         for (Component comp : components) {
             comp.setEnabled(true);
         }
     }
 
-    void disableControllers() {
+    private void disableControllers() {
         for (Component comp : components) {
             comp.setEnabled(false);
         }
@@ -250,6 +254,16 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
         if (groupId >= 0) {
             updateConfigs(groupId);
         }
+    }
+
+    @Override
+    public void startMovie(EasyGui.RunningOrder ro) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void stopMovie() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
     private class StatusUpdateThread extends Thread {
@@ -529,17 +543,17 @@ public class CameraPanel extends javax.swing.JPanel implements ClientPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel channelLabel;
-    private javax.swing.JComboBox<String> configBox;
+    javax.swing.JComboBox<String> configBox;
     private javax.swing.JButton configButton;
     private javax.swing.JButton exposureButton;
-    private javax.swing.JTextField exposureField;
+    javax.swing.JTextField exposureField;
     private javax.swing.JLabel exposureLabel;
     private javax.swing.JLabel fpsLabel;
-    private javax.swing.JComboBox<String> groupBox;
+    javax.swing.JComboBox<String> groupBox;
     private javax.swing.JLabel msLabel;
     private javax.swing.JLabel queuingLabel;
     private javax.swing.JPanel queuingPanel;
-    private javax.swing.JComboBox<String> roiBox;
+    javax.swing.JComboBox<String> roiBox;
     private javax.swing.JButton roiButton;
     private javax.swing.JLabel roiLabel;
     private javax.swing.JLabel sendingLabel;

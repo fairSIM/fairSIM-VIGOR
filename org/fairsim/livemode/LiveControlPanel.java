@@ -51,7 +51,7 @@ import org.fairsim.linalg.Vec;
 import org.fairsim.sim_gui.PlainImageDisplay;
 
 import org.fairsim.linalg.Vec2d;
-import org.fairsim.controller.ControllerGui;
+import org.fairsim.controller.AdvancedGui;
 import org.fairsim.utils.Tool;
 import org.fairsim.utils.SimpleMT;
 
@@ -62,7 +62,7 @@ public class LiveControlPanel {
 
     boolean isRecording = false;    // if the raw stream is recorded
 
-    private int wfPixelSize;
+    int wfPixelSize;
     private final int nrCh;
     private final String[] channels;
 
@@ -76,8 +76,8 @@ public class LiveControlPanel {
     // The different threads in use:
     final ImageDiskWriter liveStreamWriter;
     final ImageReceiver imageReceiver;
-    public final ReconstructionRunner reconRunner;
-    public final SimSequenceExtractor seqDetection;
+    final ReconstructionRunner reconRunner;
+    final SimSequenceExtractor seqDetection;
 
     
 
@@ -269,7 +269,7 @@ public class LiveControlPanel {
         JTabbedPane tabbedPane = new JTabbedPane();
 
         tabbedPane.addTab("main", mainPanel);
-        tabbedPane.addTab("controller", new ControllerGui(cfg, channels, this));
+        tabbedPane.addTab("controller", new AdvancedGui(cfg, channels, this));
 
         pTab = new ParameterTab[nrCh];
         for (int ch = 0; ch < nrCh; ch++) {
@@ -345,6 +345,18 @@ public class LiveControlPanel {
             throw new RuntimeException(ex);
         }
         Tool.trace("Stopped DisplayThreads.");
+    }
+    
+    public int getWfSize() {
+        return this.wfPixelSize;
+    }
+    
+    public ReconstructionRunner getReconRunner() {
+        return this.reconRunner;
+    }
+    
+    public SimSequenceExtractor getSequenceExtractor() {
+        return this.seqDetection;
     }
 
     /**

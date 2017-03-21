@@ -39,7 +39,7 @@ public abstract class AbstractClient extends Thread {
 
     protected final String serverAdress;
     protected final int serverPort;
-    protected final ClientPanel gui;
+    protected final AdvancedGui.ClientGui gui;
     protected Socket serverSocket;
     protected Scanner in;
     protected PrintWriter out;
@@ -47,7 +47,7 @@ public abstract class AbstractClient extends Thread {
     private String output;
     protected final BlockingQueue<Instruction> instructions;
 
-    protected AbstractClient(String serverAdress, int serverPort, ClientPanel gui) {
+    protected AbstractClient(String serverAdress, int serverPort, AdvancedGui.ClientGui gui) {
         this.serverAdress = serverAdress;
         this.serverPort = serverPort;
         this.gui = gui;

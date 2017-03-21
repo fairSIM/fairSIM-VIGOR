@@ -20,20 +20,18 @@ package org.fairsim.controller;
 import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
-import org.fairsim.livemode.ReconstructionRunner;
 import org.fairsim.livemode.SimSequenceExtractor;
 
 /**
  *
  * @author m.lachetta
  */
-public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
-    private ControllerGui motherGui;
-    private ControllerClient controllerClient;
+public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.ClientGui, EasyGui.Ctrl {
+    private AdvancedGui motherGui;
+    ControllerClient controllerClient;
     private List<Component> slmControllers, arduinoControllers;
     private boolean controllerInstructionDone;
     SimSequenceExtractor seqDetection;
-    ReconstructionRunner recRunner;
     
     /**
      * Creates new form ArduinoPanel
@@ -42,13 +40,12 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
         initComponents();
     }
     
-    void enablePanel(ControllerGui motherGui, String adress, int port, SimSequenceExtractor seqDetection) {
+    void enablePanel(AdvancedGui motherGui, String adress, int port, SimSequenceExtractor seqDetection) {
         initSlm();
         initArduino();
         
         this.motherGui = motherGui;
         this.seqDetection = seqDetection;
-        this.recRunner = recRunner;
         
         controllerClient = new ControllerClient(adress, port, this);
         controllerClient.start();
@@ -221,7 +218,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
         arduinoBlueButton.setSelected(b);
     }
 
-    private void arduinoStop() {
+    void arduinoStop() {
         sendArduinoInstruction("x");
         if (controllerInstructionDone) {
             arduinoStartButton.setEnabled(true);
@@ -254,7 +251,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
     /**
      * Connects server and SLM
      */
-    private void slmConnect() {
+    void slmConnect() {
         sendSlmInstruction("connect");
         if (controllerInstructionDone) {
             sendSlmInstruction("rolist");
@@ -273,7 +270,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
     /**
      * Disconnects server and SLM
      */
-    private void slmDissconnect() {
+    void slmDissconnect() {
         sendSlmInstruction("disconnect");
         if (controllerInstructionDone) {
             disableSlmControllers();
@@ -281,7 +278,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
         }
     }
 
-    private void arduinoConnect() {
+    void arduinoConnect() {
         sendArduinoInstruction("connect");
         if (controllerInstructionDone) {
             setRGBButtonSelected(false);
@@ -319,7 +316,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
             }
     }
 
-    private void arduinoDisconnect() {
+    void arduinoDisconnect() {
         sendArduinoInstruction("disconnect");
         if (controllerInstructionDone) {
             disableArduinoControllers();
@@ -355,6 +352,29 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
     
     void slmActivate() {
         sendSlmInstruction("activate");
+    }
+    
+    public ControllerClient.ArduinoRunningOrder[] getArduinoRos() {
+        Component[] componentBox = arduinoComboBox.getComponents();
+        String[] arduinoBox = new String[componentBox.length];
+        for (int i = 0; i < componentBox.length; i++) {
+            if (!controllerClient.arduinoRos[i].name.equals(arduinoBox[i])) {
+                return null;
+            }
+        }
+        return controllerClient.arduinoRos;
+    }
+    
+    public String[] getDeviceRos() {
+        Component[] componentBox = slmComboBox.getComponents();
+        String[] deviceRos = new String[componentBox.length];
+        for (int i = 0; i < componentBox.length; i++) {
+            deviceRos[i] = componentBox[i].getName();
+            if (!deviceRos[i].equals(controllerClient.slmList[i])) {
+                return null;
+            }
+        }
+        return deviceRos;
     }
     
     @Override
@@ -759,8 +779,8 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JToggleButton arduinoBlueButton;
-    private javax.swing.JTextField arduinoBreakTimeTextField;
-    private javax.swing.JComboBox<String> arduinoComboBox;
+    javax.swing.JTextField arduinoBreakTimeTextField;
+    javax.swing.JComboBox<String> arduinoComboBox;
     private javax.swing.JButton arduinoConnectButton;
     private javax.swing.JLabel arduinoDelayLabel;
     private javax.swing.JButton arduinoDisconnectButton;
@@ -772,7 +792,7 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
     private javax.swing.JButton arduinoStartButton;
     private javax.swing.JButton arduinoStopButton;
     private javax.swing.JButton slmActivateButton;
-    private javax.swing.JComboBox<String> slmComboBox;
+    javax.swing.JComboBox<String> slmComboBox;
     private javax.swing.JButton slmConnectButton;
     private javax.swing.JButton slmDeactivateButton;
     private javax.swing.JButton slmDisconnectButton;
@@ -782,4 +802,19 @@ public class ControllerPanel extends javax.swing.JPanel implements ClientPanel{
     private javax.swing.JLabel slmSelect;
     private javax.swing.JButton slmSelectButton;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void takePhoto(EasyGui.RunningOrder ro) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void startMovie(EasyGui.RunningOrder ro) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void stopMovie() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }

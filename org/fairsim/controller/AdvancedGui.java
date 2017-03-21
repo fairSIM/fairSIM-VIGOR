@@ -18,10 +18,10 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 
 package org.fairsim.controller;
 
-import java.awt.event.KeyEvent;
+import java.awt.Component;
+import java.util.ArrayList;
+import java.util.List;
 import org.fairsim.livemode.LiveControlPanel;
-import org.fairsim.livemode.ReconstructionRunner;
-import org.fairsim.livemode.SimSequenceExtractor;
 import org.fairsim.utils.Conf;
 import org.fairsim.utils.Tool;
 
@@ -29,7 +29,7 @@ import org.fairsim.utils.Tool;
  *
  * @author m.lachetta
  */
-public class ControllerGui extends javax.swing.JPanel {
+public class AdvancedGui extends javax.swing.JPanel implements EasyGui.AdvGui {
 
     LiveControlPanel motherGui;
     private String controllerAdress;
@@ -44,7 +44,7 @@ public class ControllerGui extends javax.swing.JPanel {
      * @param channelNames Camera Channels
      * @param seqDetection The Sim-Sequence-Extractor
      */
-    public ControllerGui(Conf.Folder cfg, String[] channelNames, LiveControlPanel motherGui) {
+    public AdvancedGui(Conf.Folder cfg, String[] channelNames, LiveControlPanel motherGui) {
         initComponents();
         this.motherGui = motherGui;
         camCounts = channelNames.length;
@@ -94,7 +94,7 @@ public class ControllerGui extends javax.swing.JPanel {
             }
         }
         //init controller panels
-        controllerPanel.enablePanel(this, controllerAdress, port, motherGui.seqDetection);
+        controllerPanel.enablePanel(this, controllerAdress, port, motherGui.getSequenceExtractor());
         serverLabel.setText("Controller: " + controllerAdress);
 
         if (camCounts > 0 && camAdresses[0] != null) {
@@ -116,10 +116,10 @@ public class ControllerGui extends javax.swing.JPanel {
             camControllerPanel2.disablePanel();
         }
 
-        syncPanel.enablePanel(motherGui.seqDetection);
-        registrationPanel.enablePanel(cfg, channelNames, motherGui.seqDetection, motherGui.reconRunner);
+        syncPanel.enablePanel(motherGui.getSequenceExtractor());
+        registrationPanel.enablePanel(cfg, channelNames, motherGui.getSequenceExtractor(), motherGui.getReconRunner());
     }
-
+    
     /**
      * Shows a new text-line in the text-field
      *
@@ -129,30 +129,65 @@ public class ControllerGui extends javax.swing.JPanel {
         logger.append(text + "\n");
     }
 
-    /*
-    int calculateViewSize() {
-        int[] pixelSize = new int[CAMCOUNTMAX];
+    interface ClientGui {
+        void showText(String text);
+        void registerClient();
+        void unregisterClient();
+        void handleError(String answer);
+        void interruptInstruction();
+    }
+    
+    @Override
+    public EasyGui.Ctrl getCtrl() {
+        return this.controllerPanel;
+    }
+    
+    @Override
+    public EasyGui.Sync getSync() {
+        return this.syncPanel;
+    }
+    
+    @Override
+    public EasyGui.Reg getReg() {
+        return this.registrationPanel; 
+   }
+    
+    @Override
+    public List<EasyGui.Movie> getCams(){
+        List<EasyGui.Movie> camGuis = new ArrayList<>();
+        if (camControllerPanel0.enabled) camGuis.add(camControllerPanel0);
+        if (camControllerPanel1.enabled) camGuis.add(camControllerPanel1);
+        if (camControllerPanel2.enabled) camGuis.add(camControllerPanel2);
+        return camGuis;
+    }
+    
+    @Override
+    public void setRoi(int size) {
+        if (motherGui.getWfSize() == size) return;
         
-        pixelSize[0] = camControllerPanel0.recivingPixelSize;
-        pixelSize[1] = camControllerPanel1.recivingPixelSize;
-        pixelSize[2] = camControllerPanel2.recivingPixelSize;
-        
-        int ps = -1;
-        for (int i = 0; i < CAMCOUNTMAX; i++) {
-            if (pixelSize[i] > 0) {
-                ps = pixelSize[i];
-                for (int j = i + 1; j < CAMCOUNTMAX; j++) {
-                    if (pixelSize[j] > 0 && pixelSize[i] != pixelSize[j]) ps = -1;
-                }
-                break;
+        Component[] componentBox = refreshBox.getComponents();
+        int[] rois = new int[componentBox.length];
+        for (int i = 0; i < componentBox.length; i++) {
+            rois[i] = Integer.parseInt(componentBox[i].getName());
+            if (rois[i] == size) {
+                refreshBox.setSelectedIndex(i);
+                refreshView();
+                return;
             }
         }
-        if (ps > 0) refreshButton.setEnabled(true);
-        else refreshButton.setEnabled(false);
-        System.out.println(ps);
-        return ps;
+        
+        throw new RuntimeException("Refreshing view went wrong");
     }
-     */
+    
+    private void refreshView() {
+        int ps = Integer.parseInt(refreshBox.getSelectedItem().toString());
+        if (ps > 0) {
+            refreshButton.setEnabled(false);
+            motherGui.refreshView(ps);
+            refreshButton.setEnabled(true);
+        }
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -260,30 +295,21 @@ public class ControllerGui extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
-        //int ps = calculateViewSize();
-        try {
-            int ps = Integer.parseInt(refreshBox.getSelectedItem().toString());
-            if (ps > 0) {
-                refreshButton.setEnabled(false);
-                motherGui.refreshView(ps);
-                refreshButton.setEnabled(true);
-            }
-        } catch (NumberFormatException ex) {
-        }
+        refreshView();
     }//GEN-LAST:event_refreshButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private org.fairsim.controller.CameraPanel camControllerPanel0;
-    private org.fairsim.controller.CameraPanel camControllerPanel1;
-    private org.fairsim.controller.CameraPanel camControllerPanel2;
+    org.fairsim.controller.CameraPanel camControllerPanel0;
+    org.fairsim.controller.CameraPanel camControllerPanel1;
+    org.fairsim.controller.CameraPanel camControllerPanel2;
     private javax.swing.JPanel clientServerPanel;
-    private org.fairsim.controller.ControllerPanel controllerPanel;
+    org.fairsim.controller.ControllerPanel controllerPanel;
     private java.awt.TextArea logger;
-    private javax.swing.JComboBox<String> refreshBox;
+    javax.swing.JComboBox<String> refreshBox;
     private javax.swing.JButton refreshButton;
-    private org.fairsim.controller.RegistrationPanel registrationPanel;
+    org.fairsim.controller.RegistrationPanel registrationPanel;
     private javax.swing.JLabel serverLabel;
-    private org.fairsim.controller.SyncPanel syncPanel;
+    org.fairsim.controller.SyncPanel syncPanel;
     // End of variables declaration//GEN-END:variables
 }
