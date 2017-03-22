@@ -31,6 +31,7 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
     ControllerClient controllerClient;
     private List<Component> slmControllers, arduinoControllers;
     private boolean controllerInstructionDone;
+    private boolean slmConnected = false, slmReboot = false, arduinoConnected = false;
     SimSequenceExtractor seqDetection;
     
     /**
@@ -163,6 +164,7 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
         } else if (code == 7) {
             disableSlmControllers();
             slmConnectButton.setEnabled(true);
+            slmConnected = false;
             showText("Gui: No connection to the SLM");
         } else if (code == 8) {
             slmDissconnect();
@@ -264,6 +266,7 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
             slmRefresh();
             enableSlmControllers();
             slmConnectButton.setEnabled(false);
+            slmConnected = true;
         }
     }
 
@@ -275,6 +278,7 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
         if (controllerInstructionDone) {
             disableSlmControllers();
             slmConnectButton.setEnabled(true);
+            slmConnected = false;
         }
     }
 
@@ -283,26 +287,20 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
         if (controllerInstructionDone) {
             setRGBButtonSelected(false);
             arduinoConnectButton.setEnabled(false);
-            final int waiting = 3;
+            int waiting = 3;
             showText("Gui: Waiting for the arduino... (" + waiting + "seconds)");
-            Thread timer = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        for (int i = waiting; i > 0; i--) {
-                            Thread.sleep(1000);
-                        }
-                    } catch (InterruptedException ex) {
-                        showText("Gui: Error: Arduino sleep interrupted");
-                    } finally {
-                        updateArduinoRos();
-                        enableArduinoControllers();
-                        arduinoStopButton.setEnabled(false);
-                    }
+            try {
+                for (int i = waiting; i > 0; i--) {
+                    Thread.sleep(1000);
                 }
-
-            });
-            timer.start();
+            } catch (InterruptedException ex) {
+                showText("Gui: Error: Arduino sleep interrupted");
+            } finally {
+                updateArduinoRos();
+                enableArduinoControllers();
+                arduinoStopButton.setEnabled(false);
+                arduinoConnected = true;
+            }
         }
     }
     
@@ -321,6 +319,7 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
         if (controllerInstructionDone) {
             disableArduinoControllers();
             arduinoConnectButton.setEnabled(true);
+            arduinoConnected = false;
         }
     }
     
@@ -355,26 +354,11 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
     }
     
     public ControllerClient.ArduinoRunningOrder[] getArduinoRos() {
-        Component[] componentBox = arduinoComboBox.getComponents();
-        String[] arduinoBox = new String[componentBox.length];
-        for (int i = 0; i < componentBox.length; i++) {
-            if (!controllerClient.arduinoRos[i].name.equals(arduinoBox[i])) {
-                return null;
-            }
-        }
         return controllerClient.arduinoRos;
     }
     
     public String[] getDeviceRos() {
-        Component[] componentBox = slmComboBox.getComponents();
-        String[] deviceRos = new String[componentBox.length];
-        for (int i = 0; i < componentBox.length; i++) {
-            deviceRos[i] = componentBox[i].getName();
-            if (!deviceRos[i].equals(controllerClient.slmList[i])) {
-                return null;
-            }
-        }
-        return deviceRos;
+        return controllerClient.slmList;
     }
     
     @Override
@@ -391,10 +375,12 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
     @Override
     public void unregisterClient() {
         disableSlmControllers();
-            slmSelect.setText("Selected running order: -");
-            slmComboBox.removeAllItems();
-            slmConnectButton.setEnabled(false);
-            disableArduinoControllers();
+        slmSelect.setText("Selected running order: -");
+        slmComboBox.removeAllItems();
+        slmConnectButton.setEnabled(false);
+        disableArduinoControllers();
+        slmConnected = false;
+        arduinoConnected = false;
     }
 
     @Override
@@ -747,6 +733,7 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
     private void slmRebootButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmRebootButtonActionPerformed
         sendSlmInstruction("reboot");
         if (controllerInstructionDone) {
+            slmReboot = true;
             disableSlmControllers();
             Thread timer = new Thread(new Runnable() {
                 @Override
@@ -762,6 +749,7 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
                     }
                     showText("Gui: SLM rebooted");
                     enableSlmControllers();
+                    slmReboot = false;
                 }
             });
             timer.start();
@@ -804,17 +792,55 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
     // End of variables declaration//GEN-END:variables
 
     @Override
-    public void takePhoto(EasyGui.RunningOrder ro) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void enableEasy() throws EasyGui.EasyGuiException{
+        if (!slmConnected) {
+            slmConnect();
+            if (!slmConnected) throw new EasyGui.EasyGuiException("Controller: No connection to the slm");
+        }
+        if (!arduinoConnected) {
+            arduinoConnect();
+            if (!arduinoConnected) throw new EasyGui.EasyGuiException("Controller: No connection to the arduino");
+        }
+    }
+    
+    @Override
+    public void setDelay(int delay) {
+        arduinoBreakTimeTextField.setText(String.valueOf(delay));
+    }
+    
+    @Override
+    public void setRo(EasyGui.RunningOrder ro) throws EasyGui.EasyGuiException {
+        arduinoComboBox.setSelectedIndex(ro.arduinoRo);
+        if (ro.device.equals("slm")) slmComboBox.setSelectedIndex(ro.deviceRo);
+        else throw new EasyGui.EasyGuiException("Controller: Not supported device: " + ro.device);
+        slmDeactivate();
+        slmSetSelected();
+        slmDeactivate();
+        slmActivate();
+        slmDeactivate();
+        slmDeactivate();
+        slmDeactivate();
+        slmDeactivate();
+        slmDeactivate();
+        slmActivate();
+        slmActivate();
+        slmActivate();
+        slmActivate();
+        slmActivate();
+    }
+    
+    @Override
+    public void takePhoto() {
+        this.arduinoPhoto();
     }
 
     @Override
-    public void startMovie(EasyGui.RunningOrder ro) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void startMovie() {
+        this.arduinoStart();
     }
 
     @Override
     public void stopMovie() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        this.arduinoStop();
     }
 }

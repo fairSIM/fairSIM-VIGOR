@@ -131,9 +131,7 @@ public abstract class AbstractClient extends Thread {
                 gui.showText(ex + ";\t in: " + getClass());
             } finally {
                 gui.unregisterClient();
-                if (this != null) {
-                    disconnect();
-                }
+                disconnect();
             }
         }
     }

@@ -69,13 +69,12 @@ public class SyncPanel extends javax.swing.JPanel implements EasyGui.Sync{
     }
     
     @Override
-    public void setSync(int delay, int avr, int freq) {
-        syncDelayTextField.setText(String.valueOf(delay));
-        syncAvrTextField.setText(String.valueOf(avr));
-        syncFreqTextField.setText(String.valueOf(freq));
+    public void setRo(EasyGui.RunningOrder ro) {
+        syncDelayTextField.setText(String.valueOf(ro.syncDelay));
+        syncFreqTextField.setText(String.valueOf(ro.syncFreq));
         setDelay();
-        setAvr();
         setFreq();
+        return;
     }
 
     /**

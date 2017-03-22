@@ -52,6 +52,7 @@ import org.fairsim.sim_gui.PlainImageDisplay;
 
 import org.fairsim.linalg.Vec2d;
 import org.fairsim.controller.AdvancedGui;
+import org.fairsim.controller.EasyGui;
 import org.fairsim.utils.Tool;
 import org.fairsim.utils.SimpleMT;
 
@@ -269,7 +270,10 @@ public class LiveControlPanel {
         JTabbedPane tabbedPane = new JTabbedPane();
 
         tabbedPane.addTab("main", mainPanel);
-        tabbedPane.addTab("controller", new AdvancedGui(cfg, channels, this));
+        AdvancedGui advancedGui = new AdvancedGui(cfg, channels, this);
+        EasyGui easyGui = new EasyGui(advancedGui);
+        tabbedPane.addTab("Easy", easyGui);
+        tabbedPane.addTab("Advanced", advancedGui);
 
         pTab = new ParameterTab[nrCh];
         for (int ch = 0; ch < nrCh; ch++) {

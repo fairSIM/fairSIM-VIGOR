@@ -1,7 +1,7 @@
 <fairsim>
 <vigor-settings>
 
-<ControllerAdress type="string">Atana</ControllerAdress>
+<ControllerAdress type="string">localhost</ControllerAdress>
 <TCPPort type="int">32322</TCPPort>
 
 <RawPxlCount type="int">512</RawPxlCount>

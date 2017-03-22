@@ -153,8 +153,8 @@ public class AdvancedGui extends javax.swing.JPanel implements EasyGui.AdvGui {
    }
     
     @Override
-    public List<EasyGui.Movie> getCams(){
-        List<EasyGui.Movie> camGuis = new ArrayList<>();
+    public List<EasyGui.Cam> getCams(){
+        List<EasyGui.Cam> camGuis = new ArrayList<>();
         if (camControllerPanel0.enabled) camGuis.add(camControllerPanel0);
         if (camControllerPanel1.enabled) camGuis.add(camControllerPanel1);
         if (camControllerPanel2.enabled) camGuis.add(camControllerPanel2);
@@ -162,7 +162,8 @@ public class AdvancedGui extends javax.swing.JPanel implements EasyGui.AdvGui {
     }
     
     @Override
-    public void setRoi(int size) {
+    public void setRo(EasyGui.RunningOrder ro) throws EasyGui.EasyGuiException {
+        int size = ro.allowBigRoi ? 512 : 256;
         if (motherGui.getWfSize() == size) return;
         
         Component[] componentBox = refreshBox.getComponents();
@@ -175,8 +176,7 @@ public class AdvancedGui extends javax.swing.JPanel implements EasyGui.AdvGui {
                 return;
             }
         }
-        
-        throw new RuntimeException("Refreshing view went wrong");
+        throw new EasyGui.EasyGuiException("AdvancedGui: no ROI found");
     }
     
     private void refreshView() {
@@ -300,16 +300,16 @@ public class AdvancedGui extends javax.swing.JPanel implements EasyGui.AdvGui {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    org.fairsim.controller.CameraPanel camControllerPanel0;
-    org.fairsim.controller.CameraPanel camControllerPanel1;
-    org.fairsim.controller.CameraPanel camControllerPanel2;
+    private org.fairsim.controller.CameraPanel camControllerPanel0;
+    private org.fairsim.controller.CameraPanel camControllerPanel1;
+    private org.fairsim.controller.CameraPanel camControllerPanel2;
     private javax.swing.JPanel clientServerPanel;
-    org.fairsim.controller.ControllerPanel controllerPanel;
+    private org.fairsim.controller.ControllerPanel controllerPanel;
     private java.awt.TextArea logger;
     javax.swing.JComboBox<String> refreshBox;
     private javax.swing.JButton refreshButton;
-    org.fairsim.controller.RegistrationPanel registrationPanel;
+    private org.fairsim.controller.RegistrationPanel registrationPanel;
     private javax.swing.JLabel serverLabel;
-    org.fairsim.controller.SyncPanel syncPanel;
+    private org.fairsim.controller.SyncPanel syncPanel;
     // End of variables declaration//GEN-END:variables
 }

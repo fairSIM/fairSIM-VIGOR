@@ -207,7 +207,7 @@ public class ArduinoController implements SerialPortEventListener {
 
     public String disconnect() {
         try {
-            sendingThread.interrupt();
+            if (sendingThread != null) sendingThread.interrupt();
             arduinoCommands.clear();
             arduinoAnswers.clear();
             sendingThread.join();

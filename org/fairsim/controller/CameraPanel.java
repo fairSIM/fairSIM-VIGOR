@@ -29,7 +29,7 @@ import org.fairsim.utils.Tool;
  *
  * @author m.lachetta
  */
-public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.ClientGui, EasyGui.Movie {
+public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.ClientGui, EasyGui.Cam {
 
     private AdvancedGui motherGui;
     private CameraClient client;
@@ -255,15 +255,53 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
             updateConfigs(groupId);
         }
     }
+    
+    @Override
+    public void enableEasy() throws EasyGui.EasyGuiException{
+        if (client.serverSocket == null) throw new EasyGui.EasyGuiException("Camera: No network connection");
+    }
+    
+    @Override
+    public void setRo(EasyGui.RunningOrder ro) throws EasyGui.EasyGuiException {
+        String[] groups = client.getGroupArray();
+        boolean configFound = false;
+        for (int i = 0; i < groups.length; i++) {
+            if (groups[i].equals(ro.camGroup)) {
+                groupBox.setSelectedIndex(i);
+                String[] configs = client.getConfigArray(i);
+                for (int k = 0; k < configs.length; k++) {
+                    if (configs[k].equals(ro.camConfig)) {
+                        configBox.setSelectedIndex(k);
+                        setConfig();
+                        configFound = true;
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        if(!configFound) throw new EasyGui.EasyGuiException("Camera: No config found");
+        
+        exposureField.setText(String.valueOf((double) ro.exposureTime / 1000.));
+        setExposureTime();
+        
+        int size = ro.allowBigRoi ? 512 : 256;
+        if (client.roi[4] != size) {
+            if (size == 512) roiBox.setSelectedIndex(0);
+            else if (size == 256) roiBox.setSelectedIndex(1);
+            else throw new EasyGui.EasyGuiException("Camera: No ROI found");
+            setRoi();
+        }
+    }
 
     @Override
-    public void startMovie(EasyGui.RunningOrder ro) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void startMovie() {
+        startCam();
     }
 
     @Override
     public void stopMovie() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        stopCam();
     }
     
     private class StatusUpdateThread extends Thread {
@@ -453,11 +491,11 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
                         .addComponent(roiButton)
                         .addGap(18, 18, 18)
                         .addComponent(exposureField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(21, 21, 21)
-                        .addComponent(exposureButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(msLabel)
-                        .addGap(18, 18, 18)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(exposureButton)
+                        .addGap(35, 35, 35)
                         .addComponent(groupBox, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(configBox, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -510,10 +548,6 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
-        startCam();
-    }//GEN-LAST:event_startButtonActionPerformed
-
     private void stopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButtonActionPerformed
         stopCam();
     }//GEN-LAST:event_stopButtonActionPerformed
@@ -539,6 +573,10 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
             setExposureTime();
         }
     }//GEN-LAST:event_exposureFieldKeyPressed
+
+    private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
+        startCam();
+    }//GEN-LAST:event_startButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
