@@ -9,6 +9,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultListModel;
+import org.fairsim.livemode.LiveControlPanel;
 
 /**
  *
@@ -16,7 +17,7 @@ import javax.swing.DefaultListModel;
  */
 public class EasyGui extends javax.swing.JPanel {
 
-    private boolean active;
+    private final LiveControlPanel lcp;
     private final AdvGui advanced;
     private final Ctrl controller;
     private final Sync sync;
@@ -29,9 +30,9 @@ public class EasyGui extends javax.swing.JPanel {
     /**
      * Creates new form EasyGui
      */
-    public EasyGui(AdvGui advGui) {
+    public EasyGui(LiveControlPanel lcp, AdvGui advGui) {
         initComponents();
-        active = false;
+        this.lcp = lcp;
         advanced = advGui;
         controller = advGui.getCtrl();
         sync = advGui.getSync();
@@ -57,7 +58,6 @@ public class EasyGui extends javax.swing.JPanel {
                     arduinoRos[i].exposureTime, allowBigRoi));
         }
         enableLaserPanel();
-        active = true;
     }
     
     private int getDeviceRo(String name, String[] deviceRos) {
@@ -66,7 +66,7 @@ public class EasyGui extends javax.swing.JPanel {
         }
         return -1;
     }
-    
+
     class RunningOrder {
         final String device, name;
         final int deviceRo, arduinoRo;
@@ -157,6 +157,7 @@ public class EasyGui extends javax.swing.JPanel {
         delaySlider = new javax.swing.JSlider();
         delayLabel = new javax.swing.JLabel();
         msLabel = new javax.swing.JLabel();
+        paramButton = new javax.swing.JButton();
         enableButton = new javax.swing.JButton();
         statusPanel = new javax.swing.JPanel();
         statusLabel = new javax.swing.JLabel();
@@ -269,9 +270,19 @@ public class EasyGui extends javax.swing.JPanel {
 
         registrationButton.setText("Image Registration");
         registrationButton.setEnabled(false);
+        registrationButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                registrationButtonActionPerformed(evt);
+            }
+        });
 
         recordButton.setText("Record raw images");
         recordButton.setEnabled(false);
+        recordButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                recordButtonActionPerformed(evt);
+            }
+        });
 
         delaySlider.setMaximum(20);
         delaySlider.setValue(0);
@@ -289,6 +300,14 @@ public class EasyGui extends javax.swing.JPanel {
         msLabel.setText("0 ms");
         msLabel.setEnabled(false);
 
+        paramButton.setText("Parameter Estimation");
+        paramButton.setEnabled(false);
+        paramButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                paramButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout controllPanelLayout = new javax.swing.GroupLayout(controllPanel);
         controllPanel.setLayout(controllPanelLayout);
         controllPanelLayout.setHorizontalGroup(
@@ -305,7 +324,8 @@ public class EasyGui extends javax.swing.JPanel {
                         .addGap(18, 18, 18)
                         .addComponent(delaySlider, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(msLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(msLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(paramButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         controllPanelLayout.setVerticalGroup(
@@ -324,6 +344,8 @@ public class EasyGui extends javax.swing.JPanel {
                 .addComponent(runButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(photoButton)
+                .addGap(18, 18, 18)
+                .addComponent(paramButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -421,7 +443,7 @@ public class EasyGui extends javax.swing.JPanel {
 
     private void runButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runButtonActionPerformed
         if (runButton.isSelected()) {
-            //disableGui();
+            disableGui();
             for(Cam c : camGuis) {
                 c.startMovie();
             }
@@ -431,8 +453,12 @@ public class EasyGui extends javax.swing.JPanel {
                 c.stopMovie();
             }
             controller.stopMovie();
-            //enableGui();
+            enableGui();
         }
+        registrationButton.setEnabled(true);
+        recordButton.setEnabled(true);
+        runButton.setEnabled(true);
+        paramButton.setEnabled(true);
     }//GEN-LAST:event_runButtonActionPerformed
 
     private void photoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_photoButtonActionPerformed
@@ -444,6 +470,18 @@ public class EasyGui extends javax.swing.JPanel {
             c.stopMovie();
         }
     }//GEN-LAST:event_photoButtonActionPerformed
+
+    private void registrationButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_registrationButtonActionPerformed
+        regPanel.register(registrationButton.isSelected());
+    }//GEN-LAST:event_registrationButtonActionPerformed
+
+    private void recordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_recordButtonActionPerformed
+        recordButton.setSelected(lcp.record());
+    }//GEN-LAST:event_recordButtonActionPerformed
+
+    private void paramButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_paramButtonActionPerformed
+        lcp.doParamEstimation();
+    }//GEN-LAST:event_paramButtonActionPerformed
 
     private boolean connected() {
         try {
@@ -459,6 +497,20 @@ public class EasyGui extends javax.swing.JPanel {
             setStatus(ex.getMessage(), true);
             return false;
         }
+    }
+    
+    private void disableGui() {
+        disableLaserPanel();
+        disableItPanel();
+        disableControllPanel();
+        enableButton.setEnabled(false);
+    }
+    
+    private void enableGui() {
+        enableLaserPanel();
+        enableItPanel();
+        enableControllPanel();
+        enableButton.setEnabled(true);
     }
     
     private void enableLaserPanel() {
@@ -535,6 +587,7 @@ public class EasyGui extends javax.swing.JPanel {
         msLabel.setEnabled(true);
         runButton.setEnabled(true);
         photoButton.setEnabled(true);
+        paramButton.setEnabled(true);
         setStatus("Ready for captureing images");
     }
     
@@ -547,6 +600,7 @@ public class EasyGui extends javax.swing.JPanel {
         msLabel.setEnabled(false);
         runButton.setEnabled(false);
         photoButton.setEnabled(false);
+        paramButton.setEnabled(false);
     }
     
     private void setStatus(String message) {
@@ -581,6 +635,7 @@ public class EasyGui extends javax.swing.JPanel {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JPanel laserPanel;
     private javax.swing.JLabel msLabel;
+    private javax.swing.JButton paramButton;
     private javax.swing.JButton photoButton;
     private javax.swing.JToggleButton recordButton;
     private javax.swing.JCheckBox redCheckBox;

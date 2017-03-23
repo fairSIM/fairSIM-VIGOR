@@ -65,14 +65,17 @@ public class LiveControlPanel {
 
     int wfPixelSize;
     private final int nrCh;
+    private double[] rawFps;
     private final String[] channels;
 
     final JProgressBar networkBufferBar;
     final JProgressBar reconBufferInputBar;
     final JProgressBar reconBufferOutputBar;
     final JProgressBar[] channelBufferBar;
-
+    final JProgressBar[] channelSortBufferBar;
     final JProgressBar fileBufferBar;
+    final JButton recordButton;
+    final JTextField filePrefix;
 
     // The different threads in use:
     final ImageDiskWriter liveStreamWriter;
@@ -141,30 +144,18 @@ public class LiveControlPanel {
         JPanel recorderPanel = new JPanel();
         recorderPanel.setBorder(BorderFactory.createTitledBorder(
                 "raw Stream recording"));
-        recorderPanel.setLayout(new GridLayout(3, 1, 2, 2));
+        recorderPanel.setLayout(new GridLayout(2, 1, 2, 2));
 
-        final JTextField filePrefix = new JTextField("VIGOR", 30);
+        filePrefix = new JTextField("VIGOR", 30);
 
-        final JButton recordButton = new JButton("record");
+        recordButton = new JButton("record");
         recordButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if (!isRecording) {
-                    recordButton.setForeground(Color.RED);
-                    try {
-                        liveStreamWriter.startRecording(filePrefix.getText());
-                    } catch (Exception ex) {
-                        throw new RuntimeException(ex);
-                    }
-                    isRecording = true;
-                } else {
-                    recordButton.setForeground(Color.BLACK);
-                    liveStreamWriter.stopRecording();
-                    isRecording = false;
-                }
+                record();
             }
         ;
         });
-
+        
 	final JButton bufferClearButton = new JButton("buffer clear / resync");
         bufferClearButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -182,7 +173,7 @@ public class LiveControlPanel {
         recorderPanel.add(bufferClearButton);
         recorderPanel.add(filePrefix);
         recorderPanel.add(fileBufferBar);
-        mainPanel.add(recorderPanel);
+        //mainPanel.add(recorderPanel);
 
         //mainPanel.add(new RegistrationPanel(avf, cfg, channels));
         JButton fitPeakButton = new JButton("run parameter fit");
@@ -208,8 +199,10 @@ public class LiveControlPanel {
         wfPixelSize = cfg.getInt("RawPxlCount").val();
 
         JPanel statusPanel2 = new JPanel();
+        rawFps = new double[nrCh];
         syncButtons = new JButton[nrCh];
         channelBufferBar = new JProgressBar[nrCh];
+        channelSortBufferBar = new JProgressBar[nrCh];
         for (int c = 0; c < nrCh; c++) {
             syncButtons[c] = new JButton("");
             syncButtons[c].setEnabled(false);
@@ -217,7 +210,14 @@ public class LiveControlPanel {
             channelBufferBar[c] = new JProgressBar();
             channelBufferBar[c].setString(channels[c] + " channel buffer: 0%");
             channelBufferBar[c].setStringPainted(true);
-            reconBuffersPanel.add(channelBufferBar[c]);
+            channelSortBufferBar[c] = new JProgressBar();
+            channelSortBufferBar[c].setString(channels[c] + " sort buffer: 0%");
+            channelSortBufferBar[c].setStringPainted(true);
+            JPanel p = new JPanel();
+            p.setLayout(new BoxLayout(p, BoxLayout.X_AXIS));
+            p.add(channelBufferBar[c]);
+            p.add(channelSortBufferBar[c]);
+            reconBuffersPanel.add(p);
         }
 
         statusMessage = new JTextField(40);
@@ -271,7 +271,7 @@ public class LiveControlPanel {
 
         tabbedPane.addTab("main", mainPanel);
         AdvancedGui advancedGui = new AdvancedGui(cfg, channels, this);
-        EasyGui easyGui = new EasyGui(advancedGui);
+        EasyGui easyGui = new EasyGui(this, advancedGui);
         tabbedPane.addTab("Easy", easyGui);
         tabbedPane.addTab("Advanced", advancedGui);
 
@@ -280,14 +280,52 @@ public class LiveControlPanel {
             pTab[ch] = new ParameterTab(reconRunner, ch, cfg);
             tabbedPane.addTab(channels[ch], pTab[ch].getPanel());
         }
+        
+        JPanel finalPanel = new JPanel();
+        finalPanel.setLayout(new BoxLayout(finalPanel, BoxLayout.Y_AXIS));
+        finalPanel.add(recorderPanel);
+        finalPanel.add(tabbedPane);
 
-        mainFrame.add(tabbedPane);
+        mainFrame.add(finalPanel);
         mainFrame.pack();
         mainFrame.setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         mainFrame.setVisible(true);
 
         startThreads();
 
+    }
+    
+    public boolean record() {
+        if (!isRecording) {
+            recordButton.setForeground(Color.RED);
+            try {
+                liveStreamWriter.startRecording(filePrefix.getText());
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+            isRecording = true;
+        } else {
+            recordButton.setForeground(Color.BLACK);
+            liveStreamWriter.stopRecording();
+            isRecording = false;
+        }
+        return isRecording;
+    }
+    
+    public void doParamEstimation() {
+        for (ParameterTab pt : pTab) {
+            pt.runFit();
+        }
+    }
+    
+    public void setRawFps(double fps, String channel) {
+        for (int i = 0; i < nrCh; i++) {
+            if(channels[i].equals(channel)) {
+                rawFps[i] = fps;
+                return;
+            }
+        }
+        Tool.trace("Setting rawFps went wrong");
     }
     
     private void initView() {
@@ -389,11 +427,18 @@ public class LiveControlPanel {
                     int percent = getQueuePercent(seqDetection.channels[ch].rawImgs);
                     channelBufferBar[ch].setString(channels[ch] + " channel buffer: " + percent + "%");
                     channelBufferBar[ch].setValue(percent);
+                    percent = seqDetection.channels[ch].sortBuffer.getCapacityPercent();
+                    channelSortBufferBar[ch].setString(channels[ch] + " sort buffer: " + percent + "%");
+                    channelSortBufferBar[ch].setValue(percent);
                 }
                 // update save buffer state
+                double fps = 0;
+                for (double d : rawFps) {
+                    fps += d/rawFps.length;
+                }
                 fileBufferBar.setString(String.format("%7.0f MB / %7.0f sec left",
                         (float) liveStreamWriter.getSpace() / (2*wfPixelSize) / (2*wfPixelSize),
-                        liveStreamWriter.getTimeLeft(wfPixelSize, 1, 100)));
+                        liveStreamWriter.getTimeLeft(wfPixelSize, 1, fps)));
                 fileBufferBar.setValue(liveStreamWriter.bufferState());
 
                 int dropped = liveStreamWriter.nrDroppedFrames();

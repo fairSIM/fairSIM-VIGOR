@@ -49,6 +49,8 @@ import java.util.ArrayList;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.fairsim.utils.Conf;
 import org.fairsim.sim_algorithm.SimParam;
@@ -101,6 +103,10 @@ public class ParameterTab {
         
 	mainPanel.add( fp.panel );
 	mainPanel.add( rp.panel );
+    }
+    
+    void runFit() {
+        rp.runFit();
     }
    
     
@@ -164,6 +170,7 @@ public class ParameterTab {
     class ReconParameters implements Tool.Callback<SimParam> {
     
 	JPanel panel = new JPanel();
+        final JTextArea	statusField;
 
 	final Tiles.TList<SimParam> availableParameters;
 
@@ -188,7 +195,7 @@ public class ParameterTab {
 	    fillListFromFolder();
 
 	    // displaying the currently active parameter
-	    final JTextArea	statusField = new JTextArea(12,35);
+	    statusField = new JTextArea(12,35);
 	    statusField.setEditable(false);
 
 	    statusField.setText(ourChannel.param.prettyPrint(true));
@@ -200,11 +207,7 @@ public class ParameterTab {
 
 	    useParameterButton.addActionListener( new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
-		    SimParam sp = availableParameters.getSelectedValue();
-		    if (sp!=null) {
-			ourChannel.param = sp;
-			statusField.setText(ourChannel.param.prettyPrint(true));
-		    }
+		    useParam();
 		}
 
 	    });
@@ -246,19 +249,31 @@ public class ParameterTab {
 	    
 	    runFitButton.addActionListener( new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
-		    
-		    Tool.Tuple<Integer, Tool.Callback<SimParam>> errant=
-			new Tool.Tuple<Integer, Tool.Callback<SimParam>>(
-			    ourChannelIndex, ReconParameters.this  );
-		    
-		    boolean ok = ourReconRunner.doParameterRefit.offer(errant);
-		    if (!ok)
-			Tool.trace("too many updates pending, please wait...");
+		    runFit();
 		}
 	    });
 	
 
 	}
+        
+        private void runFit() {
+            Tool.Tuple<Integer, Tool.Callback<SimParam>> errant
+                    = new Tool.Tuple<Integer, Tool.Callback<SimParam>>(
+                            ourChannelIndex, ReconParameters.this);
+
+            boolean ok = ourReconRunner.doParameterRefit.offer(errant);
+            if (!ok) {
+                Tool.trace("too many updates pending, please wait...");
+            }
+        }
+        
+        public void useParam() {
+            SimParam sp = availableParameters.getSelectedValue();
+            if (sp != null) {
+                ourChannel.param = sp;
+                statusField.setText(ourChannel.param.prettyPrint(true));
+            }
+        }
    
 	@Override
 	public void callback(SimParam sp) {
@@ -276,6 +291,8 @@ public class ParameterTab {
 	    } catch (Conf.SomeIOException e) {
 		Tool.error("Saving failed: "+e, false);
 	    }
+            availableParameters.setSelectedIndex(availableParameters.getComponentCount() - 1);
+            useParam();
 	}
     
 	/** scans a folder and loads all parameter sets matching a pattern */

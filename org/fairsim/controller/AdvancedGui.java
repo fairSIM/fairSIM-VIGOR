@@ -166,17 +166,10 @@ public class AdvancedGui extends javax.swing.JPanel implements EasyGui.AdvGui {
         int size = ro.allowBigRoi ? 512 : 256;
         if (motherGui.getWfSize() == size) return;
         
-        Component[] componentBox = refreshBox.getComponents();
-        int[] rois = new int[componentBox.length];
-        for (int i = 0; i < componentBox.length; i++) {
-            rois[i] = Integer.parseInt(componentBox[i].getName());
-            if (rois[i] == size) {
-                refreshBox.setSelectedIndex(i);
-                refreshView();
-                return;
-            }
-        }
-        throw new EasyGui.EasyGuiException("AdvancedGui: no ROI found");
+        if (size == 512) refreshBox.setSelectedIndex(0);
+        else if (size == 256) refreshBox.setSelectedIndex(1);
+        else throw new EasyGui.EasyGuiException("AdvancedGui: no ROI found");
+        refreshView();
     }
     
     private void refreshView() {

@@ -143,6 +143,7 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
         sendInstruction("get status");
         if (instructionDone) {
             fpsLabel.setText("FPS: " + Math.round(client.fps * 10) / 10.0);
+            motherGui.motherGui.setRawFps(client.fps, channelName);
             if (client.queued) {
                 queuingPanel.setBackground(Color.GREEN);
             } else {
@@ -522,7 +523,7 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(0, 0, 0)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(channelLabel)
                     .addComponent(roiLabel)

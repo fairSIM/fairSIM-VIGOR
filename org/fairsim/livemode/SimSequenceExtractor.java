@@ -215,7 +215,7 @@ public class SimSequenceExtractor {
 
         BlockingQueue<ImageWrapper> rawImgs;
         BlockingQueue<short[][]> simSeq;
-        private final SortBuffer sortBuffer;
+        final SortBuffer sortBuffer;
         
         final int queueSize, chNumber, chIndex;
         boolean restartThread;
@@ -224,7 +224,7 @@ public class SimSequenceExtractor {
         int missedSim = 0;
         int noSyncSince = 0;
         long syncFrameCount = 0;
-        long seqNr = Long.MAX_VALUE;
+        long seqNr;
 
         int queryRaw() {
             return rawImgs.size();
@@ -292,6 +292,7 @@ public class SimSequenceExtractor {
         
         void setSeqNr() {
             sortBuffer.buffer.clear();
+            seqNr = Long.MAX_VALUE;
             while (!sortBuffer.isFull()) {
                 try {
                     ImageWrapper iw = rawImgs.take();
@@ -391,7 +392,7 @@ public class SimSequenceExtractor {
             }
         }
         
-        private class SortBuffer {
+        class SortBuffer {
 
             final int MAXSIZE;
             Map<Long, ImageWrapper> buffer;
@@ -419,6 +420,10 @@ public class SimSequenceExtractor {
             
             boolean isFull() {
                 return buffer.size() >= MAXSIZE;
+            }
+            
+            int getCapacityPercent() {
+                return (buffer.size() * 100 / MAXSIZE);
             }
 
         }

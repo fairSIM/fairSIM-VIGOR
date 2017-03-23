@@ -226,6 +226,7 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="msLabel" min="-2" pref="50" max="-2" attributes="0"/>
                       </Group>
+                      <Component id="paramButton" alignment="0" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
@@ -248,6 +249,8 @@
                   <Component id="runButton" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="photoButton" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                  <Component id="paramButton" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="32767" attributes="0"/>
               </Group>
           </Group>
@@ -277,12 +280,18 @@
             <Property name="text" type="java.lang.String" value="Image Registration"/>
             <Property name="enabled" type="boolean" value="false"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="registrationButtonActionPerformed"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JToggleButton" name="recordButton">
           <Properties>
             <Property name="text" type="java.lang.String" value="Record raw images"/>
             <Property name="enabled" type="boolean" value="false"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="recordButtonActionPerformed"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JSlider" name="delaySlider">
           <Properties>
@@ -306,6 +315,15 @@
             <Property name="text" type="java.lang.String" value="0 ms"/>
             <Property name="enabled" type="boolean" value="false"/>
           </Properties>
+        </Component>
+        <Component class="javax.swing.JButton" name="paramButton">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Parameter Estimation"/>
+            <Property name="enabled" type="boolean" value="false"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="paramButtonActionPerformed"/>
+          </Events>
         </Component>
       </SubComponents>
     </Container>
