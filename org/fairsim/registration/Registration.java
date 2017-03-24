@@ -60,6 +60,7 @@ public class Registration {
         wfMaxW = -1;
         wfMaxH = -1;
 
+        // read in the registration file
         BufferedReader br = new BufferedReader(new FileReader(file));
         Tool.trace("Registration: readin file: " + file);
 
@@ -77,6 +78,7 @@ public class Registration {
         br.close();
         Tool.trace("Registration: readin done for: " + file);
 
+        // sets number of threads for registering images
         threads = Runtime.getRuntime().availableProcessors();
         if (threads > wfMaxH) {
             threads = wfMaxH;
@@ -245,6 +247,7 @@ public class Registration {
 	final Vec2d.Real xTransVec, final Vec2d.Real yTransVec, 
 	final int width, final int height) {
         
+        // preperation for the registration
         final Vec2d.Real regVec = vf.createReal2D(width, height);
         int maxWidth = xTransVec.vectorWidth();
         int maxHeight = xTransVec.vectorHeight();
@@ -254,9 +257,7 @@ public class Registration {
         int offsetX = (maxWidth - width) / 2;
         int offsetY = (maxHeight - height) / 2;
         
-        
-
-        //Multi-Threaded way
+        //registers an image in a multi threaded way
         final int blockSize = height / threads;
         final Thread[] blocks = new Thread[threads];
         for (int threadId = 0; threadId < threads; threadId++) {

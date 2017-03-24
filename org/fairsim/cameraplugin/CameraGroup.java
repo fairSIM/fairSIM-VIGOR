@@ -18,12 +18,17 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 package org.fairsim.cameraplugin;
 
 /**
- *
+ * Helpful class to handle camera groups and configs
  * @author m.lachetta
  */
 public class CameraGroup {
     private String[] group;
     
+    /**
+     * Constructor
+     * @param name name of this group
+     * @param configs array of configs in this group
+     */
     CameraGroup(String name, String[] configs) {
         group = new String[configs.length + 1];
         group[0] = name;
@@ -32,18 +37,35 @@ public class CameraGroup {
         }
     }
     
+    /**
+     * decodes a CameraGroup and creates a new instance
+     * @param encodedCameraGroup the string encoded camera group
+     */
     public CameraGroup(String encodedCameraGroup) {
         group = encodedCameraGroup.split(",");
     }
     
+    /**
+     * 
+     * @return name of this group
+     */
     public String getNmae() {
         return group[0];
     }
     
+    /**
+     * 
+     * @param configId id of the specified config
+     * @return the specified config
+     */
     public String getConfig(int configId) {
         return group[configId+1];
     }
     
+    /**
+     * 
+     * @return an array of all configs in this group
+     */
     public String[] getConfigArray() {
         int len = group.length - 1;
         String[] s = new String[len];
@@ -53,6 +75,10 @@ public class CameraGroup {
         return s;
     }
     
+    /**
+     * 
+     * @return an encoded string of this group
+     */
     String encode() {
         String output = group[0];
         for (int i = 1; i < group.length; i++) {

@@ -34,6 +34,7 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
     private boolean refreshing;
     private CameraController cc;
     private Color defaultColor;
+    
     /**
      * Creates new form CameraGui
      */
@@ -73,6 +74,11 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
         fpsLabel.setText("FPS: -");
     }
     
+    /**
+     * disposes and creates a new view frame, called after changing cameras ROI
+     * @param width new image width
+     * @param height new image height
+     */
     void refreshView(int width, int height) {
         if (viewWidth != width || viewHeight != height) {
             refreshing = true;
@@ -85,6 +91,9 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
         }
     }
     
+    /**
+     * closes the whole micro manager pluging including all threads
+     */
     public void closeWholePlugin() {
         cc.close();
         cs.close();
@@ -92,6 +101,11 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
         viewFrame.dispose();
     }
     
+    /**
+     * initializes the view frame
+     * @param width image width
+     * @param height image height
+     */
     private void initView(int width, int height) {
         viewWidth = width;
         viewHeight = height;
@@ -109,11 +123,7 @@ public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
         });
         viewFrame.setVisible(true);
     }
-    /*
-    PlainImageDisplay getView() {
-        return view;
-    }
-    */
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

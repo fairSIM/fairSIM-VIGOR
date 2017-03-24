@@ -79,31 +79,28 @@ public class RegFileCreator {
      * @param targetChannelName  channel which the registration is for
      */
     void createRegFile(Vec2d.Real sourceVec, Vec2d.Real targetVec, String targetChannelName) {
+        // vec to imagePlus transformation
         ImagePlus targetImg = Converter.converteVecImg(targetVec, "targetVec");
         ImageProcessor targetProcessor = targetImg.getProcessor();
         ImagePlus sourceImg = Converter.converteVecImg(sourceVec, "sourceVec");
         ImageProcessor sourceProcessor = sourceImg.getProcessor();
         
-        
+        // calculate elastic transformation
         Transformation elasticTransf = bUnwarpJ_.computeTransformationBatch(targetImg, sourceImg, targetProcessor,
                 sourceProcessor, mode, img_subsamp_fact, min_scale_deformation,
                 max_scale_deformation, divWeight, curlWeight, landmarkWeight,
                 imageWeight, consistencyWeight, stopThreshold);
-        
-        
         elasticTransf.saveDirectTransformation(Tool.getFile(regFolder + targetChannelName + "Elastic.txt").getAbsolutePath());
         
-        
+        // transform elastic to raw transformation
         Converter.saveImage(targetImg, Tool.getFile(regFolder + "targetImg.tif").getAbsolutePath());
         Converter.saveImage(sourceImg, Tool.getFile(regFolder + "sourceImg.tif").getAbsolutePath());
-        
-        
         Tool.getFile(regFolder + targetChannelName + ".txt").delete();
         bUnwarpJ_.convertToRawTransformationMacro(Tool.getFile(regFolder + "targetImg.tif").getAbsolutePath(),
                 Tool.getFile(regFolder + "sourceImg.tif").getAbsolutePath(), Tool.getFile(regFolder + targetChannelName + "Elastic.txt").getAbsolutePath(),
                 Tool.getFile(regFolder + targetChannelName + ".txt").getAbsolutePath());
         
-        
+        //delete temp files
         Tool.getFile(regFolder + targetChannelName + "Elastic.txt").delete();
         Tool.getFile(regFolder + "targetImg.tif").delete();
         Tool.getFile(regFolder + "sourceImg.tif").delete();
@@ -111,7 +108,7 @@ public class RegFileCreator {
     
     /**
      * Sets fields for registering of this class.
-     * Names are chosen equal to the BUnwarpJ GUI.
+     * variable names are chosen equal to the BUnwarpJ GUI.
      * @throws DataFormatException if input values are impossible to set
      */
     void setOptions(int mode, int img_subsamp_fact, int min_scale_deformation,
@@ -140,8 +137,8 @@ public class RegFileCreator {
     
     /**
      * Creates a registration file in live mode
-     * @param targetId id of target image
-     * @param sourceId is of source image
+     * @param targetId id of target channel
+     * @param sourceId is of source channel
      * @param recRunner reconstruction ReconstructionRunner of live mode
      * @throws DataFormatException if target- and source-id are equal
      * @throws IOException if copying goes wrong
@@ -154,9 +151,9 @@ public class RegFileCreator {
         String targetChannelName = channelNames[targetId];
         String sourcChannelName = channelNames[sourceId];
         
+        // get images for registration from ReconstructionRunner
         Vec2d.Real targetVec;
         Vec2d.Real sourceVec;
-        
         recRunner.latestReconLock[targetId].lock();
         recRunner.latestReconLock[sourceId].lock();
         try {
@@ -167,14 +164,15 @@ public class RegFileCreator {
             recRunner.latestReconLock[sourceId].unlock();
         }
         
+        // creating the file for registration
         if (targetVec.vectorWidth() != REGISTRATIONSIZE || targetVec.vectorHeight() != REGISTRATIONSIZE
                 || sourceVec.vectorWidth() != REGISTRATIONSIZE
                 || sourceVec.vectorHeight() != REGISTRATIONSIZE) {
             throw new DataFormatException("Need pixel size: " + REGISTRATIONSIZE);
         }
-        
         createRegFile(targetVec, sourceVec, targetChannelName);
 
+        // creates a copy of the reagistration file with timestap
         Path targetPath = Paths.get(Tool.getFile(regFolder + targetChannelName + ".txt").getAbsolutePath());
         Path sourcePath = Paths.get(Tool.getFile(regFolder + targetChannelName + "to" + sourcChannelName + "-" + Tool.readableTimeStampMillis(System.currentTimeMillis(), false) + ".txt").getAbsolutePath());
         Files.copy(targetPath, sourcePath, StandardCopyOption.REPLACE_EXISTING);

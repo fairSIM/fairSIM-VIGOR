@@ -388,17 +388,19 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
             @Override
             public void run() {
                 try {
+                    // preparation
                     createButton.setEnabled(false);
                     setCreatorOptions();
-
                     int targetId = targetComboBox.getSelectedIndex();
                     int sourceId = sourceComboBox.getSelectedIndex();
                     setBlackStatus("Creating registration file...");
                     seqDetection.pause(true);
                     
+                    // create registration file
                     creator.createChannelRegFile(targetId, sourceId, recRunner);
                     setBlackStatus("New file created, load new file...");
                     
+                    // load new registration file
                     wfButton.setEnabled(false);
                     reconButton.setEnabled(false);
                     boolean wfTemp = Registration.isWidefield();

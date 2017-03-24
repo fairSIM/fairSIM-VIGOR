@@ -31,7 +31,7 @@ import org.fairsim.utils.Conf;
 import org.fairsim.utils.Tool;
 
 /**
- *
+ * Class to control a camera via micro manager
  * @author Mario
  */
 public class CameraController {
@@ -54,12 +54,20 @@ public class CameraController {
     double  fps;
     boolean queued;
     boolean sended;
-
+    
+    /**
+     * Constructor for this instance
+     * @param cp CameraPlugin for communication with micro manager
+     * @throws IOException if reading from .xlm went wrong
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if communication
+     * with micro manager went wrong
+     */
     CameraController(CameraPlugin cp) throws IOException, CameraException {
         this.cp = cp;
         isend = new ImageSender();
         sendIps = new ArrayList<>();
-
+        
+        // readin config from .xlm
         String filename = Tool.getFile(System.getProperty("user.home") + "/documents/fastsim-camera.xml").getAbsolutePath();
         try {
             Conf.Folder cfg = Conf.loadFile(filename).r().cd("camera-settings");
@@ -89,27 +97,64 @@ public class CameraController {
 
         cp.setBuffer(CAMBUFFER);
 
+        // initilizes groups & configs
         String[] grps = cp.getConfigGroups();
         groups = new CameraGroup[grps.length];
         for (int i = 0; i < grps.length; i++) {
             groups[i] = new CameraGroup(grps[i], cp.getConfigs(grps[i]));
         }
 
+        // starts the GUI
         this.gui = new CameraServerGui(imageWidth, imageHeight, this);
     }
 
+    /**
+     * sets the region of interest of the camera
+     * @param x upper left x value
+     * @param y upper left y value
+     * @param width image width
+     * @param height image height
+     * @param sendImageSize squared sending size
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if communication
+     * with micro manager went wrong
+     * @throws DataFormatException if ROI could not be set as preferred
+     */
     void setRoi(int x, int y, int width, int height, int sendImageSize) throws CameraException, DataFormatException {
         setRoi(x, y, width, height, sendImageSize, false);
     }
     
+    /**
+     * 
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if communication
+     * with micro manager went wrong
+     * @throws DataFormatException if ROI could not be set as preferred
+     */
     void setBigRoi() throws CameraException, DataFormatException {
         setRoi(bigRoi[0], bigRoi[1], bigRoi[2], bigRoi[3], bigRoi[4]);
     }
     
+    /**
+     * 
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if communication
+     * with micro manager went wrong
+     * @throws DataFormatException if ROI could not be set as preferred
+     */
     void setSmallRoi() throws CameraException, DataFormatException {
         setRoi(smallRoi[0], smallRoi[1], smallRoi[2], smallRoi[3], smallRoi[4]);
     }
 
+    /**
+     * sets the region of interest of the camera
+     * @param x upper left x value
+     * @param y upper left y value
+     * @param width image width
+     * @param height image height
+     * @param sendImageSize squared sending size
+     * @param firstTime set this true if it is the first time as the ROI will be set
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if communication
+     * with micro manager went wrong
+     * @throws DataFormatException if ROI could not be set as preferred
+     */
     private void setRoi(int x, int y, int width, int height, int sendSize, boolean firstTime) throws CameraException, DataFormatException {
         cp.stopSequenceAcquisition();
         cp.setROI(x, y, width, height);
@@ -130,6 +175,12 @@ public class CameraController {
         }
     }
 
+    /**
+     * 
+     * @return int array with the roi informations (x,y,width,height)
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if communication
+     * with micro manager went wrong
+     */
     int[] getRoi() throws CameraException {
         int rawRoi[] = cp.getRoi();
         int len = rawRoi.length;
@@ -141,29 +192,58 @@ public class CameraController {
         return extendedRoi;
     }
 
+    /**
+     * Sets the exposure time in milliseconds
+     * @param time exposure time in milliseconds
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if communication
+     * with micro manager went wrong
+     */
     void setExposure(double time) throws CameraException {
         cp.setExposure(time);
     }
 
+    /**
+     * 
+     * @return the exposure time in milliseconds
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if communication
+     * with micro manager went wrong
+     */
     double getExposure() throws CameraException {
         return cp.getExposure();
     }
 
+    /**
+     * Sets a specified configuration
+     * @param groupId id of the configuration group
+     * @param configId id of the configuration
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if communication
+     * with micro manager went wrong
+     */
     void setConfig(int groupId, int configId) throws CameraException {
         cp.setConfig(groups[groupId].getNmae(), groups[groupId].getConfig(configId));
     }
 
+    /**
+     * 
+     * @return groups of the camera
+     */
     CameraGroup[] getGroups() {
         return groups;
     }
 
+    /**
+     * starts acquisition
+     */
     void startAcquisition() {
         gui.startButton.setEnabled(false);
         gui.stopButton.setEnabled(true);
         acquisitionThread = new AcquisitionThread();
         acquisitionThread.start();
     }
-
+    
+    /**
+     * stops acquisition
+     */
     void stopAcquisition() {
         gui.startButton.setEnabled(true);
         gui.stopButton.setEnabled(false);
@@ -172,24 +252,39 @@ public class CameraController {
         }
     }
     
+    /**
+     * starts acquisition, called over network
+     */
     void startNetworkAcquisition() {
         gui.startButton.setEnabled(false);
         acquisitionThread = new AcquisitionThread();
         acquisitionThread.start();
     }
 
+    /**
+     * stops the acquisition thread
+     */
     void close() {
         if (acquisitionThread != null) {
             acquisitionThread.interrupt();
         }
     }
 
+    /**
+     * Thread to acquire images and send them over network
+     */
     private class AcquisitionThread extends Thread {
 
         boolean acquisition;
         boolean imagesQueued;
         boolean imagesSended;
-
+        
+        /**
+         * offers an image to send it over network
+         * @param imgData the image to be send
+         * @param count frame number of the image
+         * @param timeStamp timestamp of the image
+         */
         private void queueImage(short[] imgData, int count, long timeStamp) {
             ImageWrapper iw;
             //System.out.println(mirrored + "/" + sendPixelSize);
@@ -205,13 +300,19 @@ public class CameraController {
             imagesSended = imagesSended && isend.canSend();
         }
 
+        /**
+         * acquires images and sends them over network
+         */
         public void run() {
             acquisition = imagesQueued = imagesSended = true;
             isend.clearBuffer();
             try {
+                // connects image senders
                 for (String ip : sendIps) {
                     isend.connect(ip, null);
                 }
+                
+                // starting acquisition
                 cp.startSequenceAcquisition();
                 int count = 0;
                 Tool.Timer t1 = Tool.getTimer();
@@ -228,7 +329,7 @@ public class CameraController {
                         long timeStamp = Tool.decodeBcdTimestamp(imgData);
                         // send image to reconstruction / capture
                         queueImage(imgData, count, timeStamp);
-                        // display image all 59 images & updates queuing/sending color
+                        // display image all 59 images & updates queuing/sending color & fps
                         if (count % FPSCOUNTS == 0) {
                             t1.stop();
                             fps = ((FPSCOUNTS * 1000) / t1.msElapsed());
@@ -254,6 +355,7 @@ public class CameraController {
                         }
                     }
                 }
+                // stops and resets acqusition
                 t1.stop();
                 cp.stopSequenceAcquisition();
                 gui.resetFps();

@@ -25,18 +25,34 @@ import org.fairsim.controller.ServerGui;
 import org.fairsim.utils.Tool;
 
 /**
- *
+ * Class for the server on camera side to control cameras from the reconstruction
+ * computer directly out of fairSIM
  * @author m.lachetta
  */
 public class CameraServer extends AbstractServer {
 
     CameraController cc;
 
+    /**
+     * Constructor
+     * @param gui GUI of this server
+     * @param cc controller of this camera
+     * @throws IOException of connecting went wrong
+     */
     private CameraServer(ServerGui gui, CameraController cc) throws IOException {
         super(gui);
         this.cc = cc;
     }
 
+    /**
+     * sets the region of interest of the camera
+     * @param x upper left corner x value
+     * @param y upper left corner y value
+     * @param width acquire image width
+     * @param height acquire image height
+     * @param imageSize squared sending image size
+     * @return answer for the client
+     */
     private String setRoi(int x, int y, int width, int height, int imageSize) {
         //cc.stopAcquisition();
         try {
@@ -55,6 +71,10 @@ public class CameraServer extends AbstractServer {
         }
     }
     
+    /**
+     * sets the 512 region of interest of the camera
+     * @return answer for the client
+     */
     private String setBigRoi() {
         int[] roi;
         try {
@@ -68,6 +88,10 @@ public class CameraServer extends AbstractServer {
         } 
     }
     
+    /**
+     * sets the 256 region of interest of the camera
+     * @return answer for the client
+     */
     private String setSmallRoi() {
         int[] roi;
         try {
@@ -81,6 +105,10 @@ public class CameraServer extends AbstractServer {
         } 
     }
 
+    /**
+     * 
+     * @return answer for the client, the encoded region of interest
+     */
     private String getRoi() {
         try {
             int[] roi = cc.getRoi();
@@ -91,6 +119,11 @@ public class CameraServer extends AbstractServer {
         }
     }
 
+    /**
+     * sets the exposure time of the camera
+     * @param time exposure time in milliseconds
+     * @return answer for the client
+     */
     private String setExposureTime(double time) {
         try {
             cc.setExposure(time);
@@ -102,6 +135,10 @@ public class CameraServer extends AbstractServer {
         }
     }
 
+    /**
+     * 
+     * @return answer for the client, exposure time in milliseconds
+     */
     private String getExposureTime() {
         try {
             String output = "Transfering exposure time;" + cc.getExposure();
@@ -112,6 +149,10 @@ public class CameraServer extends AbstractServer {
         }
     }
 
+    /**
+     * 
+     * @return answer for the client, encoded array containing groups with configs
+     */
     private String getGroups() {
         CameraGroup[] groups = cc.getGroups();
         int len = groups.length;
@@ -123,6 +164,12 @@ public class CameraServer extends AbstractServer {
         return Tool.encodeArray("Transfering groups", groupStrings);
     }
 
+    /**
+     * sets a specified config of this camera
+     * @param groupId id of the group of configs
+     * @param configId id of the config
+     * @return answer for the client
+     */
     private String setConfig(int groupId, int configId) {
         try {
             cc.setConfig(groupId, configId);
@@ -134,6 +181,10 @@ public class CameraServer extends AbstractServer {
         }
     }
 
+    /**
+     * starts acquiring images
+     * @return answer for the client
+     */
     private String startAcquisition() {
         cc.startNetworkAcquisition();
         String output = "Acquisition started";
@@ -141,6 +192,10 @@ public class CameraServer extends AbstractServer {
         return output;
     }
 
+    /**
+     * stops acquiring images
+     * @return answer for the client
+     */
     private String stopAcquisition() {
         cc.stopAcquisition();
         String output = "Acquisition stopped";
@@ -148,6 +203,10 @@ public class CameraServer extends AbstractServer {
         return output;
     }
 
+    /**
+     * 
+     * @return answer for the client, encoded array containing fps and sending status
+     */
     private String getStatus() {
         String[] status = new String[3];
         status[0] = String.valueOf(cc.fps);
@@ -155,7 +214,7 @@ public class CameraServer extends AbstractServer {
         status[2] = String.valueOf(cc.sended);
         return Tool.encodeArray("Transfering status", status);
     }
-
+    
     @Override
     protected void buildUpConnection() {
         cc.stopAcquisition();
@@ -206,6 +265,12 @@ public class CameraServer extends AbstractServer {
         }
     }
 
+    /**
+     * creates and starts a CameraServer
+     * @param gui GUI of the CameraServer
+     * @param cc CameraController of the CameraServer
+     * @return the CameraServer
+     */
     static CameraServer startCameraServer(CameraServerGui gui, CameraController cc) {
         try {
             CameraServer serverObject = new CameraServer(gui, cc);

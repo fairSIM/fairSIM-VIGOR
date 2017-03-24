@@ -216,7 +216,6 @@
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="registrationButton" max="32767" attributes="0"/>
-                      <Component id="recordButton" alignment="0" max="32767" attributes="0"/>
                       <Component id="runButton" alignment="0" max="32767" attributes="0"/>
                       <Component id="photoButton" alignment="0" max="32767" attributes="0"/>
                       <Group type="102" alignment="0" attributes="0">
@@ -237,8 +236,6 @@
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="registrationButton" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Component id="recordButton" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" max="-2" attributes="0">
                       <Component id="delaySlider" max="32767" attributes="0"/>
@@ -282,15 +279,6 @@
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="registrationButtonActionPerformed"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JToggleButton" name="recordButton">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Record raw images"/>
-            <Property name="enabled" type="boolean" value="false"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="recordButtonActionPerformed"/>
           </Events>
         </Component>
         <Component class="javax.swing.JSlider" name="delaySlider">

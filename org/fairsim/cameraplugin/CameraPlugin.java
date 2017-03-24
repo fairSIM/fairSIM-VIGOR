@@ -21,7 +21,7 @@ import mmcorej.CMMCore;
 import org.micromanager.api.ScriptInterface;
 
 /**
- *
+ * Class that implements the micro manager plugin
  * @author m.lachetta
  */
 public class CameraPlugin implements org.micromanager.api.MMPlugin {
@@ -32,6 +32,11 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
     CMMCore mmc;
     CameraController cc;
     
+    /**
+     * starts camera acquisition
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if anything
+     * went wrong
+     */
     public void startSequenceAcquisition() throws CameraException {
         try {
             mmc.startContinuousSequenceAcquisition(1);
@@ -40,6 +45,11 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         }
     }
     
+    /**
+     * stops camera acquisition
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if anything
+     * went wrong
+     */
     public void stopSequenceAcquisition() throws CameraException {
         try {
             mmc.stopSequenceAcquisition();
@@ -48,6 +58,12 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         }
     }
     
+    /**
+     * set the camera/micro manager buffer to a specific size
+     * @param buffer size of the buffer
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if anything
+     * went wrong
+     */
     public void setBuffer(int buffer) throws CameraException {
         try {
             mmc.setCircularBufferMemoryFootprint(buffer);
@@ -57,6 +73,12 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         }
     }
     
+    /**
+     * 
+     * @return if the camera is acquiring
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if anything
+     * went wrong
+     */
     public boolean isSequenceRunning() throws CameraException {
         try {
             return mmc.isSequenceRunning();
@@ -65,6 +87,12 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         }
     }
     
+    /**
+     * 
+     * @return number of images in the buffer
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if anything
+     * went wrong
+     */
     public int getRemainingImageCount() throws CameraException {
         try {
             return mmc.getRemainingImageCount();
@@ -73,6 +101,12 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         }
     }
     
+    /**
+     * 
+     * @return the next image from the buffer
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if anything
+     * went wrong
+     */
     public short[] getNextImage() throws CameraException {
         try {
             return (short[]) mmc.popNextImage();
@@ -81,6 +115,12 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         }
     }
     
+    /**
+     * Waits (blocks the calling thread) for specified time in milliseconds.
+     * @param time waiting time
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if anything
+     * went wrong
+     */
     public void sleepCam(int time) throws CameraException {
         try {
             mmc.sleep(time);
@@ -89,6 +129,15 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         }
     }
     
+    /**
+     * sets the region of interest of the camera
+     * @param x upper left corner x value
+     * @param y upper left corner y value
+     * @param w image width
+     * @param h image height
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if anything
+     * went wrong
+     */
     public void setROI(int x, int y, int w, int h) throws CameraException {
         try {;
             mmc.clearROI();
@@ -98,6 +147,12 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         }
     }
     
+    /**
+     * 
+     * @return width of images which will be acquire
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if anything
+     * went wrong
+     */
     public int getImageWidth() throws CameraException {
         try {
             return (int) mmc.getImageWidth();
@@ -106,6 +161,12 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         }
     }
     
+    /**
+     * 
+     * @return height of images which will be acquire
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if anything
+     * went wrong
+     */
     public int getImageHeight() throws CameraException {
         try {
             return (int) mmc.getImageHeight();
@@ -114,6 +175,12 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         }
     }
     
+    /**
+     * 
+     * @return an array with the region of interest of the camera (x,y,width,height)
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if anything
+     * went wrong
+     */
     public int[] getRoi() throws CameraException {
         int[] x = new int[1];
         int[] y = new int[1];
@@ -132,6 +199,12 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         return roi;
     }
     
+    /**
+     * sets the exposure time (not directly global exposure) of the camera
+     * @param time exposure time in milliseconds
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if anything
+     * went wrong
+     */
     public void setExposure(double time) throws CameraException {
         try {
             mmc.setExposure(time);
@@ -140,6 +213,12 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         }
     }
     
+    /**
+     * 
+     * @return the exposure time of the camera
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if anything
+     * went wrong
+     */
     public double getExposure() throws CameraException {
         try {
             return mmc.getExposure();
@@ -148,6 +227,13 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         }
     }
     
+    /**
+     * sets a specified config of the camera
+     * @param group group of config
+     * @param config config to be set
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if anything
+     * went wrong
+     */
     public void setConfig(String group, String config) throws CameraException {
         try {
             mmc.setConfig(group , config);
@@ -156,6 +242,12 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         }
     }
     
+    /**
+     * 
+     * @return array of groups of config
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if anything
+     * went wrong
+     */
     public String[] getConfigGroups() throws CameraException {
         try {
             return mmc.getAvailableConfigGroups().toArray();
@@ -164,6 +256,13 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         }
     }
     
+    /**
+     * 
+     * @param group the group of configs
+     * @return the config array of a specified group
+     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if anything
+     * went wrong
+     */
     public String[] getConfigs(String group) throws CameraException {
         try {
             return mmc.getAvailableConfigs(group).toArray();
@@ -172,6 +271,10 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         }
     }
     
+    /**
+     * Exception class to handle errors in communication with micro manager and 
+     * cameras
+     */
     class CameraException extends Exception {
 
         CameraException(String message) {
@@ -180,23 +283,19 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         }
     }
 
+    /**
+     * called when micro manager is closing
+     */
     @Override
     public void dispose() {
     }
 
+    /**
+     * called by micro while starting this plugin
+     * @param si ScriptInterface of micro manager
+     */
     @Override
     public void setApp(ScriptInterface si) {
-        /*
-        try {
-            initPlugin(si);
-            prepareAcquisition(768, 768, 512, 512);
-            guiFrame.startButton.setEnabled(true);
-            guiFrame.stopButton.setEnabled(false);
-        } catch (Exception ex) {
-            System.out.println(ex);
-        }
-        */
-        
         try {
             mmc = si.getMMCore();
             cc = new CameraController(this);
@@ -205,6 +304,10 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
         }
     }
 
+    /**
+     * called by micro manager after setApp
+     * @see setApp(ScriptInterface si)
+     */
     @Override
     public void show() {
         System.out.println(menuName + " got opend via mirco manager");
@@ -223,12 +326,12 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
 
     @Override
     public String getVersion() {
-        return "alpha-version 1.1";
+        return "version 1";
     }
 
     @Override
     public String getCopyright() {
-        return "there is no right to copy";
+        return "GPL licence";
     }
 
 }
