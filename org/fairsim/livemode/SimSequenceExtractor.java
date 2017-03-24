@@ -313,6 +313,14 @@ public class SimSequenceExtractor {
                 }
             }
         }
+        
+        private boolean isTimeStampSync(long curTimeStamp, long lastTimeStamp) {
+            return Math.abs(curTimeStamp - lastTimeStamp - syncFrameDelay) < 50;
+        }
+        
+        private boolean isAvrSync(short[] pxl) {
+            return MTool.avr_ushort(pxl) > syncFrameAvr;
+        }
 
         /**
          * Sequence detection, emptying rawImgs, filling simSeq
@@ -327,16 +335,17 @@ public class SimSequenceExtractor {
                 try {
 
                     long lastTimeStamp = 0;
+                    long curTimeStamp = 0;
                     int counter = 0;
                     // first, loop over incoming images until we find a sync frame
                     while (true) {
 
                         // take a frame, get it's timestamp
                         ImageWrapper iwSync = getSorted();
-                        long curTimeStamp = iwSync.timeCamera();
+                        curTimeStamp = iwSync.timeCamera();
 
                         // version 1 (for camera with precise time-stamp, like PCO)
-                        if (Math.abs(curTimeStamp - lastTimeStamp - syncFrameDelay) < 50) {
+                        if (isTimeStampSync(curTimeStamp, lastTimeStamp)) {
                             //Tool.tell("SYNC "+chNumber+": via timestamp/PCO");
                             syncFrameCount++;
                             long count = syncFrameCount / 5;
@@ -349,7 +358,7 @@ public class SimSequenceExtractor {
 
                         // version 2 (for camera w/o timestamp, bright LED):
                         short pxl[] = iwSync.getPixels();
-                        if (MTool.avr_ushort(pxl) > syncFrameAvr) {
+                        if (isAvrSync(pxl)) {
                             syncFrameCount++;
                             long count = syncFrameCount / 5;
                             Color bg = (count % 2 == 0) ? (Color.BLACK) : (Color.GREEN);
@@ -360,7 +369,7 @@ public class SimSequenceExtractor {
                         }
                         counter++;
                         if (counter >= nrRawPerSeq * seqCount) {
-                            Tool.trace("No sync frame found");
+                            Tool.trace("No sync frame found " + iwSync.seqNr());
                             counter = 0;
                         }
                     }
@@ -373,6 +382,13 @@ public class SimSequenceExtractor {
                         for (int i = 0; i < nrRawPerSeq; i++) {
                             ImageWrapper iw = getSorted();
                             simPxls[i] = iw.getPixels();
+                            
+                            curTimeStamp = iw.timeCamera();
+                            if (isTimeStampSync(curTimeStamp, lastTimeStamp))
+                                Tool.trace("TimeStamp sync frame found in sequence " + iw.seqNr());
+                            lastTimeStamp = curTimeStamp;
+                            if (isAvrSync(simPxls[i]))
+                                Tool.trace("Avr sync frame found in sequence " + iw.seqNr());
                         }
 
                         boolean ok = simSeq.offer(simPxls);

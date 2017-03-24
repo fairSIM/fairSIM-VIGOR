@@ -423,6 +423,14 @@ public class Tiles {
 	    DefaultListModel<T> dlm = (DefaultListModel<T>)lm;
 	    dlm.addElement( elem );
 	}
+        
+        public int getNrElements() {
+            ListModel<T> lm = this.getModel();
+            if (!( lm instanceof DefaultListModel ))
+	       throw new RuntimeException("Wrong listmodel for this opeartion to work");
+	    DefaultListModel<T> dlm = (DefaultListModel<T>)lm;
+            return dlm.getSize();
+        }
 
 	// emulate Java7 behaviour
 	@Override

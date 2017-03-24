@@ -411,14 +411,17 @@ public class EasyGui extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void blueCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_blueCheckBoxActionPerformed
+        disableControllPanel();
         enableItPanel();
     }//GEN-LAST:event_blueCheckBoxActionPerformed
 
     private void greenCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_greenCheckBoxActionPerformed
+        disableControllPanel();
         enableItPanel();
     }//GEN-LAST:event_greenCheckBoxActionPerformed
 
     private void redCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_redCheckBoxActionPerformed
+        disableControllPanel();
         enableItPanel();
     }//GEN-LAST:event_redCheckBoxActionPerformed
 
@@ -589,7 +592,6 @@ public class EasyGui extends javax.swing.JPanel {
         runButton.setEnabled(true);
         photoButton.setEnabled(true);
         paramButton.setEnabled(true);
-        setStatus("Ready for captureing images");
     }
     
     private void disableControllPanel() {
@@ -621,7 +623,7 @@ public class EasyGui extends javax.swing.JPanel {
         for (Cam c : camGuis) {
             c.setRo(ro);
         }
-        setStatus("Running order was set to: " + ro.device + "_" + ro.name);
+        setStatus("Running order: " + ro.device + "_" + ro.name);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

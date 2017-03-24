@@ -291,7 +291,8 @@ public class ParameterTab {
 	    } catch (Conf.SomeIOException e) {
 		Tool.error("Saving failed: "+e, false);
 	    }
-            availableParameters.setSelectedIndex(availableParameters.getComponentCount() - 1);
+            
+            availableParameters.setSelectedIndex(availableParameters.getNrElements() - 1);
             useParam();
 	}
     
