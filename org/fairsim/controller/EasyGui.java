@@ -446,6 +446,7 @@ public class EasyGui extends javax.swing.JPanel {
 
     private void runButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runButtonActionPerformed
         if (runButton.isSelected()) {
+            lcp.getSequenceExtractor().clearBuffers();
             disableGui();
             for(Cam c : camGuis) {
                 c.startMovie();
@@ -466,6 +467,7 @@ public class EasyGui extends javax.swing.JPanel {
     }//GEN-LAST:event_runButtonActionPerformed
 
     private void photoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_photoButtonActionPerformed
+        lcp.getSequenceExtractor().clearBuffers();
         for(Cam c : camGuis) {
             c.startMovie();
         }

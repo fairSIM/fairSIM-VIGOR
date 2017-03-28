@@ -295,6 +295,10 @@ public class LiveControlPanel {
 
     }
     
+    /**
+     * starts/stops recording raw images from input stream over network
+     * @return true/false if recording was started/stopped
+     */
     public boolean record() {
         if (!isRecording) {
             recordButton.setForeground(Color.RED);
@@ -312,12 +316,20 @@ public class LiveControlPanel {
         return isRecording;
     }
     
+    /**
+     * starts e parameter estimation for all channels
+     */
     public void doParamEstimation() {
         for (ParameterTab pt : pTab) {
             pt.runFit();
         }
     }
     
+    /**
+     * sets the raw frames per seconds for this instance
+     * @param fps raw frames per second for this channel
+     * @param channel channel for fps
+     */
     public void setRawFps(double fps, String channel) {
         for (int i = 0; i < nrCh; i++) {
             if(channels[i].equals(channel)) {
@@ -328,6 +340,9 @@ public class LiveControlPanel {
         Tool.trace("Setting rawFps went wrong");
     }
     
+    /**
+     * initializes the widefield- and reconstructed view frames
+     */
     private void initView() {
         if (reconRunner != null) wfDisplay = new RawImageDisplay(this.reconRunner, channels);
         else wfDisplay = new PlainImageDisplay(nrCh, wfPixelSize, wfPixelSize, channels);
@@ -343,6 +358,10 @@ public class LiveControlPanel {
         lrFr.setVisible(true);
     }
     
+    /**
+     * refreshes and resizes the widefield- and reconstructed view frames
+     * @param pixelSize squared image size
+     */
     public void refreshView(int pixelSize) {
         stopThreads();
         seqDetection.pause(true);
@@ -363,6 +382,9 @@ public class LiveControlPanel {
         startThreads();
     }
     
+    /**
+     * starts threads for {@link #refreshView(int) }
+     */
     private void startThreads() {
         sif1 = new SimpleImageForward(false);
         sif2 = new SimpleImageForward(true);
@@ -375,6 +397,9 @@ public class LiveControlPanel {
         Tool.trace("Started DisplayThreads.");
     }
     
+    /**
+     * stops threads for {@link #refreshView(int) }
+     */
     private void stopThreads() {
         sif1.interrupt();
         sif2.interrupt();
@@ -389,14 +414,26 @@ public class LiveControlPanel {
         Tool.trace("Stopped DisplayThreads.");
     }
     
+    /**
+     * 
+     * @return widefield squared image size
+     */
     public int getWfSize() {
         return this.wfPixelSize;
     }
     
+    /**
+     * 
+     * @return this {@link org.fairsim.livemode.ReconstructionRunner}
+     */
     public ReconstructionRunner getReconRunner() {
         return this.reconRunner;
     }
     
+    /**
+     * 
+     * @return this {@link org.fairsim.livemode.SimSequenceExtractor}
+     */
     public SimSequenceExtractor getSequenceExtractor() {
         return this.seqDetection;
     }
@@ -414,6 +451,7 @@ public class LiveControlPanel {
 
         public void run() {
             while (true) {
+                // updating buffer bars
                 int bufferPercent = imageReceiver.getQueuePercent();
                 networkBufferBar.setString("network input buffer: " + bufferPercent + '%');
                 networkBufferBar.setValue(bufferPercent);
@@ -431,6 +469,7 @@ public class LiveControlPanel {
                     channelSortBufferBar[ch].setString(channels[ch] + " sort buffer: " + percent + "%");
                     channelSortBufferBar[ch].setValue(percent);
                 }
+                
                 // update save buffer state
                 double fps = 0;
                 for (double d : rawFps) {
@@ -496,6 +535,10 @@ public class LiveControlPanel {
         }
     }
     
+    /**
+     * Widefield GUI-Frame extends the PlainImageDisplay with an extra slider
+     * to see the single raw frames
+     */
     public static class RawImageDisplay extends PlainImageDisplay {
 
         public RawImageDisplay(ReconstructionRunner recRunner, String... names) {

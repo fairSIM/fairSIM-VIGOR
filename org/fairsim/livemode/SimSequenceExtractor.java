@@ -24,8 +24,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.awt.Color;
 import java.nio.BufferOverflowException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.DataFormatException;
 
 import org.fairsim.transport.ImageReceiver;
@@ -243,7 +241,11 @@ public class SimSequenceExtractor {
             sortBuffer = new SortBuffer(10);
             restartThread = false;
         }
-
+        
+        /**
+         * forwards an image to this
+         * @param iw image
+         */
         void pushImg(ImageWrapper iw) {
             boolean ok = rawImgs.offer(iw);
             if (!ok) {
@@ -252,6 +254,12 @@ public class SimSequenceExtractor {
             }
         }
         
+        /**
+         * 
+         * @return the next raw frame from the raw queue or the sort buffer
+         * including sync frames
+         * @throws InterruptedException if gets an interrupt
+         */
         private ImageWrapper getSorted() throws InterruptedException {
             ImageWrapper image = null;
             if (sortBuffer.isEmpty()) {
@@ -267,6 +275,11 @@ public class SimSequenceExtractor {
             }
         }
         
+        /**
+         * 
+         * @return the next image from the raw queue
+         * @throws InterruptedException 
+         */
         private ImageWrapper sortFromQueue() throws InterruptedException {
             ImageWrapper image = rawImgs.take();
             if (image.seqNr() == seqNr) {
@@ -283,13 +296,20 @@ public class SimSequenceExtractor {
                 return getSorted();
             }
         }
-
+        
+        /**
+         * clearing all buffers of this except the sort buffer
+         */
         void clearBuffers() {
             rawImgs.clear();
             simSeq.clear();
             syncFrameCount = 0;
         }
         
+        /**
+         * fills the sort buffer and sets the minimum of its containing seqNr
+         * as new starting seqNr for this
+         */
         void setSeqNr() {
             sortBuffer.buffer.clear();
             seqNr = Long.MAX_VALUE;
@@ -314,10 +334,21 @@ public class SimSequenceExtractor {
             }
         }
         
+        /**
+         * 
+         * @param curTimeStamp current timestamp
+         * @param lastTimeStamp last timestamp before the current timestamp
+         * @return true if two timestamps are sync timestamps
+         */
         private boolean isTimeStampSync(long curTimeStamp, long lastTimeStamp) {
             return Math.abs(curTimeStamp - lastTimeStamp - syncFrameDelay) < 50;
         }
         
+        /**
+         * 
+         * @param pxl image
+         * @return true if image is detected as an average based sync frame
+         */
         private boolean isAvrSync(short[] pxl) {
             return MTool.avr_ushort(pxl) > syncFrameAvr;
         }
@@ -408,6 +439,9 @@ public class SimSequenceExtractor {
             }
         }
         
+        /**
+         * class that provides a buffer for sorting images on the basis of seqNr
+         */
         class SortBuffer {
 
             final int MAXSIZE;

@@ -256,6 +256,9 @@ public class ParameterTab {
 
 	}
         
+        /**
+         * starts a parameter fit
+         */
         private void runFit() {
             Tool.Tuple<Integer, Tool.Callback<SimParam>> errant
                     = new Tool.Tuple<Integer, Tool.Callback<SimParam>>(
@@ -267,6 +270,9 @@ public class ParameterTab {
             }
         }
         
+        /**
+         * uses selected parameters from the GUI list
+         */
         public void useParam() {
             SimParam sp = availableParameters.getSelectedValue();
             if (sp != null) {

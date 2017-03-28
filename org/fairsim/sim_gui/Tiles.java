@@ -424,6 +424,10 @@ public class Tiles {
 	    dlm.addElement( elem );
 	}
         
+        /**
+         * 
+         * @return number of elements in this JList
+         */
         public int getNrElements() {
             ListModel<T> lm = this.getModel();
             if (!( lm instanceof DefaultListModel ))

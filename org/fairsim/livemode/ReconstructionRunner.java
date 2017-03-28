@@ -172,7 +172,7 @@ public class ReconstructionRunner {
     }
     
     /**
-     * Starts all threads of the ReconstructionRunner
+     * Starts all threads of this
      */
     private void startThreads() {
         stopReconThreads = false;
@@ -200,7 +200,7 @@ public class ReconstructionRunner {
     }
 
     /**
-     * Stops all threads of the ReconstructionRunner
+     * Stops all threads of this
      */
     private void stopThreads() {
         stopReconThreads = true;
@@ -518,6 +518,7 @@ public class ReconstructionRunner {
                 }
 
             }
+            // settting null pointer for garbage collector
             fullResult = null;
             widefield = null;
             inFFT = null;

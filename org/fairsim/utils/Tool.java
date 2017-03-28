@@ -91,6 +91,11 @@ public final class Tool {
                 if (!errorShown) {
                     errorShown = true;
                     JOptionPane.showMessageDialog(null, message, "fairSIM Error", JOptionPane.ERROR_MESSAGE);
+                    try {
+                        Thread.sleep(3000);
+                    } catch (InterruptedException ex) {
+                        Tool.trace("Tool: errorShown sleep interrupted, why?");
+                    }
                     errorShown = false;
                 }
             }
