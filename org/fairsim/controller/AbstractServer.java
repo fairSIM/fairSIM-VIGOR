@@ -25,19 +25,25 @@ import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 /**
- *
+ * Abstract class for a server for network communication in an extra thread,
+ * build for a single connected client
  * @author m.lachetta
  */
 public abstract class AbstractServer extends Thread {
 
     protected ServerGui gui;
-    private int port;
-    private ServerSocket server;
+    private final int port;
+    private final ServerSocket server;
     private Socket client;
     protected Scanner in;
     protected PrintWriter out;
     public boolean interrupted;
 
+    /**
+     * creates a new server
+     * @param gui gui for this server
+     * @throws IOException if creating went wrong
+     */
     protected AbstractServer(ServerGui gui) throws IOException {
         this.gui = gui;
         port = 32322;
@@ -45,13 +51,28 @@ public abstract class AbstractServer extends Thread {
         interrupted = false;
     }
 
+    /**
+     * method that is called after the client was connected to this server
+     */
     protected abstract void buildUpConnection();
 
+    /**
+     * method that is called after the connection to the client was closed
+     */
     protected abstract void buildDownConnection();
 
-    protected abstract String handleCommand(String input);
+    /**
+     * method that is called after this server received a command from the client
+     * @param command command from the client
+     * @return answer from this server
+     */
+    protected abstract String handleCommand(String command);
 
-    private final void handleConnection() throws IOException {
+    /**
+     * receives commands and sends answers to the client
+     * @throws IOException 
+     */
+    private void handleConnection() throws IOException {
         String input;
         try {
             while (!interrupted) {
@@ -62,7 +83,10 @@ public abstract class AbstractServer extends Thread {
         } catch (NoSuchElementException ex) {
         }
     }
-
+    
+    /**
+     * closes the connection to the client
+     */
     public final void close() {
         new Thread(new Runnable() {
             public void run() {
@@ -76,6 +100,9 @@ public abstract class AbstractServer extends Thread {
         }).start();
     }
 
+    /**
+     * waits for - and handles connections to the client
+     */
     @Override
     public final void run() {
         while (!interrupted) {

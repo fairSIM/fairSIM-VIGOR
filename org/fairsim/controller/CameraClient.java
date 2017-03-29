@@ -21,22 +21,33 @@ import org.fairsim.cameraplugin.CameraGroup;
 import org.fairsim.utils.Tool;
 
 /**
- *
+ * class for the client which should be connected to the micro manager
+ * camera plugin
  * @author m.lachetta
  */
 public class CameraClient extends AbstractClient {
 
-    AdvancedGui.ClientGui gui;
+    //ClientGui gui;
     int[] roi;
     double exposure, fps;
     boolean queued, sended;
     private CameraGroup[] groups;
 
-    public CameraClient(String serverAdress, int serverPort, AdvancedGui.ClientGui gui) {
+    /**
+     * constructor
+     * @param serverAdress ip of the server
+     * @param serverPort pert of the server
+     * @param gui gui of this
+     */
+    public CameraClient(String serverAdress, int serverPort, ClientGui gui) {
         super(serverAdress, serverPort, gui);
-        this.gui = gui;
+        //this.gui = gui;
     }
 
+    /**
+     * 
+     * @return array of all possible config groups
+     */
     String[] getGroupArray() {
         int len = groups.length;
         String[] s = new String[len];
@@ -46,6 +57,11 @@ public class CameraClient extends AbstractClient {
         return s;
     }
 
+    /**
+     * 
+     * @param groupId id of the config group
+     * @return array of configs of the group
+     */
     String[] getConfigArray(int groupId) {
         return groups[groupId].getConfigArray();
     }
@@ -53,6 +69,7 @@ public class CameraClient extends AbstractClient {
     @Override
     protected void handleServerAnswer(String answer) {
         if (answer.startsWith("Transfering roi")) {
+            // updates the roi array
             String[] sRois = Tool.decodeArray(answer);
             int len = sRois.length;
             roi = new int[len];
@@ -60,6 +77,7 @@ public class CameraClient extends AbstractClient {
                 roi[i] = Integer.parseInt(sRois[i]);
             }
         } else if (answer.startsWith("Transfering groups")) {
+            // updates thze config groups
             String[] groupStrings = Tool.decodeArray(answer);
             int len = groupStrings.length;
             groups = new CameraGroup[len];
@@ -67,8 +85,10 @@ public class CameraClient extends AbstractClient {
                 groups[i] = new CameraGroup(groupStrings[i]);
             }
         } else if (answer.startsWith("Transfering exposure time")) {
+            // updates the exposure time
             exposure = Double.parseDouble(answer.split(";")[1]);
         } else if (answer.startsWith("Transfering status")) {
+            // updating fps, queued & sended status
             String[] statusArray = Tool.decodeArray(answer);
             fps = Double.parseDouble(statusArray[0]);
             queued = Boolean.parseBoolean(statusArray[1]);

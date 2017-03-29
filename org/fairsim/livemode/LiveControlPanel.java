@@ -462,7 +462,7 @@ public class LiveControlPanel {
                 reconBufferOutputBar.setString("recon output buffer: " + bufferPercent + '%');
                 reconBufferOutputBar.setValue(bufferPercent);
                 for(int ch = 0; ch < nrCh; ch++) {
-                    int percent = getQueuePercent(seqDetection.channels[ch].rawImgs);
+                    int percent = getQueuePercent(seqDetection.channels[ch].simSeq);
                     channelBufferBar[ch].setString(channels[ch] + " channel buffer: " + percent + "%");
                     channelBufferBar[ch].setValue(percent);
                     percent = seqDetection.channels[ch].sortBuffer.getCapacityPercent();

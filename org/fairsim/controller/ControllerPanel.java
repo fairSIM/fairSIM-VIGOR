@@ -23,10 +23,10 @@ import java.util.List;
 import org.fairsim.livemode.SimSequenceExtractor;
 
 /**
- *
+ * gui for a controller client
  * @author m.lachetta
  */
-public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.ClientGui, EasyGui.Ctrl {
+public class ControllerPanel extends javax.swing.JPanel implements AbstractClient.ClientGui, EasyGui.Ctrl {
     private AdvancedGui motherGui;
     ControllerClient controllerClient;
     private List<Component> slmControllers, arduinoControllers;
@@ -41,6 +41,13 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
         initComponents();
     }
     
+    /**
+     * enables this panel, called from the advanced gui
+     * @param motherGui the advanced gui
+     * @param adress server adress
+     * @param port server port
+     * @param seqDetection the sequence extractor of fairSIM
+     */
     void enablePanel(AdvancedGui motherGui, String adress, int port, SimSequenceExtractor seqDetection) {
         initSlm();
         initArduino();
@@ -53,7 +60,7 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
     }
     
     /**
-     * Initialises the GUI for the SLM
+     * initializes the GUI for the SLM
      */
     private void initSlm() {
         slmControllers = new ArrayList<>();
@@ -69,7 +76,7 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
     }
 
     /**
-     * Initialises the GUI for the arduino
+     * initializes the GUI for the arduino
      */
     private void initArduino() {
         arduinoControllers = new ArrayList<>();
@@ -205,7 +212,7 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
                 //slmTime.setText("Timestamp: " + client.info[1]);
                 //slmType.setText("Activation type: " + client.info[2]);
                 //slmDefault.setText("Default running order: " + slmComboBox.getItemAt(Integer.parseInt(client.info[3])));
-                slmSelect.setText("Selected running order: " + slmComboBox.getItemAt(Integer.parseInt(controllerClient.slmInfo[4])));
+                slmSelect.setText("Selected running order: " + slmComboBox.getItemAt(Integer.parseInt(controllerClient.deviceInfo[4])));
                 //slmRepertoir.setText("Repertoir name: " + client.info[5]);
             }
         } catch (NullPointerException ex) {
@@ -214,12 +221,19 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
         }
     }
     
+    /**
+     * sets the red/green/blue buttons to selected/unselected
+     * @param b true/false = selected/unselected
+     */
     private void setRGBButtonSelected(boolean b) {
         arduinoRedButton.setSelected(b);
         arduinoGreenButton.setSelected(b);
         arduinoBlueButton.setSelected(b);
     }
 
+    /**
+     * stops the the program on the arduino
+     */
     void arduinoStop() {
         sendArduinoInstruction("x");
         if (controllerInstructionDone) {
@@ -234,6 +248,10 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
         }
     }
 
+    /**
+     * starts a arduino program
+     * @param command command for the arduino
+     */
     private void startArduinoProgramm(String command) {
         seqDetection.resetChannelBufferThreads();
         sendArduinoInstruction(command);
@@ -251,16 +269,18 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
     }
 
     /**
-     * Connects server and SLM
+     * Connects server and SLM and updates the running orders
      */
     void slmConnect() {
+        // connecting
         sendSlmInstruction("connect");
         if (controllerInstructionDone) {
+            // updating running orders
             sendSlmInstruction("rolist");
             if (controllerInstructionDone) {
                 slmComboBox.removeAllItems();
-                for (int i = 0; i < controllerClient.slmList.length; i++) {
-                    slmComboBox.addItem("[" + i + "]    " + controllerClient.slmList[i]);
+                for (int i = 0; i < controllerClient.deviceList.length; i++) {
+                    slmComboBox.addItem("[" + i + "]    " + controllerClient.deviceList[i]);
                 }
             }
             slmRefresh();
@@ -282,6 +302,9 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
         }
     }
 
+    /**
+     * connects server and arudino
+     */
     void arduinoConnect() {
         sendArduinoInstruction("connect");
         if (controllerInstructionDone) {
@@ -304,6 +327,9 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
         }
     }
     
+    /**
+     * updates running orders from the arduino
+     */
     private void updateArduinoRos() {
         sendArduinoInstruction("rolist");
             if (controllerInstructionDone) {
@@ -314,6 +340,9 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
             }
     }
 
+    /**
+     * disconnects server and arduino
+     */
     void arduinoDisconnect() {
         sendArduinoInstruction("disconnect");
         if (controllerInstructionDone) {
@@ -323,6 +352,9 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
         }
     }
     
+    /**
+     * starts the selected movie running order of the arduino from this gui
+     */
     void arduinoStart() {
         int breakTime = 0;
         try {
@@ -332,6 +364,9 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
         startArduinoProgramm("movie;" + arduinoComboBox.getSelectedIndex() + ";" + breakTime);
     }
     
+    /**
+     * starts the selected photo running order of the arduino from this gui
+     */
     void arduinoPhoto() {
         seqDetection.resetChannelBufferThreads();
         sendArduinoInstruction("photo;" + arduinoComboBox.getSelectedIndex());
@@ -340,25 +375,42 @@ public class ControllerPanel extends javax.swing.JPanel implements AdvancedGui.C
         }
     }
     
+    /**
+     * sets the selected running order of the slm
+     */
     void slmSetSelected() {
         sendSlmInstruction(Integer.toString(slmComboBox.getSelectedIndex()));
         slmRefresh();
     }
     
+    /**
+     * deactivate the running oder on the slm
+     */
     void slmDeactivate() {
         sendSlmInstruction("deactivate");
     }
     
+    /**
+     * activates the running order on the slm
+     */
     void slmActivate() {
         sendSlmInstruction("activate");
     }
     
+    /**
+     * 
+     * @return running orders of the arduino
+     */
     public ControllerClient.ArduinoRunningOrder[] getArduinoRos() {
         return controllerClient.arduinoRos;
     }
     
+    /**
+     * 
+     * @return running orders of the slm
+     */
     public String[] getDeviceRos() {
-        return controllerClient.slmList;
+        return controllerClient.deviceList;
     }
     
     @Override

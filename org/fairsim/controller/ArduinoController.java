@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 import org.fairsim.utils.Tool;
 
 /**
- * Class to controll the Arduino.
+ * Class to control the arduino
  *
  * @author m.lachetta
  */
@@ -33,7 +33,7 @@ public class ArduinoController implements SerialPortEventListener {
     private final BlockingQueue<String> arduinoAnswers;
     private final BlockingQueue<String> arduinoCommands;
     private SendingThread sendingThread;
-    private boolean ready;
+    private boolean ready; // is arduino ready for a command?
     /**
      * The port we're normally going to use.
      */
@@ -61,13 +61,21 @@ public class ArduinoController implements SerialPortEventListener {
      */
     private static final int DATA_RATE = 19200;
 
+    /**
+     * constructor for testing serial communication in command line
+     * @throws Exception 
+     */
     private ArduinoController() throws Exception {
         serverGui = null;
         arduinoAnswers = null;
         arduinoCommands = null;
         initialize();
     }
-
+    
+    /**
+     * constructor
+     * @param serverGui gui of this
+     */
     ArduinoController(ControllerServerGui serverGui) {
         this.serverGui = serverGui;
         arduinoAnswers = new LinkedBlockingQueue<>();
@@ -75,6 +83,10 @@ public class ArduinoController implements SerialPortEventListener {
         ready = false;
     }
 
+    /**
+     * initializes the serial connection to the arduino
+     * @throws Exception 
+     */
     private void initialize() throws Exception {
         CommPortIdentifier portId = null;
         Enumeration portEnum = CommPortIdentifier.getPortIdentifiers();
@@ -126,27 +138,32 @@ public class ArduinoController implements SerialPortEventListener {
     }
 
     /**
-     * Handle an event on the serial port. Read the data and print it.
+     * Handle an event on the serial port. Adds the arduinos answer to the
+     * answers queue
      */
     @Override
     public synchronized void serialEvent(SerialPortEvent oEvent) {
         if (oEvent.getEventType() == SerialPortEvent.DATA_AVAILABLE) {
             try {
                 String inputLine = input.readLine();
-                if (inputLine.equals("ready")) ready = true;
+                if (inputLine.equals("ready")) ready = true; // will not be added to the answers queue
                 else {
                     if (inputLine.startsWith("Movie started: ")) ready = true;
                     try {
+                        // for fairSIM mode
                         serverGui.showText("Arduino: " + inputLine);
                         arduinoAnswers.add(inputLine);
                     } catch (NullPointerException ex) {
+                        // for testing mode
                         System.out.println("Arduino: " + inputLine);
                     }
                 }
             } catch (Exception e) {
+                // ecception handling
                 if (e instanceof IOException && e.getMessage().equals("Underlying input stream returned zero bytes")) {
-                    //do nothing
+                    //happens sometimes but seams not to be important, will be ignorred
                 } else {
+                    // outputs an error
                     System.err.println("Arduino: Error:" + e.toString());
                     try {
                         serverGui.showText("Arduino: Error: " + e.toString());
@@ -158,6 +175,11 @@ public class ArduinoController implements SerialPortEventListener {
         // Ignore all the other eventTypes, but you should consider the other ones.
     }
     
+    /**
+     * asks the arduino for the list of running orders and returns them as an
+     * encoded array
+     * @return encoded array of running orders from the arduino
+     */
     public String getRoList() {
         String error = "Error: ArduinoController.getRoList()";
         arduinoCommands.add("list");
@@ -177,6 +199,9 @@ public class ArduinoController implements SerialPortEventListener {
         }
     }
     
+    /**
+     * @return the next answer from the arduino or a timeout message after 1 sec
+     */
     private String getArduinoAnswer() {
         try {
             String answer = arduinoAnswers.poll(1000, TimeUnit.MILLISECONDS);
@@ -187,13 +212,21 @@ public class ArduinoController implements SerialPortEventListener {
         }
     }
     
-    //only for commandline input
+    /**
+     * sends a command to the arduino, only for testing from commandline
+     * @param toSend command for the arduino
+     * @throws IOException if communication with arduino went wrong
+     */
     private void sendCommand(String toSend) throws IOException {
         byte[] command = toSend.getBytes(Charset.forName("UTF-8"));
         output.write(command);
         output.flush();
     }
-
+    
+    /**
+     * builds up a connection to the arduino and starts the sending thread
+     * @return information about connecting status
+     */
     public String connect() {
         try {
             initialize();
@@ -205,6 +238,10 @@ public class ArduinoController implements SerialPortEventListener {
         }
     }
 
+    /**
+     * closes the connection to the arduino
+     * @return information about connecting status
+     */
     public String disconnect() {
         try {
             if (sendingThread != null) sendingThread.interrupt();
@@ -218,21 +255,43 @@ public class ArduinoController implements SerialPortEventListener {
         }
     }
     
+    /**
+     * sends a single char to the arduino
+     * @param c char to be send
+     * @return answer of the arduino
+     */
     public String sendChar(char c) {
         arduinoCommands.add(String.valueOf(c));
         return getArduinoAnswer();
     }
     
+    /**
+     * gives the arduino the command to take a photo with the fast sim setup
+     * @param runningOrder running order for the photo
+     * @return answer for the arduino
+     */
     public String takePhoto(int runningOrder) {
         arduinoCommands.add("p;" + runningOrder);
         return getArduinoAnswer();
     }
     
+    /**
+     * gives the arduino the command to start movie acquisition with the fast sim setup
+     * @param runningOrder running order for the acquisition
+     * @param breakTime delays between sim sequences
+     * @return answer from the arduino
+     */
     public String startMovie(int runningOrder, int breakTime) {
         arduinoCommands.add("m;" + runningOrder + ";" + breakTime);
         return getArduinoAnswer();
     }
 
+    /**
+     * main method for testing direct serial communication with the arduino
+     * @param args not used
+     * @throws IOException if anything went wrong
+     * @throws InterruptedException if anything went wrong
+     */
     public static void main(String[] args) throws IOException, InterruptedException {
         try {
             ArduinoController main = new ArduinoController(null);
@@ -249,6 +308,9 @@ public class ArduinoController implements SerialPortEventListener {
         }
     }
     
+    /**
+     * thread that takes command from commad queue and sends them to the arduino
+     */
     private class SendingThread extends Thread {
 
         @Override

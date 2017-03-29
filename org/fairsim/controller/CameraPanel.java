@@ -26,10 +26,10 @@ import javax.swing.*;
 import org.fairsim.utils.Tool;
 
 /**
- *
+ * gui for a camera client
  * @author m.lachetta
  */
-public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.ClientGui, EasyGui.Cam {
+public class CameraPanel extends javax.swing.JPanel implements AbstractClient.ClientGui, EasyGui.Cam {
 
     private AdvancedGui motherGui;
     private CameraClient client;
@@ -40,7 +40,6 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
     private List<JButton> buttons;
     private List<Component> components;
     //int recivingPixelSize;
-    private static final int UPDATEDELAY = 2000;
     
     boolean enabled;
 
@@ -51,6 +50,9 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
         initComponents();
     }
 
+    /**
+     * initializes all important components of this
+     */
     private void init() {
         defaultColor = queuingPanel.getBackground();
 
@@ -83,6 +85,13 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
         
     }
     
+    /**
+     * enables this panel, called from the advanced gui
+     * @param motherGui the advanced gui
+     * @param adress server adress
+     * @param port server port
+     * @param channelName channel of this
+     */
     void enablePanel(AdvancedGui motherGui, String adress, int port, String channelName) {
         init();
         this.motherGui = motherGui;
@@ -95,6 +104,9 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
         }
     }
     
+    /**
+     * disables this
+     */
     void disablePanel() {
         init();
         disableControllers();
@@ -102,6 +114,9 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
         enabled = false;
     }
 
+    /**
+     * updates the roi
+     */
     private void updateRoi() {
         sendInstruction("get roi");
         if (instructionDone) {
@@ -112,6 +127,9 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
         }
     }
 
+    /**
+     * updates the exposure time
+     */
     private void updateExposure() {
         sendInstruction("get exposure");
         if (instructionDone) {
@@ -119,6 +137,9 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
         }
     }
 
+    /**
+     * updates the config groups
+     */
     private void updateGroups() {
         sendInstruction("get groups");
         if (instructionDone) {
@@ -131,6 +152,10 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
         }
     }
 
+    /**
+     * updates the configs of the group
+     * @param groupId id of the group
+     */
     private void updateConfigs(int groupId) {
         String[] configs = client.getConfigArray(groupId);
         configBox.removeAllItems();
@@ -139,6 +164,9 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
         }
     }
 
+    /**
+     * updating fps, queued & sended status
+     */
     private void updateStatus() {
         sendInstruction("get status");
         if (instructionDone) {
@@ -157,6 +185,9 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
         }
     }
 
+    /**
+     * resets fps, queued & sended status
+     */
     private void resetCamStatus() {
         if (updateThread != null) {
             updateThread.interrupt();
@@ -166,35 +197,54 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
         sendingPanel.setBackground(defaultColor);
     }
 
+    /**
+     * sends a command to the camera
+     * @param command command for the camera
+     */
     private void sendInstruction(String command) {
         instructionDone = true;
         client.addInstruction(command);
     }
-
+    
+    /**
+     * enables all buttons of this
+     */
     private void enableButtons() {
         for (JButton b : buttons) {
             b.setEnabled(true);
         }
     }
 
+    /**
+     * disables all buttons of this
+     */
     private void disableButtons() {
         for (JButton b : buttons) {
             b.setEnabled(false);
         }
     }
 
+    /**
+     * enables all components of this
+     */
     private void enableControllers() {
         for (Component comp : components) {
             comp.setEnabled(true);
         }
     }
 
+    /**
+     * disables all components of this
+     */
     private void disableControllers() {
         for (Component comp : components) {
             comp.setEnabled(false);
         }
     }
     
+    /**
+     * starts camera acquisition
+     */
     void startCam() {
         sendInstruction("start");
         if (instructionDone) {
@@ -205,6 +255,9 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
         }
     }
 
+    /**
+     * stops camera acquisition
+     */
     void stopCam() {
         sendInstruction("stop");
         if (instructionDone) {
@@ -214,6 +267,9 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
         }
     }
 
+    /**
+     * sets the selected rou from this gui for the camera
+     */
     void setRoi() {
         try {
             int roiId = roiBox.getSelectedIndex();
@@ -226,6 +282,9 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
         }
     }
 
+    /**
+     * sets the typed exposure time from this gui for the camera
+     */
     void setExposureTime() {
         try {
             String exposureString = exposureField.getText();
@@ -238,6 +297,9 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
         }
     }
 
+    /**
+     * sets the selected config from this gui for the camera
+     */
     void setConfig() {
         int[] ids = new int[2];
         ids[0] = groupBox.getSelectedIndex();
@@ -250,6 +312,9 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
         }
     }
 
+    /**
+     * updates the gui for the selected groups
+     */
     void groupBoxSelected() {
         int groupId = groupBox.getSelectedIndex();
         if (groupId >= 0) {
@@ -264,6 +329,7 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
     
     @Override
     public void setRo(EasyGui.RunningOrder ro) throws EasyGui.EasyGuiException {
+        // sets the specified config of this running order for the camera
         String[] groups = client.getGroupArray();
         boolean configFound = false;
         for (int i = 0; i < groups.length; i++) {
@@ -282,10 +348,10 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
             }
         }
         if(!configFound) throw new EasyGui.EasyGuiException("Camera: No config found");
-        
+        // sets the exposure time of this running order for the camera
         exposureField.setText(String.valueOf((double) ro.exposureTime / 1000.));
         setExposureTime();
-        
+        //sets the roi of this running order for the camera
         int size = ro.allowBigRoi ? 512 : 256;
         if (client.roi[4] != size) {
             if (size == 512) roiBox.setSelectedIndex(0);
@@ -305,12 +371,15 @@ public class CameraPanel extends javax.swing.JPanel implements AdvancedGui.Clien
         stopCam();
     }
     
+    /**
+     * thread that updates fps, queued & sended status every 2 sec
+     */
     private class StatusUpdateThread extends Thread {
         @Override
         public void run() {
             while (!isInterrupted()) {
                 try {
-                    sleep(UPDATEDELAY);
+                    sleep(2000);
                     updateStatus();
                 } catch (InterruptedException ex) {
                     interrupt();

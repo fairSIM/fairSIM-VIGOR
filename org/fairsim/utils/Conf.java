@@ -712,7 +712,7 @@ public class Conf {
 		if ( t.equals( "int" )) 
 		    fdl.newInt( name ).fromText( c );
 		
-		if ( t.equals( "decimal" )) 
+		if ( t.equals( "decimal" ))
 		    fdl.newDbl( name ).fromText( c );
 		
 		if ( t.equals( "string" )) 

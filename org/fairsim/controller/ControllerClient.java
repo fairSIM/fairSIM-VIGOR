@@ -21,24 +21,23 @@ package org.fairsim.controller;
 import org.fairsim.utils.Tool;
 
 /**
- * Class of the Client in the communication chain <br>
- * SLM - Server - Client - GUI
+ * Class for the controller client
  *
  * @author m.lachetta
  */
 public class ControllerClient extends AbstractClient {
-    String[] slmInfo;
-    String[] slmList;
+    String[] deviceInfo;
+    String[] deviceList;
     ArduinoRunningOrder[] arduinoRos;
 
     /**
-     * Constructor for the Client
+     * Constructor for this
      *
-     * @param serverAdress IP/Name of the host-server
-     * @param serverPort for the Connection
-     * @param clientGui Gui for the SLM
+     * @param serverAdress IP/Name of the server
+     * @param serverPort port of the server
+     * @param clientGui gui for this
      */
-    protected ControllerClient(String serverAdress, int serverPort, AdvancedGui.ClientGui controllerPanel) {
+    protected ControllerClient(String serverAdress, int serverPort, AbstractClient.ClientGui controllerPanel) {
         super(serverAdress, serverPort, controllerPanel);
     }
     
@@ -49,12 +48,14 @@ public class ControllerClient extends AbstractClient {
      */
     @Override
     protected void handleServerAnswer(String answer) {
-        //clientGui.showText(output);
         if (answer.startsWith("Slm: Transfering info")) {
-            slmInfo = Tool.decodeArray(answer);
+            // updates the information of the device
+            deviceInfo = Tool.decodeArray(answer);
         } else if (answer.startsWith("Slm: Transfering rolist")) {
-            slmList = Tool.decodeArray(answer);
+            // updates running orders of the device
+            deviceList = Tool.decodeArray(answer);
         } else if (answer.startsWith("Arduino: Transfering rolist")) {
+            // updates running orders of the arduino
             String[] stringRos = Tool.decodeArray(answer);
             int len = stringRos.length;
             arduinoRos = new ArduinoRunningOrder[len];
@@ -80,13 +81,19 @@ public class ControllerClient extends AbstractClient {
         gui.interruptInstruction();
     }
     
+    /**
+     * class for running orders of the arduino
+     */
     class ArduinoRunningOrder {
-        
         String name;
         int syncDelay;
         int syncFreq;
         int exposureTime;
         
+        /**
+         * constructs from an encoded arduino running order an new
+         * @param encodedRo the encoded running order
+         */
         ArduinoRunningOrder(String encodedRo) {
             String[] stringArray = encodedRo.split(",");
             name = stringArray[0];

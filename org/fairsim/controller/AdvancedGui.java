@@ -14,11 +14,9 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
-*/
-
+ */
 package org.fairsim.controller;
 
-import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 import org.fairsim.livemode.LiveControlPanel;
@@ -26,6 +24,7 @@ import org.fairsim.utils.Conf;
 import org.fairsim.utils.Tool;
 
 /**
+ * class for the advanced controller gui
  *
  * @author m.lachetta
  */
@@ -38,36 +37,36 @@ public class AdvancedGui extends javax.swing.JPanel implements EasyGui.AdvGui {
     private static final int CAMCOUNTMAX = 3;
 
     /**
-     * Creates the GUI for the Controller
+     * Creates a new advanced controller gui
      *
      * @param cfg Configuration settings
-     * @param channelNames Camera Channels
-     * @param seqDetection The Sim-Sequence-Extractor
+     * @param channelNames active channels of fairSIM
+     * @param motherGui the main gui of fairSIM
      */
     public AdvancedGui(Conf.Folder cfg, String[] channelNames, LiveControlPanel motherGui) {
         initComponents();
         this.motherGui = motherGui;
+        // set number of cameras
         camCounts = channelNames.length;
-        if (camCounts > 3) {
+        if (camCounts > CAMCOUNTMAX) {
             camCounts = CAMCOUNTMAX;
         }
         camAdresses = new String[camCounts];
-        //readin port
+        // readin port
         try {
             port = cfg.getInt("TCPPort").val();
         } catch (Conf.EntryNotFoundException ex) {
             port = 32322;
             Tool.error("[fairSIM] No TCPPort found. TCPPort set to '32322'", false);
         }
-        //readin controller adress
+        // readin controller adress
         try {
             controllerAdress = cfg.getStr("ControllerAdress").val();
         } catch (Conf.EntryNotFoundException ex) {
             controllerAdress = "localhost";
             Tool.error("[fairSIM] No ControllerAdress found. ControllerAdress set to 'localhost'", false);
         }
-        //readin cam adresses
-
+        // readin camera adresses
         for (int i = 0; i < camCounts; i++) {
             try {
                 Conf.Folder fld = cfg.cd("channel-" + channelNames[i]);
@@ -93,10 +92,10 @@ public class AdvancedGui extends javax.swing.JPanel implements EasyGui.AdvGui {
                 }
             }
         }
-        //init controller panels
+        // init controller panel
         controllerPanel.enablePanel(this, controllerAdress, port, motherGui.getSequenceExtractor());
         serverLabel.setText("Controller: " + controllerAdress);
-
+        // init camera panels
         if (camCounts > 0 && camAdresses[0] != null) {
             camControllerPanel0.enablePanel(this, camAdresses[0], port, channelNames[0]);
             serverLabel.setText(serverLabel.getText() + "   Camera_0: " + camAdresses[0]);
@@ -115,63 +114,71 @@ public class AdvancedGui extends javax.swing.JPanel implements EasyGui.AdvGui {
         } else {
             camControllerPanel2.disablePanel();
         }
-
+        // init sync & registration panel
         syncPanel.enablePanel(motherGui.getSequenceExtractor());
         registrationPanel.enablePanel(cfg, channelNames, motherGui.getSequenceExtractor(), motherGui.getReconRunner());
     }
-    
+
     /**
-     * Shows a new text-line in the text-field
+     * Shows a new text-line in the log
      *
-     * @param text String that shoulds be displayed in the text-field
+     * @param text String that should be displayed in the log
      */
     public void showText(String text) {
         logger.append(text + "\n");
     }
 
-    interface ClientGui {
-        void showText(String text);
-        void registerClient();
-        void unregisterClient();
-        void handleError(String answer);
-        void interruptInstruction();
-    }
-    
     @Override
     public EasyGui.Ctrl getCtrl() {
         return this.controllerPanel;
     }
-    
+
     @Override
     public EasyGui.Sync getSync() {
         return this.syncPanel;
     }
-    
+
     @Override
     public EasyGui.Reg getReg() {
-        return this.registrationPanel; 
-   }
-    
+        return this.registrationPanel;
+    }
+
     @Override
-    public List<EasyGui.Cam> getCams(){
+    public List<EasyGui.Cam> getCams() {
         List<EasyGui.Cam> camGuis = new ArrayList<>();
-        if (camControllerPanel0.enabled) camGuis.add(camControllerPanel0);
-        if (camControllerPanel1.enabled) camGuis.add(camControllerPanel1);
-        if (camControllerPanel2.enabled) camGuis.add(camControllerPanel2);
+        if (camControllerPanel0.enabled) {
+            camGuis.add(camControllerPanel0);
+        }
+        if (camControllerPanel1.enabled) {
+            camGuis.add(camControllerPanel1);
+        }
+        if (camControllerPanel2.enabled) {
+            camGuis.add(camControllerPanel2);
+        }
         return camGuis;
     }
-    
+
     @Override
     public void setRo(EasyGui.RunningOrder ro) throws EasyGui.EasyGuiException {
         int size = ro.allowBigRoi ? 512 : 256;
-        if (motherGui.getWfSize() == size) return;
-        
-        if (size == 512) refreshBox.setSelectedIndex(0);
-        else if (size == 256) refreshBox.setSelectedIndex(1);
-        else throw new EasyGui.EasyGuiException("AdvancedGui: no ROI found");
+        if (motherGui.getWfSize() == size) {
+            return;
+        }
+
+        if (size == 512) {
+            refreshBox.setSelectedIndex(0);
+        } else if (size == 256) {
+            refreshBox.setSelectedIndex(1);
+        } else {
+            throw new EasyGui.EasyGuiException("AdvancedGui: no ROI found");
+        }
         refreshView();
     }
-    
+
+    /**
+     * refreshes the {@link org.fairsim.sim_gui.PlainImageDisplay} for widefield
+     * reconstructed image with the selected image size from this gui
+     */
     private void refreshView() {
         int ps = Integer.parseInt(refreshBox.getSelectedItem().toString());
         if (ps > 0) {
@@ -180,7 +187,7 @@ public class AdvancedGui extends javax.swing.JPanel implements EasyGui.AdvGui {
             refreshButton.setEnabled(true);
         }
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

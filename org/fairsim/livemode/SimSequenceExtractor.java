@@ -50,6 +50,8 @@ public class SimSequenceExtractor {
     final PerChannelBuffer[] channels;
     private Map< Integer, PerChannelBuffer> channelMapping;
     final private LiveControlPanel livePanel;
+    
+    private boolean creatingRegFile;
 
     private boolean pause;
 
