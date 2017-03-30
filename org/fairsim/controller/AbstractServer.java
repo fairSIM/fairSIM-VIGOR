@@ -132,4 +132,15 @@ public abstract class AbstractServer extends Thread {
             }
         }
     }
+    
+    /**
+     * interface for a server gui
+     */
+    public interface ServerGui {
+        /**
+         * shows a message at the gui
+         * @param message massage to be shown
+         */
+        void showText(String message);
+    }
 }

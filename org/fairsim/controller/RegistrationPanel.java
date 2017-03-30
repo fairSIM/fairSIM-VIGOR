@@ -26,7 +26,7 @@ import org.fairsim.utils.Conf;
 import org.fairsim.utils.Tool;
 
 /**
- *
+ * gui for the image registration
  * @author m.lachetta
  */
 public class RegistrationPanel extends javax.swing.JPanel implements EasyGui.Reg {
@@ -34,6 +34,7 @@ public class RegistrationPanel extends javax.swing.JPanel implements EasyGui.Reg
     String[] channelNames;
     SimSequenceExtractor seqDetection;
     ReconstructionRunner recRunner;
+    
     /**
      * Creates new form RegistrationPanel
      */
@@ -41,11 +42,18 @@ public class RegistrationPanel extends javax.swing.JPanel implements EasyGui.Reg
         initComponents();
     }
     
+    /**
+     * enables this panel
+     * @param cfg config folder to get registration folder
+     * @param channelNames array of channels
+     * @param seqDetection the sequence extractor
+     * @param recRunner the reconstruction runner
+     */
     void enablePanel(Conf.Folder cfg, String[] channelNames, SimSequenceExtractor seqDetection, ReconstructionRunner recRunner) {
         this.channelNames = channelNames;
         this.seqDetection = seqDetection;
         this.recRunner = recRunner;
-        
+        // checks for all necessary classes and activates this panel
         try {
             regFolder = Registration.getRegFolder(cfg);
             Class.forName("ij.ImagePlus");

@@ -36,9 +36,9 @@ public class ControllerServer extends AbstractServer {
      * Constructor for the Server
      *
      * @param gui GUI of the Server
-     * @param slm
-     * @param arduino
-     * @throws IOException throwen if TCP-Connection failed
+     * @param slm slm controller
+     * @param arduino arduino controller
+     * @throws IOException if TCP-Connection failed
      */
     private ControllerServer(ServerGui gui, SlmController slm, ArduinoController arduino) throws IOException {
         super(gui);
@@ -46,14 +46,19 @@ public class ControllerServer extends AbstractServer {
         this.arduino = arduino;
     }
 
+    /**
+     * handles a command from the client
+     * @param input command from the client
+     * @return answer for the client
+     */
     protected String handleCommand(String input) {
         String serverOut = "---";
         if (input.startsWith("slm->")) {
+            // handles commands for the slm
             input = input.split("->")[1];
             out.print("Slm: ");
             try {
                 serverOut = slm.setRo(Integer.parseInt(input));
-
             } catch (NumberFormatException e) {
                 if (input.equals("activate")) {
                     serverOut = slm.activateRo();
@@ -74,6 +79,7 @@ public class ControllerServer extends AbstractServer {
                 }
             }
         } else if (input.startsWith("arduino->")) {
+            // handles commands for the arduino
             input = input.split("->")[1];
             out.print("Arduino: ");
             if (input.equals("connect")) {

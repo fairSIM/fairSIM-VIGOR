@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.zip.DataFormatException;
 import org.fairsim.cameraplugin.CameraPlugin.CameraException;
 import org.fairsim.controller.AbstractServer;
-import org.fairsim.controller.ServerGui;
 import org.fairsim.utils.Tool;
 
 /**

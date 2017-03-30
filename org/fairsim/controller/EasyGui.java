@@ -24,7 +24,7 @@ import javax.swing.DefaultListModel;
 import org.fairsim.livemode.LiveControlPanel;
 
 /**
- *
+ * Easy to use controller gui to controll the fast sim setup
  * @author Mario
  */
 public class EasyGui extends javax.swing.JPanel {
@@ -52,12 +52,14 @@ public class EasyGui extends javax.swing.JPanel {
         camGuis = advGui.getCams();
     }
     
+    /**
+     * activates this if all necessary devices are connected, connects arduino
+     * & device running orders
+     */
     void activate() {
         if(!connected()) return;
-        ControllerClient.ArduinoRunningOrder[] arduinoRos = null;
-        String[] deviceRos = null;
-        arduinoRos = controller.getArduinoRos();
-        deviceRos = controller.getDeviceRos();
+        ControllerClient.ArduinoRunningOrder[] arduinoRos = controller.getArduinoRos();
+        String[] deviceRos = controller.getDeviceRos();
         runningOrders.clear();
         for(int i = 0; i < arduinoRos.length; i++) {
             String device = arduinoRos[i].name.split("_", 2)[0];
@@ -72,6 +74,12 @@ public class EasyGui extends javax.swing.JPanel {
         enableLaserPanel();
     }
     
+    /**
+     * finds the id of the device running order with a specific name
+     * @param name name of the running order
+     * @param deviceRos 
+     * @return id of the running order, -1 if no running order was found
+     */
     private int getDeviceRo(String name, String[] deviceRos) {
         for(int i = 0; i < deviceRos.length; i++) {
             if (name.equals(deviceRos[i])) return i;
@@ -79,6 +87,9 @@ public class EasyGui extends javax.swing.JPanel {
         return -1;
     }
 
+    /**
+     * class to handle running orders for the whole fast sim setup
+     */
     class RunningOrder {
         final String device, name;
         final int deviceRo, arduinoRo;
@@ -105,40 +116,156 @@ public class EasyGui extends javax.swing.JPanel {
         }
     }
     
+    /**
+     * interface for the advanced gui
+     */
     static interface AdvGui {
+        
+        /**
+         * sets all options for this running order
+         * @param ro running order
+         * @throws org.fairsim.controller.EasyGui.EasyGuiException if anything
+         * went wrong
+         */
         void setRo(RunningOrder ro) throws EasyGuiException;
+        
+        /**
+         * 
+         * @return controller gui of the advanced gui
+         */
         Ctrl getCtrl();
+        
+        /**
+         * 
+         * @return sync gui of the advanced gui
+         */
         Sync getSync();
+        
+        /**
+         * 
+         * @return registration gui of the advanced gui
+         */
         Reg getReg();
+        
+        /**
+         * 
+         * @return list of camnera guis of the advanced gui
+         */
         List<Cam> getCams();
     }
     
+    /**
+     * interface for the controller gui of arduino & device
+     */
     static interface Ctrl {
+        
+        /**
+         * preparations for the easy gui
+         * @throws org.fairsim.controller.EasyGui.EasyGuiException anything went
+         * wrong
+         */
         void enableEasy() throws EasyGui.EasyGuiException;
+        
+        /**
+         * sets all options for this running order
+         * @param ro running order
+         * @throws org.fairsim.controller.EasyGui.EasyGuiException if anything
+         * went wrong
+         */
         void setRo(RunningOrder ro) throws EasyGuiException;
+        
+        /**
+         * 
+         * @return running orders of the arduino
+         */
         ControllerClient.ArduinoRunningOrder[] getArduinoRos();
+        
+        /**
+         * 
+         * @return running orders of the device
+         */
         String[] getDeviceRos();
+        
+        /**
+         * sets the delay between single sim images in movie mode
+         * @param delay delay in milliseconds
+         */
         void setDelay(int delay);
+        
+        /**
+         * starts the sim movie mode
+         */
         void startMovie();
+        
+        /**
+         * stops the sim movie mode
+         */
         void stopMovie();
+        
+        /**
+         * takes a sim photo
+         */
         void takePhoto();
     }
     
+    /**
+     * interface for the sync gui
+     */
     static interface Sync {
+        /**
+         * sets all options for this running order
+         * @param ro running order
+         * @throws org.fairsim.controller.EasyGui.EasyGuiException if anything
+         * went wrong
+         */
         void setRo(RunningOrder ro) throws EasyGuiException;
     }
     
+    /**
+     * interface for the registration gui
+     */
     static interface Reg {
+        /**
+         * (de)activates registration
+         * @param b activate/deactivate for true/false
+         */
         void register(boolean b);
     }
     
+    /**
+     * interface for the camera guis
+     */
     static interface Cam {
+        
+        /**
+         * preparations for the easy gui
+         * @throws org.fairsim.controller.EasyGui.EasyGuiException anything went
+         * wrong
+         */
         void enableEasy() throws EasyGuiException;
+        
+        /**
+         * sets all options for this running order
+         * @param ro running order
+         * @throws org.fairsim.controller.EasyGui.EasyGuiException if anything
+         * went wrong
+         */
         void setRo(RunningOrder ro) throws EasyGuiException;
+        
+        /**
+         * starts camera acquisition
+         */
         void startMovie();
+        
+        /**
+         * stops camera acquisition
+         */
         void stopMovie();
     }
     
+    /**
+     * exception class for the easy to use gui
+     */
     static class EasyGuiException extends Exception {
         EasyGuiException(String message) {
             super(message);
@@ -161,7 +288,7 @@ public class EasyGui extends javax.swing.JPanel {
         itPanel = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         itList = new javax.swing.JList<>();
-        controllPanel = new javax.swing.JPanel();
+        controlPanel = new javax.swing.JPanel();
         runButton = new javax.swing.JToggleButton();
         photoButton = new javax.swing.JButton();
         registrationButton = new javax.swing.JToggleButton();
@@ -260,8 +387,8 @@ public class EasyGui extends javax.swing.JPanel {
                 .addContainerGap())
         );
 
-        controllPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Controll"));
-        controllPanel.setEnabled(false);
+        controlPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Control"));
+        controlPanel.setEnabled(false);
 
         runButton.setText("Run");
         runButton.setEnabled(false);
@@ -311,17 +438,17 @@ public class EasyGui extends javax.swing.JPanel {
             }
         });
 
-        javax.swing.GroupLayout controllPanelLayout = new javax.swing.GroupLayout(controllPanel);
-        controllPanel.setLayout(controllPanelLayout);
-        controllPanelLayout.setHorizontalGroup(
-            controllPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(controllPanelLayout.createSequentialGroup()
+        javax.swing.GroupLayout controlPanelLayout = new javax.swing.GroupLayout(controlPanel);
+        controlPanel.setLayout(controlPanelLayout);
+        controlPanelLayout.setHorizontalGroup(
+            controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(controlPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(controllPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(registrationButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(runButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(photoButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(controllPanelLayout.createSequentialGroup()
+                    .addGroup(controlPanelLayout.createSequentialGroup()
                         .addComponent(delayLabel)
                         .addGap(18, 18, 18)
                         .addComponent(delaySlider, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
@@ -330,13 +457,13 @@ public class EasyGui extends javax.swing.JPanel {
                     .addComponent(paramButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
-        controllPanelLayout.setVerticalGroup(
-            controllPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(controllPanelLayout.createSequentialGroup()
+        controlPanelLayout.setVerticalGroup(
+            controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(controlPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(registrationButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(controllPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(delaySlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(delayLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(msLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -387,7 +514,7 @@ public class EasyGui extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(itPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(controllPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(controlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(enableButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -403,7 +530,7 @@ public class EasyGui extends javax.swing.JPanel {
                     .addComponent(enableButton, javax.swing.GroupLayout.DEFAULT_SIZE, 27, Short.MAX_VALUE))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(controllPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(controlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(itPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(laserPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -411,17 +538,17 @@ public class EasyGui extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void blueCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_blueCheckBoxActionPerformed
-        disableControllPanel();
+        disableControlPanel();
         enableItPanel();
     }//GEN-LAST:event_blueCheckBoxActionPerformed
 
     private void greenCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_greenCheckBoxActionPerformed
-        disableControllPanel();
+        disableControlPanel();
         enableItPanel();
     }//GEN-LAST:event_greenCheckBoxActionPerformed
 
     private void redCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_redCheckBoxActionPerformed
-        disableControllPanel();
+        disableControlPanel();
         enableItPanel();
     }//GEN-LAST:event_redCheckBoxActionPerformed
 
@@ -438,7 +565,7 @@ public class EasyGui extends javax.swing.JPanel {
     private void itListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_itListMouseClicked
         try {
             setRo();
-            enableControllPanel();
+            enableControlPanel();
         } catch (EasyGuiException ex) {
             setStatus(ex.getMessage(), true);
         }
@@ -447,7 +574,7 @@ public class EasyGui extends javax.swing.JPanel {
     private void runButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runButtonActionPerformed
         if (runButton.isSelected()) {
             lcp.getSequenceExtractor().clearBuffers();
-            disableGui();
+            disableControllers();
             for(Cam c : camGuis) {
                 c.startMovie();
             }
@@ -459,7 +586,7 @@ public class EasyGui extends javax.swing.JPanel {
             }
             controller.stopMovie();
             setStatus("Capturing images stopped");
-            enableGui();
+            enableControllers();
         }
         registrationButton.setEnabled(true);
         runButton.setEnabled(true);
@@ -490,6 +617,10 @@ public class EasyGui extends javax.swing.JPanel {
         setStatus("Parameter estimation");
     }//GEN-LAST:event_paramButtonActionPerformed
 
+    /**
+     * asks if all necessary devices are connected, if not disables the easy gui
+     * @return true if all necessary devices are connected, else false
+     */
     private boolean connected() {
         try {
             controller.enableEasy();
@@ -500,26 +631,35 @@ public class EasyGui extends javax.swing.JPanel {
         } catch (EasyGuiException ex) {
             disableLaserPanel();
             disableItPanel();
-            disableControllPanel();
+            disableControlPanel();
             setStatus(ex.getMessage(), true);
             return false;
         }
     }
     
-    private void disableGui() {
+    /**
+     * disables all controllers, called after starting the movie mode
+     */
+    private void disableControllers() {
         disableLaserPanel();
         disableItPanel();
-        disableControllPanel();
+        disableControlPanel();
         enableButton.setEnabled(false);
     }
     
-    private void enableGui() {
+    /**
+     * enables all controllers, called after stopping the movie mode
+     */
+    private void enableControllers() {
         enableLaserPanel();
         enableItPanel();
-        enableControllPanel();
+        enableControlPanel();
         enableButton.setEnabled(true);
     }
     
+    /**
+     * enables the laser panel
+     */
     private void enableLaserPanel() {
         if (!connected()) return;
         laserPanel.setEnabled(true);
@@ -529,6 +669,9 @@ public class EasyGui extends javax.swing.JPanel {
         setStatus("Choose laser colors");
     }
     
+    /**
+     * disable the laser panel
+     */
     private void disableLaserPanel() {
         laserPanel.setEnabled(false);
         redCheckBox.setEnabled(false);
@@ -536,6 +679,9 @@ public class EasyGui extends javax.swing.JPanel {
         blueCheckBox.setEnabled(false);
     }
     
+    /**
+     * enables the illumination time panel
+     */
     private void enableItPanel() {
         if (!connected()) return;
         updateItList();
@@ -544,6 +690,9 @@ public class EasyGui extends javax.swing.JPanel {
         setStatus("Choose illumination time");
     }
     
+    /**
+     * updates the illumination time list
+     */
     private void updateItList() {
         List<String> colors = new ArrayList<>();
         if (redCheckBox.isSelected()) colors.add("r");
@@ -551,6 +700,7 @@ public class EasyGui extends javax.swing.JPanel {
         if (blueCheckBox.isSelected()) colors.add("b");
         possibleRos.clear();
         int colorCount = colors.size();
+        // algorithm to find the correct running orders for the illumination time list
         for (int i = 0; i < runningOrders.size(); i++) {
             if (Integer.parseInt(runningOrders.get(i).name.split("col")[0]) == colorCount) {
                 switch (colorCount) {
@@ -579,14 +729,20 @@ public class EasyGui extends javax.swing.JPanel {
         }
     }
     
+    /**
+     * disables the illumination time panel
+     */
     private void disableItPanel() {
         itPanel.setEnabled(false);
         itList.setEnabled(false);
     }
     
-    private void enableControllPanel() {
+    /**
+     * enables the control panel
+     */
+    private void enableControlPanel() {
         if (!connected()) return;
-        controllPanel.setEnabled(true);
+        controlPanel.setEnabled(true);
         registrationButton.setEnabled(true);
         delayLabel.setEnabled(true);
         delaySlider.setEnabled(true);
@@ -596,8 +752,11 @@ public class EasyGui extends javax.swing.JPanel {
         paramButton.setEnabled(true);
     }
     
-    private void disableControllPanel() {
-        controllPanel.setEnabled(false);
+    /**
+     * disables the control panel
+     */
+    private void disableControlPanel() {
+        controlPanel.setEnabled(false);
         registrationButton.setEnabled(false);
         delayLabel.setEnabled(false);
         delaySlider.setEnabled(false);
@@ -607,16 +766,30 @@ public class EasyGui extends javax.swing.JPanel {
         paramButton.setEnabled(false);
     }
     
+    /**
+     * sets the status line of this with green text
+     * @param message message to be shown
+     */
     private void setStatus(String message) {
         setStatus(message, false);
     }
     
+    /**
+     * sets the status line of this with red/green text
+     * @param message message to be shown
+     * @param error red/green for true/false
+     */
     private void setStatus(String message, boolean error) {
         statusLabel.setText(message);
         if (error) statusLabel.setForeground(new Color(255, 0, 0));
         else statusLabel.setForeground(new Color(0, 150, 0));
     }
     
+    /**
+     * sets the options for the selected running order at all devices
+     * @throws org.fairsim.controller.EasyGui.EasyGuiException if anything went
+     * wrong
+     */
     private void setRo() throws EasyGuiException {
         RunningOrder ro = possibleRos.get(itList.getSelectedIndex());
         advanced.setRo(ro);
@@ -630,7 +803,7 @@ public class EasyGui extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox blueCheckBox;
-    private javax.swing.JPanel controllPanel;
+    private javax.swing.JPanel controlPanel;
     private javax.swing.JLabel delayLabel;
     private javax.swing.JSlider delaySlider;
     private javax.swing.JButton enableButton;

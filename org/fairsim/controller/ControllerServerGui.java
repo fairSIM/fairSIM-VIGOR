@@ -21,12 +21,11 @@ package org.fairsim.controller;
 import static org.fairsim.controller.ControllerServer.startControllerServer;
 
 /**
- *
+ * Gui for the controller server
  * @author m.lachetta
  */
-public class ControllerServerGui extends javax.swing.JFrame implements ServerGui{
+public class ControllerServerGui extends javax.swing.JFrame implements AbstractServer.ServerGui{
 
-    //boolean online;
     ControllerServer server;
     SlmController slm;
     ArduinoController arduino;

@@ -24,7 +24,7 @@ import com.forthdd.commlib.r4.R4CommLib;
 import org.fairsim.utils.Tool;
 
 /**
- *
+ * class to control the slm
  * @author m.lachetta
  */
 public class SlmController {
@@ -47,7 +47,7 @@ public class SlmController {
     
     
     /**
-     * passes non chatched exeptions to the client
+     * passes not catched exceptions to the client
      *
      * @param ex thrown Exception
      * @param out String-output-Stream of the server
@@ -169,7 +169,7 @@ public class SlmController {
 
     /**
      * Reboots the SLM <br>
-     * net realy recoment to use this
+     * not really recommended to use this
      *
      * @param out String-output-Stream of the server
      */
@@ -185,7 +185,7 @@ public class SlmController {
     }
 
     /**
-     * Opens the connecten betwen Server and SLM
+     * Opens the connection between Server and SLM
      *
      * @param out String-output-Stream of the server
      */
@@ -207,7 +207,7 @@ public class SlmController {
     }
 
     /**
-     * Closes the connecten betwen Server and SLM
+     * Closes the connection between Server and SLM
      *
      * @param out String-output-Stream of the server
      */

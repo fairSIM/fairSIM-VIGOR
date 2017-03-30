@@ -24,7 +24,7 @@
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="itPanel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Component id="controllPanel" max="32767" attributes="0"/>
+                      <Component id="controlPanel" max="32767" attributes="0"/>
                   </Group>
                   <Group type="102" attributes="0">
                       <Component id="enableButton" max="-2" attributes="0"/>
@@ -46,7 +46,7 @@
               </Group>
               <EmptySpace type="separate" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                  <Component id="controllPanel" max="32767" attributes="0"/>
+                  <Component id="controlPanel" max="32767" attributes="0"/>
                   <Component id="itPanel" alignment="1" max="32767" attributes="0"/>
                   <Component id="laserPanel" alignment="1" min="-2" max="-2" attributes="0"/>
               </Group>
@@ -199,11 +199,11 @@
         </Container>
       </SubComponents>
     </Container>
-    <Container class="javax.swing.JPanel" name="controllPanel">
+    <Container class="javax.swing.JPanel" name="controlPanel">
       <Properties>
         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
           <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-            <TitledBorder title="Controll"/>
+            <TitledBorder title="Control"/>
           </Border>
         </Property>
         <Property name="enabled" type="boolean" value="false"/>

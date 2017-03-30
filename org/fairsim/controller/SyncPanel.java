@@ -22,7 +22,7 @@ import java.util.zip.DataFormatException;
 import org.fairsim.livemode.SimSequenceExtractor;
 
 /**
- *
+ * gui for sync options
  * @author m.lachetta
  */
 public class SyncPanel extends javax.swing.JPanel implements EasyGui.Sync{
@@ -34,6 +34,10 @@ public class SyncPanel extends javax.swing.JPanel implements EasyGui.Sync{
         initComponents();
     }
     
+    /**
+     * enables this panel
+     * @param seqDetection sequence extractor 
+     */
     void enablePanel(SimSequenceExtractor seqDetection) {
         this.seqDetection = seqDetection;
         syncDelayLabel.setText("Delay: " + seqDetection.getSyncDelay());
@@ -44,6 +48,9 @@ public class SyncPanel extends javax.swing.JPanel implements EasyGui.Sync{
         syncFreqTextField.setText(Integer.toString(seqDetection.getSyncFreq()));
     }
     
+    /**
+     * sets the sync delay
+     */
     private void setDelay() {
         try {
             seqDetection.setSyncDelay(Integer.parseInt(syncDelayTextField.getText()));
@@ -52,6 +59,9 @@ public class SyncPanel extends javax.swing.JPanel implements EasyGui.Sync{
         syncDelayLabel.setText("Delay: " + seqDetection.getSyncDelay());
     }
     
+    /**
+     * sets the sync average
+     */
     private void setAvr() {
         try {
             seqDetection.setSyncAvr(Integer.parseInt(syncAvrTextField.getText()));
@@ -60,6 +70,9 @@ public class SyncPanel extends javax.swing.JPanel implements EasyGui.Sync{
         syncAvrLabel.setText("Average: " + seqDetection.getSyncAvr());
     }
     
+    /**
+     * sets the sync frequency
+     */
     private void setFreq() {
         try {
             seqDetection.setSyncFreq(Integer.parseInt(syncFreqTextField.getText()));

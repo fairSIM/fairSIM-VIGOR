@@ -19,14 +19,14 @@ package org.fairsim.cameraplugin;
 
 import java.awt.Color;
 import javax.swing.JFrame;
-import org.fairsim.controller.ServerGui;
+import org.fairsim.controller.AbstractServer;
 import org.fairsim.sim_gui.PlainImageDisplay;
 
 /**
  *
  * @author m.lachetta
  */
-public class CameraServerGui extends javax.swing.JFrame implements ServerGui {
+public class CameraServerGui extends javax.swing.JFrame implements AbstractServer.ServerGui {
     private JFrame viewFrame;
     PlainImageDisplay view;
     CameraServer cs;
