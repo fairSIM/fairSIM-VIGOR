@@ -602,7 +602,7 @@ public class EasyGui extends javax.swing.JPanel {
         for(Cam c : camGuis) {
             c.stopMovie();
         }
-        setStatus("Cptured a photo");
+        setStatus("Captured a photo");
     }//GEN-LAST:event_photoButtonActionPerformed
 
     private void registrationButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_registrationButtonActionPerformed

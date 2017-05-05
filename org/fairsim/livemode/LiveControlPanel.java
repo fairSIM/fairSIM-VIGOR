@@ -143,7 +143,7 @@ public class LiveControlPanel {
         // GUI - image record function
         JPanel recorderPanel = new JPanel();
         recorderPanel.setBorder(BorderFactory.createTitledBorder(
-                "raw Stream recording"));
+                "raw stream recording"));
         recorderPanel.setLayout(new GridLayout(2, 1, 2, 2));
 
         filePrefix = new JTextField("VIGOR", 30);
@@ -269,7 +269,7 @@ public class LiveControlPanel {
         // setup main interface tabs
         JTabbedPane tabbedPane = new JTabbedPane();
 
-        tabbedPane.addTab("main", mainPanel);
+        tabbedPane.addTab("Main", mainPanel);
         AdvancedGui advancedGui = new AdvancedGui(cfg, channels, this);
         EasyGui easyGui = new EasyGui(this, advancedGui);
         tabbedPane.addTab("Easy", easyGui);

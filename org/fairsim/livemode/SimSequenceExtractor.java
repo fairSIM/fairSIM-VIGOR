@@ -400,7 +400,7 @@ public class SimSequenceExtractor {
                         }
                         counter++;
                         if (counter >= nrRawPerSeq * seqCount) {
-                            Tool.trace("No sync frame found " + iwSync.seqNr());
+                            Tool.trace("No sync frame found " + iwSync.seqNr() + "/" + nrRawPerSeq + "/" + seqCount);
                             counter = 0;
                         }
                     }

@@ -247,7 +247,7 @@ public class ArduinoController implements SerialPortEventListener {
             if (sendingThread != null) sendingThread.interrupt();
             arduinoCommands.clear();
             arduinoAnswers.clear();
-            sendingThread.join();
+            if (sendingThread != null) sendingThread.join();
             close();
             return "Disconnected from the arduino";
         } catch (InterruptedException e) {

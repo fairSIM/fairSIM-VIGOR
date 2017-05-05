@@ -327,8 +327,9 @@ public class Registration {
             float trValue = sourceVec.get(right, top) * trFactor;
             float blValue = sourceVec.get(left, bottom) * blFactor;
             float brValue = sourceVec.get(right, bottom) * brFactor;
-            //System.out.println(tlValue + trValue + blValue + brValue);
-            regVec.set(targetX - offsetX, targetY - offsetY, tlValue + trValue + blValue + brValue);
+            
+            regVec.set(targetX - offsetX, targetY - offsetY,
+                    tlValue + trValue + blValue + brValue);
         }
     }
 

@@ -173,7 +173,7 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
 
         thresholdType.setText("(double)");
 
-        createButton.setText("Create new registration file");
+        createButton.setText("Create New Registration File");
         createButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 createButtonActionPerformed(evt);
@@ -398,7 +398,7 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
                     
                     // create registration file
                     creator.createChannelRegFile(targetId, sourceId, recRunner);
-                    setBlackStatus("New file created, load new file...");
+                    setBlackStatus("New file created, loading new file...");
                     
                     // load new registration file
                     wfButton.setEnabled(false);

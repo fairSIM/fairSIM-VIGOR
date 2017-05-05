@@ -26,7 +26,7 @@ import org.micromanager.api.ScriptInterface;
  */
 public class CameraPlugin implements org.micromanager.api.MMPlugin {
 
-    public static String menuName = "Fast SIM Camera Controller";
+    public static String menuName = "Fast-SIM Camera Controller";
     public static String tooltipDescription = "Micro manager plugin to controll the cameras of the fast SIM setup";
     private static final int ROILENGTH = 4;
     CMMCore mmc;
