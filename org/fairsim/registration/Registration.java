@@ -308,26 +308,25 @@ public class Registration {
             int targetX, int targetY, int offsetX, int offsetY) {
         float sourceX = xTransVec.get(targetX, targetY) - offsetX;
         float sourceY = yTransVec.get(targetX, targetY) - offsetY;
-        //System.out.println(sourceX + "/" + sourceY + "/" + width + "/" + height);
         if (sourceX >= 0 && sourceY >= 0 && sourceX < width - 1 && sourceY < height - 1) {
+            // setting coordinates
             int left = (int) sourceX;
             int top = (int) sourceY;
             int right = (int) sourceX + 1;
             int bottom = (int) sourceY + 1;
-            
+            // calculating overlap area
             float xFragment = sourceX - left;
             float yFragment = sourceY - top;
-
             float tlFactor = (1 - xFragment) * (1 - yFragment);
             float trFactor = xFragment * (1 - yFragment);
             float blFactor = (1 - xFragment) * yFragment;
             float brFactor = xFragment * yFragment;
-
+            // calculating pixel values
             float tlValue = sourceVec.get(left, top) * tlFactor;
             float trValue = sourceVec.get(right, top) * trFactor;
             float blValue = sourceVec.get(left, bottom) * blFactor;
             float brValue = sourceVec.get(right, bottom) * brFactor;
-            
+            // setting value of registered pixel
             regVec.set(targetX - offsetX, targetY - offsetY,
                     tlValue + trValue + blValue + brValue);
         }
