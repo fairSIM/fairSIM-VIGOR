@@ -88,11 +88,10 @@ if [ ! -e bUnwarpJ_-2.6.5.jar ] ; then
 fi
 
 
-# This fetches (TODO: currently copies from local drive, until we have the GO to publish this)
-# a mockup of the ForthDD Java API.
-if [ ! -e forthDD-mockup-API.jar ] ; then
+# This fetches the ForthDD SLM API (only the Java part)
+if [ ! -e forthDD-API.jar ] ; then
     fileMissing=1
-    cp -v ../../mockup-API/forthDD-mockup-API.jar ./
+    wget -c https://github.com/biophotonics-bielefeld/forthDD-API/releases/download/v1.0/forthDD-API.jar
 fi
 
 
