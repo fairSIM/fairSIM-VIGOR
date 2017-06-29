@@ -1,7 +1,9 @@
-.PHONY: clean headerfiles
+.PHONY: clean headerfiles default
+
+default: cuda
  
-cpu: libstdcimpl.so
 cuda: libcudaimpl.so
+cpu: libstdcimpl.so
 
 headers=org_fairsim_accel_AccelVectorReal.h org_fairsim_accel_AccelVectorReal2d.h org_fairsim_accel_AccelVectorCplx.h org_fairsim_accel_AccelVectorCplx2d.h \
     org_fairsim_accel_FFTProvider.h org_fairsim_accel_AccelVectorFactory.h 
@@ -34,17 +36,27 @@ headerfiles: $(headers)
 
     
 %.o: %.cu cuda_common.h $(headers)
-	nvcc -O3 -I/usr/lib/jvm/java-6-openjdk-amd64/include -arch compute_20 \
+	nvcc -O3 \
+	-I/usr/lib/jvm/java-8-openjdk-amd64/include \
+	-I/usr/lib/jvm/java-8-openjdk-amd64/include/linux \
+	-arch compute_20 \
+	-D_FORCE_INLINES \
 	--compiler-options '-fPIC -Wall' -c -o $@ $< 
 
 
 libstdcimpl.so: $(headers)
-	gcc -O3 -march=native -I/usr/lib/jvm/java-6-openjdk-amd64/include \
+	gcc -O3 -march=native \
+	-I/usr/lib/jvm/java-8-openjdk-amd64/include \
+	-I/usr/lib/jvm/java-8-openjdk-amd64/include/linux \
 	-fopenmp -std=c99 -o $@ -shared -fPIC -Wall \
 	stdC_real.c stdC_cplx.c stdC_fft.c -lc -lfftw3f
 
 libcudaimpl.so: cuda_mgmt.o cuda_real.o cuda_cplx.o 
-	nvcc -O3 -I/usr/lib/jvm/java-6-openjdk-amd64/include -arch compute_20 \
+	nvcc -O3 \
+	-I/usr/lib/jvm/java-8-openjdk-amd64/include \
+	-I/usr/lib/jvm/java-8-openjdk-amd64/include/linux \
+	-arch compute_20 \
+	-D_FORCE_INLINES \
 	--compiler-options '-fPIC -Wall'  -shared -o $@ -lcufft \
 	cuda_mgmt.o cuda_real.o cuda_cplx.o
 

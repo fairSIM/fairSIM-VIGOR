@@ -21,6 +21,7 @@ package org.fairsim.controller;
 import com.forthdd.commlib.exceptions.AbstractException;
 import com.forthdd.commlib.exceptions.CommException;
 import com.forthdd.commlib.r4.R4CommLib;
+import com.forthdd.commlib.core.CommLib;
 import org.fairsim.utils.Tool;
 
 /**
@@ -192,10 +193,10 @@ public class SlmController {
     String connectSlm() {
         //out.println("Try to connect to the SLM");
         try {
-            String[] devEnumerateWinUSB = R4CommLib.devEnumerateWinUSB(R4CommLib.R4_WINUSB_GUID); //need to test the other funktion
+            String[] devEnumerateWinUSB = CommLib.devEnumerateWinUSB(R4CommLib.R4_WINUSB_GUID); //need to test the other funktion
             try {
                 String devPath = devEnumerateWinUSB[0].split(":")[0];
-                R4CommLib.devOpenWinUSB(devPath, 1000);
+                CommLib.devOpenWinUSB(devPath, 1000);
                 gui.showText("Connection to the SLM opened.");
                 return "Connected to the SLM";
             } catch (ArrayIndexOutOfBoundsException e) {
@@ -214,7 +215,7 @@ public class SlmController {
     String disconnectSlm() {
         //out.println("Try to disconnect from the SLM");
         try {
-            R4CommLib.devClose();
+            CommLib.devClose();
             gui.showText("Connection to the SLM closed.");
             return "Disconnected from the SLM";
         } catch (AbstractException ex) {
