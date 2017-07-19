@@ -106,7 +106,7 @@ public class RegFileCreatorGui extends javax.swing.JFrame {
         deleteButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Registration-File-Creator");
+        setTitle("Registration File Creator");
         setName("regFileCreatorFrame"); // NOI18N
 
         targetLabel.setText("Moved Channel");

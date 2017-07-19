@@ -123,27 +123,27 @@ public class SimSequenceExtractor {
         return seqCount;
     }
 
-    public void setSyncDelay(int delay) throws DataFormatException {
+    public void setSyncDelay(int delay) {
         if (delay > 0) {
             syncFrameDelay = delay;
         } else {
-            throw new DataFormatException("syncFrameDelay has to be positive");
+            throw new NumberFormatException("syncFrameDelay has to be positive");
         }
     }
 
-    public void setSyncAvr(int avr) throws DataFormatException {
+    public void setSyncAvr(int avr) {
         if (syncFrameAvr > 0) {
             syncFrameAvr = avr;
         } else {
-            throw new DataFormatException("syncFrameAvr has to be positive");
+            throw new NumberFormatException("syncFrameAvr has to be positive");
         }
     }
 
-    public void setSyncFreq(int freq) throws DataFormatException {
+    public void setSyncFreq(int freq) {
         if (seqCount > 0) {
             seqCount = freq;
         } else {
-            throw new DataFormatException("syncFreq has to be positive");
+            throw new NumberFormatException("syncFreq has to be positive");
         }
     }
 

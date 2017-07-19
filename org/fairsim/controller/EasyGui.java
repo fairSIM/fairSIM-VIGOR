@@ -219,6 +219,12 @@ public class EasyGui extends javax.swing.JPanel {
          * went wrong
          */
         void setRo(RunningOrder ro) throws EasyGuiException;
+        
+        /**
+         * sets the sync frequence
+         * @param freq 
+         */
+        void setFreq(int freq);
     }
     
     /**
@@ -575,6 +581,7 @@ public class EasyGui extends javax.swing.JPanel {
         if (runButton.isSelected()) {
             lcp.getSequenceExtractor().clearBuffers();
             disableControllers();
+            if (delaySlider.getValue() != 0) this.sync.setFreq(1);
             for(Cam c : camGuis) {
                 c.startMovie();
             }

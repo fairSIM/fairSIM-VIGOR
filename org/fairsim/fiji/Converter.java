@@ -44,7 +44,7 @@ public class Converter {
     public static Vec2d.Cplx fileToVec2dCplx(String fileLocation, VectorFactory vf) {
         Opener opener = new Opener();
 	ImagePlus imp = opener.openImage(fileLocation);
-        
+
         final int w = imp.getWidth();
         final int h = imp.getHeight();
         
