@@ -29,7 +29,7 @@ import org.fairsim.utils.Tool;
  */
 public class ControllerServer extends AbstractServer {
 
-    SlmController slm;
+    FlcosController slm;
     ArduinoController arduino;
 
     /**
@@ -40,7 +40,7 @@ public class ControllerServer extends AbstractServer {
      * @param arduino arduino controller
      * @throws IOException if TCP-Connection failed
      */
-    private ControllerServer(ServerGui gui, SlmController slm, ArduinoController arduino) throws IOException {
+    private ControllerServer(ServerGui gui, FlcosController slm, ArduinoController arduino) throws IOException {
         super(gui);
         this.slm = slm;
         this.arduino = arduino;
@@ -113,7 +113,7 @@ public class ControllerServer extends AbstractServer {
      * @return returns a ControllerServer-Object or a null-pointer if something
      * went wrong
      */
-    static ControllerServer startControllerServer(ControllerServerGui gui, SlmController slm, ArduinoController arduino) {
+    static ControllerServer startControllerServer(ControllerServerGui gui, FlcosController slm, ArduinoController arduino) {
         try {
             ControllerServer serverObject = new ControllerServer(gui, slm, arduino);
             serverObject.start();

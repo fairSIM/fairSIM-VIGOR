@@ -27,7 +27,7 @@ import static org.fairsim.controller.ControllerServer.startControllerServer;
 public class ControllerServerGui extends javax.swing.JFrame implements AbstractServer.ServerGui{
 
     ControllerServer server;
-    SlmController slm;
+    FlcosController slm;
     ArduinoController arduino;
 
     /**
@@ -35,7 +35,7 @@ public class ControllerServerGui extends javax.swing.JFrame implements AbstractS
      */
     public ControllerServerGui() {
         initComponents();
-        slm = new SlmController(this);
+        slm = new FlcosController(this);
         arduino = new ArduinoController(this);
         server = startControllerServer(this, slm, arduino);
     }
