@@ -7,4 +7,6 @@ test*.xml
 org/fairsim/git-version.txt
 com
 *.dll
+*.bat
+*.log
 external/*.dmg

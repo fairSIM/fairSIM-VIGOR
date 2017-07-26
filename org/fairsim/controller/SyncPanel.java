@@ -54,7 +54,7 @@ public class SyncPanel extends javax.swing.JPanel implements EasyGui.Sync{
     private void setDelay() {
         try {
             seqDetection.setSyncDelay(Integer.parseInt(syncDelayTextField.getText()));
-        } catch (NumberFormatException | DataFormatException e) {
+        } catch (NumberFormatException e) {
         }
         syncDelayLabel.setText("Delay: " + seqDetection.getSyncDelay());
     }
@@ -65,7 +65,7 @@ public class SyncPanel extends javax.swing.JPanel implements EasyGui.Sync{
     private void setAvr() {
         try {
             seqDetection.setSyncAvr(Integer.parseInt(syncAvrTextField.getText()));
-        } catch (NumberFormatException | DataFormatException e) {
+        } catch (NumberFormatException e) {
         }
         syncAvrLabel.setText("Average: " + seqDetection.getSyncAvr());
     }
@@ -76,8 +76,17 @@ public class SyncPanel extends javax.swing.JPanel implements EasyGui.Sync{
     private void setFreq() {
         try {
             seqDetection.setSyncFreq(Integer.parseInt(syncFreqTextField.getText()));
-        } catch (NumberFormatException | DataFormatException e) {
+        } catch (NumberFormatException e) {
         }
+        syncFreqLabel.setText("Frequency: " + seqDetection.getSyncFreq());
+    }
+    
+    /**
+     * sets the sync frequency
+     */
+    @Override
+    public void setFreq(int freq) {
+        seqDetection.setSyncFreq(freq);
         syncFreqLabel.setText("Frequency: " + seqDetection.getSyncFreq());
     }
     
@@ -87,7 +96,6 @@ public class SyncPanel extends javax.swing.JPanel implements EasyGui.Sync{
         syncFreqTextField.setText(String.valueOf(ro.syncFreq));
         setDelay();
         setFreq();
-        return;
     }
 
     /**

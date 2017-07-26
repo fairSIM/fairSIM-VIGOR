@@ -523,7 +523,7 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
             }
         });
 
-        slmSelectButton.setText("Selected");
+        slmSelectButton.setText("Select");
         slmSelectButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 slmSelectButtonActionPerformed(evt);
@@ -545,23 +545,26 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
                 .addContainerGap()
                 .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(slmPanelLayout.createSequentialGroup()
-                        .addComponent(slmConnectButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(slmDisconnectButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(slmRebootButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(slmRefreshButton))
-                    .addComponent(slmSelect)
-                    .addGroup(slmPanelLayout.createSequentialGroup()
-                        .addComponent(slmSelectButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(slmComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(slmSelectButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(slmActivateButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(slmDeactivateButton)
-                        .addGap(47, 47, 47))))
+                        .addContainerGap())
+                    .addGroup(slmPanelLayout.createSequentialGroup()
+                        .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(slmPanelLayout.createSequentialGroup()
+                                .addComponent(slmConnectButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(slmDisconnectButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(slmRebootButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(slmRefreshButton))
+                            .addComponent(slmSelect))
+                        .addGap(0, 0, Short.MAX_VALUE))))
         );
         slmPanelLayout.setVerticalGroup(
             slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -574,9 +577,9 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(slmComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(slmSelectButton)
                     .addComponent(slmActivateButton)
-                    .addComponent(slmDeactivateButton))
+                    .addComponent(slmDeactivateButton)
+                    .addComponent(slmSelectButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(slmSelect)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -657,18 +660,6 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
                 .addContainerGap()
                 .addGroup(arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(arduinoPanelLayout.createSequentialGroup()
-                        .addComponent(arduinoConnectButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(arduinoDisconnectButton)
-                        .addGap(18, 18, 18)
-                        .addComponent(arduinoLasersLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(arduinoRedButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(arduinoGreenButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(arduinoBlueButton))
-                    .addGroup(arduinoPanelLayout.createSequentialGroup()
                         .addComponent(arduinoStartButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(arduinoStopButton)
@@ -679,8 +670,21 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(arduinoBreakTimeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(arduinoDelayLabel)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(arduinoDelayLabel))
+                    .addGroup(arduinoPanelLayout.createSequentialGroup()
+                        .addComponent(arduinoConnectButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(arduinoDisconnectButton)
+                        .addGap(18, 18, 18)
+                        .addComponent(arduinoLasersLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(arduinoRedButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(arduinoGreenButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(arduinoBlueButton)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         arduinoPanelLayout.setVerticalGroup(
             arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -721,54 +725,6 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void arduinoConnectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoConnectButtonActionPerformed
-        arduinoConnect();
-    }//GEN-LAST:event_arduinoConnectButtonActionPerformed
-
-    private void arduinoDisconnectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoDisconnectButtonActionPerformed
-        arduinoDisconnect();
-    }//GEN-LAST:event_arduinoDisconnectButtonActionPerformed
-
-    private void arduinoStartButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoStartButtonActionPerformed
-        arduinoStart();
-    }//GEN-LAST:event_arduinoStartButtonActionPerformed
-
-    private void arduinoStopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoStopButtonActionPerformed
-        arduinoStop();
-    }//GEN-LAST:event_arduinoStopButtonActionPerformed
-
-    private void arduinoRedButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoRedButtonActionPerformed
-        if (arduinoRedButton.isSelected()) {
-            sendArduinoInstruction("R");
-        } else {
-            sendArduinoInstruction("r");
-        }
-    }//GEN-LAST:event_arduinoRedButtonActionPerformed
-
-    private void arduinoGreenButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoGreenButtonActionPerformed
-        if (arduinoGreenButton.isSelected()) {
-            sendArduinoInstruction("G");
-        } else {
-            sendArduinoInstruction("g");
-        }
-    }//GEN-LAST:event_arduinoGreenButtonActionPerformed
-
-    private void arduinoBlueButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoBlueButtonActionPerformed
-        if (arduinoBlueButton.isSelected()) {
-            sendArduinoInstruction("B");
-        } else {
-            sendArduinoInstruction("b");
-        }
-    }//GEN-LAST:event_arduinoBlueButtonActionPerformed
-
-    private void arduinoPhotoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoPhotoButtonActionPerformed
-        arduinoPhoto();
-    }//GEN-LAST:event_arduinoPhotoButtonActionPerformed
-
-    private void slmRefreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmRefreshButtonActionPerformed
-        slmRefresh();
-    }//GEN-LAST:event_slmRefreshButtonActionPerformed
 
     private void slmSelectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmSelectButtonActionPerformed
         slmSetSelected();
@@ -816,11 +772,59 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
         slmConnect();
     }//GEN-LAST:event_slmConnectButtonActionPerformed
 
+    private void arduinoPhotoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoPhotoButtonActionPerformed
+        arduinoPhoto();
+    }//GEN-LAST:event_arduinoPhotoButtonActionPerformed
+
+    private void arduinoBlueButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoBlueButtonActionPerformed
+        if (arduinoBlueButton.isSelected()) {
+            sendArduinoInstruction("B");
+        } else {
+            sendArduinoInstruction("b");
+        }
+    }//GEN-LAST:event_arduinoBlueButtonActionPerformed
+
+    private void arduinoGreenButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoGreenButtonActionPerformed
+        if (arduinoGreenButton.isSelected()) {
+            sendArduinoInstruction("G");
+        } else {
+            sendArduinoInstruction("g");
+        }
+    }//GEN-LAST:event_arduinoGreenButtonActionPerformed
+
+    private void arduinoRedButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoRedButtonActionPerformed
+        if (arduinoRedButton.isSelected()) {
+            sendArduinoInstruction("R");
+        } else {
+            sendArduinoInstruction("r");
+        }
+    }//GEN-LAST:event_arduinoRedButtonActionPerformed
+
+    private void arduinoStopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoStopButtonActionPerformed
+        arduinoStop();
+    }//GEN-LAST:event_arduinoStopButtonActionPerformed
+
+    private void arduinoStartButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoStartButtonActionPerformed
+        arduinoStart();
+    }//GEN-LAST:event_arduinoStartButtonActionPerformed
+
+    private void arduinoDisconnectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoDisconnectButtonActionPerformed
+        arduinoDisconnect();
+    }//GEN-LAST:event_arduinoDisconnectButtonActionPerformed
+
+    private void arduinoConnectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_arduinoConnectButtonActionPerformed
+        arduinoConnect();
+    }//GEN-LAST:event_arduinoConnectButtonActionPerformed
+
+    private void slmRefreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmRefreshButtonActionPerformed
+        slmRefresh();
+    }//GEN-LAST:event_slmRefreshButtonActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JToggleButton arduinoBlueButton;
-    javax.swing.JTextField arduinoBreakTimeTextField;
-    javax.swing.JComboBox<String> arduinoComboBox;
+    private javax.swing.JTextField arduinoBreakTimeTextField;
+    private javax.swing.JComboBox<String> arduinoComboBox;
     private javax.swing.JButton arduinoConnectButton;
     private javax.swing.JLabel arduinoDelayLabel;
     private javax.swing.JButton arduinoDisconnectButton;
