@@ -17,13 +17,12 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
  */
 package org.fairsim.controller;
 
+
 /**
  *
  * @author m.lachetta
  */
-public class DmdController {
-    
-    ControllerServerGui gui;
+public class DmdController implements SlmController {
     
     private DmdController() {
         // Loading hidapi-Library
@@ -35,6 +34,100 @@ public class DmdController {
         wd = System.getProperty("user.dir")+"\\";
         libName = "dlp6500-java-api";
         System.load(wd+libName+".dll");
+        
+        
+    }
+    
+    String[] filelist = {"C:\\Users\\cwenzel\\Desktop\\Texas Instruments Software\\Texas Instruments Software\\DLPC900REF-SW-3.0.0\\DLPC900REF-GUI\\LCR6500_Images\\linespoints.txt","C:\\Users\\cwenzel\\Desktop\\Texas Instruments Software\\Texas Instruments Software\\DLPC900REF-SW-3.0.0\\DLPC900REF-GUI\\LCR6500_Images\\points.txt"};
+
+    @Override
+    public String setRo(int ro) {
+        try {
+            if(getMode()==2||getMode()==0) setMode(3);
+            executeBatchFile(filelist[ro]);
+            System.out.println("It was chosen file "+filelist[ro]);
+            activateBoard();
+            if(isActive()){System.out.println("Board is activ");}
+            return "File was chosen";
+        } catch (DmdException ex) {
+            System.out.println("fail in setRo");
+            return DmdException.catchedDmdException(ex); 
+        }
+    }
+
+    @Override
+    public String activateRo() {
+        try {
+            startSequence();
+            if(!isSequenceRunning()){
+                return "Sequence coud not be activated.";
+                }
+            else{
+                System.out.println("Activated current sequence in mode "+getMode());
+                return "Current sequence got activated"; 
+                }
+        } catch (DmdException ex) {
+            return DmdException.catchedDmdException(ex);
+        }
+    }
+
+    @Override
+    public String deactivateRo() {
+        try {
+            stopSequence();
+            deactivateBoard();
+            System.out.println("Deactivated current sequence");
+            return "Current sequence got deactivated";
+        } catch (DmdException ex) {
+            return DmdException.catchedDmdException(ex);
+        }
+    }
+
+    @Override
+    public String getRoList() {
+            for(int i=0;i<filelist.length;i++){
+            System.out.println(filelist[i]); 
+            }
+            return "Filelist has been output completely.";
+          }
+
+    @Override
+    public String getSlmInfo() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public String rebootSlm() {
+        try {
+            resetBoard();
+            System.out.println("DMD is rebooting");
+            return "Reboot of the DMD. This may takes more than 2 seconds";
+        } catch (DmdException ex) {
+            return DmdException.catchedDmdException(ex);
+        }
+    }
+
+    @Override
+    public String connectSlm() {
+        try {
+            connect();
+            System.out.println("Connection to the DMD opened.");
+                return "Connected to the DMD";
+        } catch (DmdException ex) {
+            return DmdException.catchedDmdException(ex);
+        }
+    }
+
+    @Override
+    public String disconnectSlm() {
+        try {
+            disconnect();
+            System.out.println("Disconnection from the DMD.");
+                return "Disconnected from the DMD";
+        } catch (DmdException ex) {
+            return DmdException.catchedDmdException(ex);
+            
+        }    
     }
     
     /**
@@ -45,8 +138,11 @@ public class DmdController {
         DmdException(String message) {
             super(message);
         }
-        
+        static String catchedDmdException(DmdException ex) {
+             return "Error: " + ex.getMessage() + "  ;  " + ex.getClass();
+        }
     }
+    
     
     /**
      * 
@@ -139,43 +235,64 @@ public class DmdController {
      */
     native private void stopSequence() throws DmdException;
     
+    //connect sollte klappen
+    //Modus erst setzen, dann Board ativieren, dann Sequenz starten, letzteres klappt nicht
+    //disconnect + deactivate klappt dann setzt auch Geräusch aus
+    
     public static void main(String[] args) throws InterruptedException, DmdException {
         DmdController dmd = new DmdController();
-        dmd.connect();
-        System.out.println("isSequenceRunning: " + dmd.isSequenceRunning());
+        
+        dmd.connectSlm();
         dmd.deactivateBoard();
-        dmd.activateBoard();
-        System.out.println("isActive: " + dmd.isActive());
+       
+//        dmd.isActive();
+//        dmd.activateBoard();
         
+//        dmd.setMode(1);
+//        dmd.executeBatchFile("C:\\Users\\cwenzel\\Documents\\NetBeansProjects\\fairSIMproject\\vigor-tmp\\points.txt");
+      //  dmd.setRo(1);
+//        dmd.startSequence();
+//        dmd.activateBoard();
+//        dmd.isActive();
+//        System.out.println("isActiv"+dmd.isActive());
         
-        dmd.setMode(0);
-        System.out.println("getMode: " + dmd.getMode());
-        dmd.setMode(3);
-        System.out.println("getMode: " + dmd.getMode());
-        dmd.executeBatchFile("D:\\SLMs\\Texas Instruments Software\\DLPC900REF-SW-3.0.0\\DLPC900REF-GUI\\LCR6500_Images\\loadTextSeq_bat.txt");
-        
-        dmd.resetBoard();
-        Thread.sleep(2000);
-        dmd.connect();
-        System.out.println("isSequenceRunning: " + dmd.isSequenceRunning());
-        dmd.deactivateBoard();
-        dmd.activateBoard();
-        System.out.println("isActive: " + dmd.isActive());
-        
-        
-        dmd.setMode(0);
-        System.out.println("getMode: " + dmd.getMode());
-        dmd.setMode(3);
-        System.out.println("getMode: " + dmd.getMode());
-        dmd.executeBatchFile("D:\\SLMs\\Texas Instruments Software\\DLPC900REF-SW-3.0.0\\DLPC900REF-GUI\\LCR6500_Images\\loadTextSeq_bat.txt");
-        dmd.startSequence();
-        Thread.sleep(5000);
-        dmd.pauseSequence();
-        Thread.sleep(5000);
-        dmd.startSequence();
-        Thread.sleep(5000);
-        dmd.stopSequence();
-        dmd.disconnect();
+      
+//        System.out.println("isSequenceRunning: " + dmd.isSequenceRunning());
+//        dmd.deactivateRo();
+//        dmd.activateRo();
+//        System.out.println("isActive: " + dmd.isActive());
+//        
+//        
+//        dmd.setRo(1);
+//        System.out.println("getMode: " + dmd.getMode());
+//        dmd.setMode(3);
+//        System.out.println("getMode: " + dmd.getMode());
+//        //dmd.setRo(0);
+//        //dmd.executeBatchFile("C:\\Users\\cwenzel\\Desktop\\Texas Instruments Software\\Texas Instruments Software\\DLPC900REF-SW-3.0.0\\DLPC900REF-GUI\\LCR6500_Images\\testbatch.txt");
+//        
+//        dmd.resetBoard();
+//        Thread.sleep(2000);
+//        dmd.connectSlm();
+//        System.out.println("isSequenceRunning: " + dmd.isSequenceRunning());
+//        dmd.deactivateRo();
+//        dmd.activateRo();
+//        System.out.println("isActive: " + dmd.isActive());
+//        
+//        
+//        dmd.setMode(1);
+//        System.out.println("getMode: " + dmd.getMode());
+//        dmd.setMode(3);
+//        System.out.println("getMode: " + dmd.getMode());
+//       // dmd.executeBatchFile("C:\\Users\\cwenzel\\Desktop\\Texas Instruments Software\\Texas Instruments Software\\DLPC900REF-SW-3.0.0\\DLPC900REF-GUI\\LCR6500_Images\\testbatch.txt");
+//        dmd.startSequence();
+//        Thread.sleep(5000);
+//        dmd.pauseSequence();
+//        Thread.sleep(5000);
+//        dmd.startSequence();
+//        Thread.sleep(5000);
+//        dmd.stopSequence();
+//        dmd.deactivateRo();
+//        dmd.disconnectSlm();
     }
     
 }
