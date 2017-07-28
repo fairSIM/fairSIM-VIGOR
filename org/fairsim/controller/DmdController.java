@@ -17,6 +17,10 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
  */
 package org.fairsim.controller;
 
+import org.fairsim.utils.Conf;
+import org.fairsim.utils.Tool;
+import java.io.File;
+import java.io.FileNotFoundException;
 
 /**
  *
@@ -24,7 +28,12 @@ package org.fairsim.controller;
  */
 public class DmdController implements SlmController {
     
-    private DmdController() {
+    //ControllerServerGui gui;
+    
+    private DmdController(/*ControllerServerGui serverGui*/) {
+        
+        //this.gui = serverGui;
+        
         // Loading hidapi-Library
         String wd = System.getProperty("user.dir")+"\\";
         String libName = "hidapi";
@@ -34,20 +43,39 @@ public class DmdController implements SlmController {
         wd = System.getProperty("user.dir")+"\\";
         libName = "dlp6500-java-api";
         System.load(wd+libName+".dll");
-        
-        
     }
     
-    String[] filelist = {"C:\\Users\\cwenzel\\Desktop\\Texas Instruments Software\\Texas Instruments Software\\DLPC900REF-SW-3.0.0\\DLPC900REF-GUI\\LCR6500_Images\\linespoints.txt","C:\\Users\\cwenzel\\Desktop\\Texas Instruments Software\\Texas Instruments Software\\DLPC900REF-SW-3.0.0\\DLPC900REF-GUI\\LCR6500_Images\\points.txt"};
+    public static String filelist(final Conf.Folder cfg) throws FileNotFoundException {{
+        String folder;// = "(not found)";
+    
+        try {
+            folder = Tool.getFile(cfg.getStr("DmdRoFolder").val()).getAbsolutePath();
+            System.out.println("Folder"+folder);
+        } catch (Conf.EntryNotFoundException ex) {
+            folder = System.getProperty("user.dir");
+            Tool.error("No folder was found. Folder was set to: " + folder, false);
+        }
+         File file = new File(folder);
+        if (file.exists()) {
+            return folder;
+        } else {
+            throw new FileNotFoundException("Folder does not exists");
+        }
+        }
+    }
+    
+    String[] filelist = {"C:\\Users\\cwenzel\\Documents\\NetBeansProjects\\fairSIMproject\\vigor-tmp\\linespoints.txt","C:\\Users\\cwenzel\\Documents\\NetBeansProjects\\fairSIMproject\\vigor-tmp\\points.txt"};
+
+
 
     @Override
     public String setRo(int ro) {
         try {
+            activateBoard();
+            if(isActive()){System.out.println("Board is activ");}
             if(getMode()==2||getMode()==0) setMode(3);
             executeBatchFile(filelist[ro]);
             System.out.println("It was chosen file "+filelist[ro]);
-            activateBoard();
-            if(isActive()){System.out.println("Board is activ");}
             return "File was chosen";
         } catch (DmdException ex) {
             System.out.println("fail in setRo");
@@ -75,7 +103,6 @@ public class DmdController implements SlmController {
     public String deactivateRo() {
         try {
             stopSequence();
-            deactivateBoard();
             System.out.println("Deactivated current sequence");
             return "Current sequence got deactivated";
         } catch (DmdException ex) {
@@ -85,9 +112,9 @@ public class DmdController implements SlmController {
 
     @Override
     public String getRoList() {
-            for(int i=0;i<filelist.length;i++){
-            System.out.println(filelist[i]); 
-            }
+        for (String filelist1 : filelist) {
+            System.out.println(filelist1);
+        }
             return "Filelist has been output completely.";
           }
 
@@ -112,7 +139,7 @@ public class DmdController implements SlmController {
         try {
             connect();
             System.out.println("Connection to the DMD opened.");
-                return "Connected to the DMD";
+            return "Connected to the DMD";
         } catch (DmdException ex) {
             return DmdException.catchedDmdException(ex);
         }
@@ -121,6 +148,8 @@ public class DmdController implements SlmController {
     @Override
     public String disconnectSlm() {
         try {
+            deactivateBoard();
+            System.out.println("Board is inactiv");
             disconnect();
             System.out.println("Disconnection from the DMD.");
                 return "Disconnected from the DMD";
@@ -235,64 +264,38 @@ public class DmdController implements SlmController {
      */
     native private void stopSequence() throws DmdException;
     
-    //connect sollte klappen
+    //connect klappen
     //Modus erst setzen, dann Board ativieren, dann Sequenz starten, letzteres klappt nicht
-    //disconnect + deactivate klappt dann setzt auch Geräusch aus
+    //disconnect klappt
+    
+//    public Boolean isDmd(SlmController slm){
+//        Boolean dmd = false;
+//        if (slm.connectSlm() =="Connected to the DMD"){
+//            dmd=true;
+//        }
+//        return dmd;
+//    }
     
     public static void main(String[] args) throws InterruptedException, DmdException {
+        
         DmdController dmd = new DmdController();
+        //filelist("C:\\Users\\cwenzel\\Documents\\NetBeansProjects\\fairSIM\\vigor-omx-config-windows.xml");
         
+        dmd.getRoList();
         dmd.connectSlm();
-        dmd.deactivateBoard();
-       
-//        dmd.isActive();
-//        dmd.activateBoard();
-        
-//        dmd.setMode(1);
-//        dmd.executeBatchFile("C:\\Users\\cwenzel\\Documents\\NetBeansProjects\\fairSIMproject\\vigor-tmp\\points.txt");
-      //  dmd.setRo(1);
-//        dmd.startSequence();
-//        dmd.activateBoard();
-//        dmd.isActive();
-//        System.out.println("isActiv"+dmd.isActive());
-        
-      
-//        System.out.println("isSequenceRunning: " + dmd.isSequenceRunning());
-//        dmd.deactivateRo();
-//        dmd.activateRo();
-//        System.out.println("isActive: " + dmd.isActive());
-//        
-//        
-//        dmd.setRo(1);
-//        System.out.println("getMode: " + dmd.getMode());
-//        dmd.setMode(3);
-//        System.out.println("getMode: " + dmd.getMode());
-//        //dmd.setRo(0);
-//        //dmd.executeBatchFile("C:\\Users\\cwenzel\\Desktop\\Texas Instruments Software\\Texas Instruments Software\\DLPC900REF-SW-3.0.0\\DLPC900REF-GUI\\LCR6500_Images\\testbatch.txt");
-//        
-//        dmd.resetBoard();
-//        Thread.sleep(2000);
-//        dmd.connectSlm();
-//        System.out.println("isSequenceRunning: " + dmd.isSequenceRunning());
-//        dmd.deactivateRo();
-//        dmd.activateRo();
-//        System.out.println("isActive: " + dmd.isActive());
-//        
-//        
-//        dmd.setMode(1);
-//        System.out.println("getMode: " + dmd.getMode());
-//        dmd.setMode(3);
-//        System.out.println("getMode: " + dmd.getMode());
-//       // dmd.executeBatchFile("C:\\Users\\cwenzel\\Desktop\\Texas Instruments Software\\Texas Instruments Software\\DLPC900REF-SW-3.0.0\\DLPC900REF-GUI\\LCR6500_Images\\testbatch.txt");
-//        dmd.startSequence();
-//        Thread.sleep(5000);
-//        dmd.pauseSequence();
-//        Thread.sleep(5000);
-//        dmd.startSequence();
-//        Thread.sleep(5000);
-//        dmd.stopSequence();
-//        dmd.deactivateRo();
-//        dmd.disconnectSlm();
+        System.out.println("setRo: "+dmd.setRo(0));
+        System.out.println("activateRo: "+dmd.activateRo());
+        Thread.sleep(2000);
+        System.out.println("deactivatRo: "+dmd.deactivateRo());
+        Thread.sleep(2000);
+        System.out.println("resetBoard: "+dmd.rebootSlm());
+        Thread.sleep(5000);
+        System.out.println("connecting "+dmd.connectSlm());
+        System.out.println("setRo: "+dmd.setRo(1));
+        System.out.println("activateRo: "+dmd.activateRo());
+        Thread.sleep(2000);
+        dmd.disconnectSlm();
+
     }
     
 }
