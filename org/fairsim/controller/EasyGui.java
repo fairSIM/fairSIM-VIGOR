@@ -37,7 +37,8 @@ public class EasyGui extends javax.swing.JPanel {
     private final  List<Cam> camGuis;
     private final List<RunningOrder> runningOrders = new ArrayList<>();
     private final List<RunningOrder> possibleRos = new ArrayList<>();
-    private int delay = 0;
+    private int runDelay = 0;
+    private int runRecDelay = 0;
     
     /**
      * Creates new form EasyGui
@@ -298,10 +299,14 @@ public class EasyGui extends javax.swing.JPanel {
         runButton = new javax.swing.JToggleButton();
         photoButton = new javax.swing.JButton();
         registrationButton = new javax.swing.JToggleButton();
-        delaySlider = new javax.swing.JSlider();
-        delayLabel = new javax.swing.JLabel();
-        msLabel = new javax.swing.JLabel();
+        runDelaySlider = new javax.swing.JSlider();
+        runDelayLabel = new javax.swing.JLabel();
+        runMsLabel = new javax.swing.JLabel();
         paramButton = new javax.swing.JButton();
+        runRecDelayLabel = new javax.swing.JLabel();
+        runRecDelaySlider = new javax.swing.JSlider();
+        runRecMsLabel = new javax.swing.JLabel();
+        runRecButton = new javax.swing.JToggleButton();
         enableButton = new javax.swing.JButton();
         statusPanel = new javax.swing.JPanel();
         statusLabel = new javax.swing.JLabel();
@@ -360,7 +365,7 @@ public class EasyGui extends javax.swing.JPanel {
                 .addComponent(greenCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(redCheckBox)
-                .addContainerGap(147, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         itPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Illumination Time"));
@@ -420,27 +425,52 @@ public class EasyGui extends javax.swing.JPanel {
             }
         });
 
-        delaySlider.setMaximum(20);
-        delaySlider.setValue(0);
-        delaySlider.setEnabled(false);
-        delaySlider.addChangeListener(new javax.swing.event.ChangeListener() {
+        runDelaySlider.setMaximum(20);
+        runDelaySlider.setValue(0);
+        runDelaySlider.setEnabled(false);
+        runDelaySlider.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                delaySliderStateChanged(evt);
+                runDelaySliderStateChanged(evt);
             }
         });
 
-        delayLabel.setText("Delay");
-        delayLabel.setEnabled(false);
+        runDelayLabel.setText("Delay");
+        runDelayLabel.setEnabled(false);
 
-        msLabel.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        msLabel.setText("0 ms");
-        msLabel.setEnabled(false);
+        runMsLabel.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        runMsLabel.setText("0 ms");
+        runMsLabel.setEnabled(false);
 
         paramButton.setText("Parameter Estimation");
         paramButton.setEnabled(false);
         paramButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 paramButtonActionPerformed(evt);
+            }
+        });
+
+        runRecDelayLabel.setText("Delay");
+        runRecDelayLabel.setEnabled(false);
+
+        runRecDelaySlider.setMaximum(20);
+        runRecDelaySlider.setValue(0);
+        runRecDelaySlider.setEnabled(false);
+        runRecDelaySlider.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                runRecDelaySliderStateChanged(evt);
+            }
+        });
+
+        runRecMsLabel.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        runRecMsLabel.setText("0 ms");
+        runRecMsLabel.setEnabled(false);
+
+        runRecButton.setForeground(new java.awt.Color(255, 0, 0));
+        runRecButton.setText("Run & Record");
+        runRecButton.setEnabled(false);
+        runRecButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                runRecButtonActionPerformed(evt);
             }
         });
 
@@ -452,15 +482,26 @@ public class EasyGui extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(registrationButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(runButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(photoButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(paramButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(controlPanelLayout.createSequentialGroup()
-                        .addComponent(delayLabel)
+                        .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(runButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, controlPanelLayout.createSequentialGroup()
+                                .addComponent(runDelayLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(runDelaySlider, javax.swing.GroupLayout.DEFAULT_SIZE, 36, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(runMsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addGap(18, 18, 18)
-                        .addComponent(delaySlider, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(msLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(paramButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(controlPanelLayout.createSequentialGroup()
+                                .addComponent(runRecDelayLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(runRecDelaySlider, javax.swing.GroupLayout.DEFAULT_SIZE, 36, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(runRecMsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(runRecButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         controlPanelLayout.setVerticalGroup(
@@ -468,18 +509,26 @@ public class EasyGui extends javax.swing.JPanel {
             .addGroup(controlPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(registrationButton)
+                .addGap(18, 18, 18)
+                .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(runDelaySlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(runDelayLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(runMsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(runRecDelayLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(runRecDelaySlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(runRecMsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(delaySlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(delayLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(msLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(runButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(runButton)
+                    .addComponent(runRecButton))
+                .addGap(18, 18, 18)
                 .addComponent(photoButton)
                 .addGap(18, 18, 18)
                 .addComponent(paramButton)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(126, Short.MAX_VALUE))
         );
 
         enableButton.setText("Enable");
@@ -534,12 +583,12 @@ public class EasyGui extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(statusPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(enableButton, javax.swing.GroupLayout.DEFAULT_SIZE, 27, Short.MAX_VALUE))
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(controlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(itPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(laserPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(laserPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(itPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(controlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -558,12 +607,6 @@ public class EasyGui extends javax.swing.JPanel {
         enableItPanel();
     }//GEN-LAST:event_redCheckBoxActionPerformed
 
-    private void delaySliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_delaySliderStateChanged
-        delay = delaySlider.getValue() * 50;
-        msLabel.setText(delay + " ms");
-        controller.setDelay(delay);
-    }//GEN-LAST:event_delaySliderStateChanged
-
     private void enableButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enableButtonActionPerformed
         activate();
     }//GEN-LAST:event_enableButtonActionPerformed
@@ -577,28 +620,55 @@ public class EasyGui extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_itListMouseClicked
 
-    private void runButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runButtonActionPerformed
-        if (runButton.isSelected()) {
+    private void runRecButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runRecButtonActionPerformed
+        if (runRecButton.isSelected()) {
+            if(!lcp.record()) lcp.record();
             lcp.getSequenceExtractor().clearBuffers();
             disableControllers();
-            if (delaySlider.getValue() != 0) this.sync.setFreq(1);
+            if (runRecDelaySlider.getValue() != 0) this.sync.setFreq(1);
             for(Cam c : camGuis) {
                 c.startMovie();
             }
+            controller.setDelay(runRecDelay);
             controller.startMovie();
-            setStatus("Capturing images started");
+            setStatus("Recording images started");
         } else {
+            if(lcp.record()) lcp.record();
             for(Cam c : camGuis) {
                 c.stopMovie();
             }
             controller.stopMovie();
-            setStatus("Capturing images stopped");
+            setStatus("Recording images stopped");
             enableControllers();
         }
         registrationButton.setEnabled(true);
-        runButton.setEnabled(true);
+        runRecButton.setEnabled(true);
         paramButton.setEnabled(true);
-    }//GEN-LAST:event_runButtonActionPerformed
+    }//GEN-LAST:event_runRecButtonActionPerformed
+
+    private void runRecDelaySliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_runRecDelaySliderStateChanged
+        runRecDelay = runRecDelaySlider.getValue() * 50;
+        runRecMsLabel.setText(runRecDelay + " ms");
+        controller.setDelay(runRecDelay);
+    }//GEN-LAST:event_runRecDelaySliderStateChanged
+
+    private void paramButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_paramButtonActionPerformed
+        lcp.doParamEstimation();
+        setStatus("Parameter estimation");
+    }//GEN-LAST:event_paramButtonActionPerformed
+
+    private void runDelaySliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_runDelaySliderStateChanged
+        runDelay = runDelaySlider.getValue() * 50;
+        runMsLabel.setText(runDelay + " ms");
+        controller.setDelay(runDelay);
+    }//GEN-LAST:event_runDelaySliderStateChanged
+
+    private void registrationButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_registrationButtonActionPerformed
+        boolean registering = registrationButton.isSelected();
+        regPanel.register(registering);
+        if (registering) setStatus("Activated image registration");
+        else setStatus("Deactivated image registration");
+    }//GEN-LAST:event_registrationButtonActionPerformed
 
     private void photoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_photoButtonActionPerformed
         lcp.getSequenceExtractor().clearBuffers();
@@ -612,18 +682,31 @@ public class EasyGui extends javax.swing.JPanel {
         setStatus("Captured a photo");
     }//GEN-LAST:event_photoButtonActionPerformed
 
-    private void registrationButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_registrationButtonActionPerformed
-        boolean registering = registrationButton.isSelected();
-        regPanel.register(registering);
-        if (registering) setStatus("Activated image registration");
-        else setStatus("Deactivated image registration");
-    }//GEN-LAST:event_registrationButtonActionPerformed
-
-    private void paramButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_paramButtonActionPerformed
-        lcp.doParamEstimation();
-        setStatus("Parameter estimation");
-    }//GEN-LAST:event_paramButtonActionPerformed
-
+    private void runButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runButtonActionPerformed
+        if (runButton.isSelected()) {
+            lcp.getSequenceExtractor().clearBuffers();
+            disableControllers();
+            if (runDelaySlider.getValue() != 0) this.sync.setFreq(1);
+            for(Cam c : camGuis) {
+                c.startMovie();
+            }
+            controller.setDelay(runDelay);
+            controller.startMovie();
+            setStatus("Capturing images started");
+        } else {
+            for(Cam c : camGuis) {
+                c.stopMovie();
+            }
+            controller.stopMovie();
+            setStatus("Capturing images stopped");
+            enableControllers();
+        }
+        registrationButton.setEnabled(true);
+        runButton.setEnabled(true);
+        paramButton.setEnabled(true);
+        enableRunRec();
+    }//GEN-LAST:event_runButtonActionPerformed
+    
     /**
      * asks if all necessary devices are connected, if not disables the easy gui
      * @return true if all necessary devices are connected, else false
@@ -751,10 +834,10 @@ public class EasyGui extends javax.swing.JPanel {
         if (!connected()) return;
         controlPanel.setEnabled(true);
         registrationButton.setEnabled(true);
-        delayLabel.setEnabled(true);
-        delaySlider.setEnabled(true);
-        msLabel.setEnabled(true);
+        enableRun();
         runButton.setEnabled(true);
+        enableRunRec();
+        runRecButton.setEnabled(true);
         photoButton.setEnabled(true);
         paramButton.setEnabled(true);
     }
@@ -765,12 +848,36 @@ public class EasyGui extends javax.swing.JPanel {
     private void disableControlPanel() {
         controlPanel.setEnabled(false);
         registrationButton.setEnabled(false);
-        delayLabel.setEnabled(false);
-        delaySlider.setEnabled(false);
-        msLabel.setEnabled(false);
+        disableRun();
         runButton.setEnabled(false);
+        disableRunRec();
+        runRecButton.setEnabled(false);
         photoButton.setEnabled(false);
         paramButton.setEnabled(false);
+    }
+    
+    private void enableRunRec() {
+        runRecDelayLabel.setEnabled(true);
+        runRecDelaySlider.setEnabled(true);
+        runRecMsLabel.setEnabled(true);
+    }
+    
+    private void disableRunRec() {
+        runRecDelayLabel.setEnabled(false);
+        runRecDelaySlider.setEnabled(false);
+        runRecMsLabel.setEnabled(false);
+    }
+        
+    private void enableRun() {
+        runDelayLabel.setEnabled(true);
+        runDelaySlider.setEnabled(true);
+        runMsLabel.setEnabled(true);
+    }
+    
+    private void disableRun() {
+        runDelayLabel.setEnabled(false);
+        runDelaySlider.setEnabled(false);
+        runMsLabel.setEnabled(false);
     }
     
     /**
@@ -811,20 +918,24 @@ public class EasyGui extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox blueCheckBox;
     private javax.swing.JPanel controlPanel;
-    private javax.swing.JLabel delayLabel;
-    private javax.swing.JSlider delaySlider;
     private javax.swing.JButton enableButton;
     private javax.swing.JCheckBox greenCheckBox;
     private javax.swing.JList<String> itList;
     private javax.swing.JPanel itPanel;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JPanel laserPanel;
-    private javax.swing.JLabel msLabel;
     private javax.swing.JButton paramButton;
     private javax.swing.JButton photoButton;
     private javax.swing.JCheckBox redCheckBox;
     private javax.swing.JToggleButton registrationButton;
     private javax.swing.JToggleButton runButton;
+    private javax.swing.JLabel runDelayLabel;
+    private javax.swing.JSlider runDelaySlider;
+    private javax.swing.JLabel runMsLabel;
+    private javax.swing.JToggleButton runRecButton;
+    private javax.swing.JLabel runRecDelayLabel;
+    private javax.swing.JSlider runRecDelaySlider;
+    private javax.swing.JLabel runRecMsLabel;
     private javax.swing.JLabel statusLabel;
     private javax.swing.JPanel statusPanel;
     // End of variables declaration//GEN-END:variables

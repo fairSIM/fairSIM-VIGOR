@@ -32,8 +32,8 @@ public class CameraServerGui extends javax.swing.JFrame implements AbstractServe
     CameraServer cs;
     private int viewWidth, viewHeight;
     private boolean refreshing;
-    private CameraController cc;
-    private Color defaultColor;
+    private final CameraController cc;
+    private final Color defaultColor;
     
     /**
      * Creates new form CameraGui
@@ -44,6 +44,7 @@ public class CameraServerGui extends javax.swing.JFrame implements AbstractServe
         initView(width, height);
         this.cc = cc;
         cs = CameraServer.startCameraServer(this, cc);
+        setTitle(getTitle() + " - " + cc.getChannel());
         startButton.setEnabled(true);
         stopButton.setEnabled(false);
         setVisible(true);

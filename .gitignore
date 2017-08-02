@@ -9,4 +9,5 @@ com
 *.dll
 *.bat
 *.log
+*.log.*
 external/*.dmg

@@ -107,6 +107,10 @@ public class CameraController {
         // starts the GUI
         this.gui = new CameraServerGui(imageWidth, imageHeight, this);
     }
+    
+    int getChannel() {
+        return channel;
+    }
 
     /**
      * sets the region of interest of the camera
