@@ -24,13 +24,15 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 /**
  *
- * @author m.lachetta
+ * @author m.lachetta & c.wenzel
  */
 public class DmdController implements SlmController {
     
@@ -60,29 +62,40 @@ public class DmdController implements SlmController {
         String filename = Tool.getFile(System.getProperty("user.home") + "/NetBeansProjects/fairSIMproject/vigor-tmp").getAbsolutePath();
         File f = new File("C:/Users/cwenzel/Documents/NetBeansProjects/fairSIMproject/vigor-tmp");
         File[] fileArray = f.listFiles();
-       // ArrayList filelist = new ArrayList();
         String[] stringArray = new String[fileArray.length];
         if(fileArray != null){
             for(int i=0;i<fileArray.length;i++){
                 if(fileArray[i].getName().contains("_batch")){
                     if(checkfile(fileArray[i].getAbsoluteFile())){
-                    String fileNameWithOutExtension = fileArray[i].getName();
-                    int help;
-                    help = fileArray[i].getName().lastIndexOf('.');
-                    if (help != -1)
-                    fileNameWithOutExtension = fileNameWithOutExtension.substring(0, help);
-                    stringArray[i] = fileNameWithOutExtension;
-                   // filelist.add(fileNameWithOutExtension);        
+                        String fileNameWithOutExtension = fileArray[i].getName();
+                        int help;
+                        help = fileArray[i].getName().lastIndexOf('.');
+                        if (help != -1)
+                        fileNameWithOutExtension = fileNameWithOutExtension.substring(0, help);
+                        stringArray[i] = fileNameWithOutExtension;
+                    // filelist.add(fileNameWithOutExtension);        
+                    }
+                    else{
+                        stringArray[i] = "null";
+                        System.out.println("file is not compartible 1");
+                    }
                 }
-                else{System.out.println("file is not compartible");}
-                } 
+                else{
+                    stringArray[i] = "null";
+                    System.out.println("file is not compartible 2");
+                }
             }
-           
         }
-        
-        
-    return stringArray;
-    }
+        else{
+            System.out.println("no folder existing");
+        }
+            final List<String> list =  new ArrayList<String>();
+            Collections.addAll(list, stringArray);
+            while(list.remove("null"));
+            stringArray = list.toArray(new String[list.size()]);
+            return stringArray;
+        }
+
     
     public static boolean checkfile(File f) throws FileNotFoundException, IOException{
         boolean boo = false;
@@ -122,13 +135,6 @@ public class DmdController implements SlmController {
         return boo;
     }
     
-    public static void testsetRo(int ro) throws IOException{
-        String[] list;
-            list = filelist();
-            String file = "C:/Users/cwenzel/Documents/NetBeansProjects/fairSIMproject/vigor-tmp"+list[ro]+".txt";
-            System.out.println("It was chosen file "+file);
-        
-    }
 
     // the board is activated, the mode is tested and perhaps changed, the file is uploaded
     @Override
@@ -142,7 +148,7 @@ public class DmdController implements SlmController {
             String file = "C:\\Users\\cwenzel\\Documents\\NetBeansProjects\\fairSIMproject\\vigor-tmp\\"+list[ro]+".txt";
             executeBatchFile(file);
             
-            gui.showText("Selected running order '" + ro + "'");
+           gui.showText("Selected running order '" + ro + "'");
             
             System.out.println("It was chosen file "+file);
             return "File was chosen";
@@ -199,20 +205,22 @@ public class DmdController implements SlmController {
         try {
             list = filelist();
             for(int i = 0; i<list.length;i++){
-            gui.showText("ArrayList of sequences constructed");
+           gui.showText("ArrayList of sequences constructed");
             System.out.println(list[i]);            
         }
         } catch (IOException ex) {
             Logger.getLogger(DmdController.class.getName()).log(Level.SEVERE, null, ex);//DmdException is not possible here !!
+            return "fail to transfer rolist";
         }
-        return "file list was created.";
-        //return Tool.encodeArray("Transfering rolist", list);
+        
+        return Tool.encodeArray("Transfering rolist", list);
           }
     
-    
+    //without this empty String there would be thrown exceptions because of functions from the slm
     @Override
     public String getSlmInfo() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        String string = " ; ; ; ; ; ";
+        return string;
     }
 
     //it happens a new start of the DMD
@@ -221,12 +229,17 @@ public class DmdController implements SlmController {
         try {
             deactivateBoard();
             disconnect();
+            Thread.sleep(5000);
             connect();
+            gui.showText("Connection to the Dmd opened.");
             System.out.println("DMD is rebooting");
             gui.showText("Dmd is rebooting");
             return "Reboot of the DMD. This may takes more than 2 seconds";
         } catch (DmdException ex) {
             return DmdException.catchedDmdException(ex);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(DmdController.class.getName()).log(Level.SEVERE, null, ex);
+            return "rebooting the Dmd failed";
         }
     }
 
@@ -363,10 +376,7 @@ public class DmdController implements SlmController {
      * @throws org.fairsim.controller.DmdController.DmdException if something went wrong
      */
     native private void stopSequence() throws DmdException;
-    
-    //connect klappen
-    //Modus erst setzen, dann Board ativieren, dann Sequenz starten, letzteres klappt nicht
-    //disconnect klappt
+   
     
     
     public int einlesen() {
@@ -381,16 +391,20 @@ public class DmdController implements SlmController {
 }
     
     public static void main(String[] args) throws InterruptedException, DmdException, IOException {
-        for(int i=0;i<filelist().length;i++){
-            System.out.println(filelist()[i]);
+        
+        String[] list = filelist();
+        System.out.println("los gehts");
+        for(int i=0;i<list.length;i++){
+            System.out.println(list[i]);
         }
         
+       
 //        DmdController dmd = new DmdController();
 //
 //        dmd.connectSlm();
 //        dmd.getRoList();
 //        
-//        dmd.setRo(dmd.einlesen());
+//        dmd.setRo(2);
 //        dmd.activateRo();
 //        Thread.sleep(2000);
 //        dmd.deactivateRo();
@@ -400,22 +414,7 @@ public class DmdController implements SlmController {
 //        dmd.activateRo();
 //        Thread.sleep(2000);
 //        dmd.disconnectSlm();
-     //   dmd.executeBatchFile("C:/Users/cwenzel/Documents/NetBeansProjects/fairSIMproject/vigor-tmp/Block_Load.batch.txt");
-     //   dmd.startSequence();
-        
-//        System.out.println("setRo: "+dmd.setRo(0));
-//        System.out.println("activateRo: "+dmd.activateRo());
-//        Thread.sleep(2000);
-//        System.out.println("deactivatRo: "+dmd.deactivateRo());
-//        Thread.sleep(2000);
-//        System.out.println("resetBoard: "+dmd.rebootSlm());
-//        Thread.sleep(5000);
-//        System.out.println("connecting "+dmd.connectSlm());
-//        System.out.println("setRo: "+dmd.setRo(1));
-//        System.out.println("activateRo: "+dmd.activateRo());
-//        Thread.sleep(2000);
-//        dmd.disconnectSlm();
-//
+
     }
     
 }
