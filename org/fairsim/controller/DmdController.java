@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JOptionPane;
 
 /**
  *
@@ -36,11 +35,17 @@ import javax.swing.JOptionPane;
  */
 public class DmdController implements SlmController {
     
-    ControllerServerGui gui;
+    AbstractServer.ServerGui gui;
+    int selectedRo;
+    String[] ros;
+    boolean busy;
     
-    public DmdController(ControllerServerGui serverGui) {
+    public DmdController(AbstractServer.ServerGui serverGui) {
         
         this.gui = serverGui;
+        this.selectedRo = 0;
+        this.ros = new String[1];
+        this.busy = false;
         
         // Loading hidapi-Library
         String wd = System.getProperty("user.dir")+"\\";
@@ -77,12 +82,12 @@ public class DmdController implements SlmController {
                     }
                     else{
                         stringArray[i] = "null";
-                        System.out.println("file is not compartible 1");
+//                        System.out.println("file is not compartible 1");
                     }
                 }
                 else{
                     stringArray[i] = "null";
-                    System.out.println("file is not compartible 2");
+//                    System.out.println("file is not compartible 2");
                 }
             }
         }
@@ -139,16 +144,33 @@ public class DmdController implements SlmController {
     // the board is activated, the mode is tested and perhaps changed, the file is uploaded
     @Override
     public String setRo(int ro) {
+        if (busy) {
+            return "Error: Dmd is busy";
+        }
         String[] list;
+        this.selectedRo = ro;
         try {
             activateBoard();
             if(isActive()){System.out.println("Board is activ");}
             if(getMode()==2||getMode()==0) setMode(3);
-            list = filelist();
+            list = ros;
             String file = "C:\\Users\\cwenzel\\Documents\\NetBeansProjects\\fairSIMproject\\vigor-tmp\\"+list[ro]+".txt";
-            executeBatchFile(file);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        busy = true;
+                        executeBatchFile(file);
+                        busy = false;
+                    } catch (DmdException ex) {
+                        // should never happen
+                    }
+                    
+                }
+            }).start();
             
-           gui.showText("Selected running order '" + ro + "'");
+            
+            gui.showText("Selected running order '" + ro + "'");
             
             System.out.println("It was chosen file "+file);
             return "File was chosen";
@@ -156,22 +178,21 @@ public class DmdController implements SlmController {
             System.out.println("fail in setRo");
             return DmdException.catchedDmdException(ex); 
         }
-        catch(IOException ex){
-            Logger.getLogger(DmdController.class.getName()).log(Level.SEVERE, null, ex);
-            return "building up the file failed";
-        }
     }
     
     //the sequence is started and it is tested if its running
     @Override
     public String activateRo() {
+        if (busy) {
+            return "Error: Dmd is busy";
+        }
         try {
             startSequence();
             if(!isSequenceRunning()){
                 return "Sequence coud not be activated.";
                 }
             else{
-                System.out.println("Activated current sequence in mode "+getMode());
+                System.out.println("Activated current sequence");
                 gui.showText("Activated running order" );
                 return "Current sequence got activated"; 
                 }
@@ -183,6 +204,9 @@ public class DmdController implements SlmController {
     //the sequence is stopped and it is tested if its running
     @Override
     public String deactivateRo() {
+        if (busy) {
+            return "Error: Dmd is busy";
+        }
         try {
             stopSequence();
             if(isSequenceRunning()){
@@ -202,63 +226,74 @@ public class DmdController implements SlmController {
     @Override
     public String getRoList() {
         String[] list;
-        try {
-            list = filelist();
+            list = ros;
             for(int i = 0; i<list.length;i++){
            gui.showText("ArrayList of sequences constructed");
-            System.out.println(list[i]);            
-        }
-        } catch (IOException ex) {
-            Logger.getLogger(DmdController.class.getName()).log(Level.SEVERE, null, ex);//DmdException is not possible here !!
-            return "fail to transfer rolist";
-        }
-        
-        return Tool.encodeArray("Transfering rolist", list);
+//            System.out.println(list[i]);            
           }
+        return Tool.encodeArray("Transfering rolist", list);
+    }
     
     //without this empty String there would be thrown exceptions because of functions from the slm
     @Override
-    public String getSlmInfo() {
-        String string = " ; ; ; ; ; ";
-        return string;
+    public String getSlmSelectedRo() {
+        int select = this.selectedRo;
+        return "Transfering info;" + select;
     }
 
     //it happens a new start of the DMD
     @Override
     public String rebootSlm() {
-        try {
-            deactivateBoard();
-            disconnect();
-            Thread.sleep(5000);
-            connect();
-            gui.showText("Connection to the Dmd opened.");
-            System.out.println("DMD is rebooting");
-            gui.showText("Dmd is rebooting");
-            return "Reboot of the DMD. This may takes more than 2 seconds";
-        } catch (DmdException ex) {
-            return DmdException.catchedDmdException(ex);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(DmdController.class.getName()).log(Level.SEVERE, null, ex);
-            return "rebooting the Dmd failed";
+        if (busy) {
+            return "Error: Dmd is busy";
         }
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+                    busy = true;
+                    rebootSlm();
+                    Thread.sleep(2000);
+                    disconnect();
+                    connect();
+                    busy = false;
+                } catch (DmdException ex) {
+                    Logger.getLogger(DmdController.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(DmdController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }).start();
+        System.out.println("DMD is rebooting");
+        gui.showText("Dmd is rebooting");
+        return "Reboot of the DMD. This may takes more than 2 seconds";
     }
 
     //the connection to the DMD is builded
     @Override
     public String connectSlm() {
+        if (busy) {
+            return "Error: Dmd is busy";
+        }
         try {
             connect();
+            ros = filelist();
             System.out.println("Connection to the DMD opened.");
             gui.showText("Connection to the Dmd opened.");
             return "Connected to the DMD";
         } catch (DmdException ex) {
             return DmdException.catchedDmdException(ex);
+        } catch (IOException ex) {
+            Logger.getLogger(DmdController.class.getName()).log(Level.SEVERE, null, ex);
+            return "problem to build the ros";
         }
     }
     
     //the connection to the DMD is lost
     @Override
     public String disconnectSlm() {
+        if (busy) {
+            return "Error: Dmd is busy";
+        }
         try {
             deactivateBoard();
             System.out.println("Board is inactiv");
@@ -378,42 +413,29 @@ public class DmdController implements SlmController {
     native private void stopSequence() throws DmdException;
    
     
-    
-    public int einlesen() {
- String eingabe = JOptionPane.showInputDialog("Zahl eingeben!", "1");
- try {
- int zahl= Integer.parseInt(eingabe);
- return zahl;
- } catch (NumberFormatException e) {
- System.out.println(eingabe + " ist keine Zahl");
- return(-1);
- }
-}
-    
     public static void main(String[] args) throws InterruptedException, DmdException, IOException {
         
-        String[] list = filelist();
-        System.out.println("los gehts");
-        for(int i=0;i<list.length;i++){
-            System.out.println(list[i]);
-        }
+//        String[] list = filelist();
+//        System.out.println("los gehts");
+//        for(int i=0;i<list.length;i++){
+//            System.out.println(list[i]);
+//        }
         
        
-//        DmdController dmd = new DmdController();
-//
-//        dmd.connectSlm();
-//        dmd.getRoList();
-//        
-//        dmd.setRo(2);
-//        dmd.activateRo();
-//        Thread.sleep(2000);
-//        dmd.deactivateRo();
-//        dmd.rebootSlm();
-//        Thread.sleep(5000);
-//        dmd.setRo(dmd.einlesen());
-//        dmd.activateRo();
-//        Thread.sleep(2000);
-//        dmd.disconnectSlm();
+        DmdController dmd = new DmdController(new AbstractServer.ServerGui() {
+            public void showText(String message) {
+                System.out.println(message);
+            }
+        });
+
+        dmd.connectSlm();
+        dmd.rebootSlm();
+        Thread.sleep(2000);
+        dmd.disconnect();
+        dmd.connect();
+        dmd.setRo(0);
+        Thread.sleep(1000);
+        dmd.activateRo();
 
     }
     
