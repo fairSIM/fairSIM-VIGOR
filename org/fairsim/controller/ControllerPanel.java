@@ -18,8 +18,16 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 package org.fairsim.controller;
 
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import org.fairsim.livemode.SimSequenceExtractor;
 
 /**
@@ -164,20 +172,49 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
      */
     void handleSlmError(String error) {
         controllerInstructionDone = false;
-        int code = Integer.parseInt(error.split("  ;  ")[1].split(": ")[1]);
-        if (code == 12) {
-            slmDissconnect();
-            showText("Gui: Reconnect to the SLM is necessary");
-        } else if (code == 7) {
-            disableSlmControllers();
-            slmConnectButton.setEnabled(true);
-            slmConnected = false;
-            showText("Gui: No connection to the SLM");
-        } else if (code == 8) {
-            slmDissconnect();
-            slmConnect();
+        if(error.contains("Error")){
+            if(error.contains("Code")){
+                int code = Integer.parseInt(error.split("  ;  ")[1].split(": ")[1]);
+                    if (code == 12) {
+                    slmDissconnect();
+                    showText("Gui: Reconnect to the Flcos is necessary");
+                    } else if (code == 7) {
+                    disableSlmControllers();
+                    slmConnectButton.setEnabled(true);
+                    slmConnected = false;
+                    showText("Gui: No connection to the SLM");
+                    } else if (code == 8) {
+                    slmDissconnect();
+                    slmConnect();
+                    }
+                   
+            }    
+            else if (error.contains("busy")){
+               showText(error);
+                JFrame frame = new JFrame("Warning");
+                frame.setPreferredSize(new Dimension(450,100));
+                JPanel panel = new JPanel();
+                panel.add(new JLabel("Wait until sequence is uploaded. This could take around 15 seconds."));
+                frame.add(panel);
+                frame.pack();
+                frame.setLocationRelativeTo(null);
+                frame.setVisible(true);
+                showText("Gui: Please wait until sequence is uploaded.");
+               }
+            else if(error.contains("No ro selected")){
+                showText("Gui: select a ro.");
+            }
+            else if(error.contains("stop sequence before starting a new one")){
+                showText("Gui: stop sequence before starting a new one");
+            }
+               else{
+               showText(error);
+               showText("Gui: reboot please");
+               }
         }
     }
+    
+    
 
     /**
      * handles an error-massage from the Arduino
@@ -205,19 +242,10 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
      * refreshes the informations shown in the GUI
      */
     void slmRefresh() {
-        try {
+//        try {
             sendSlmInstruction("info");
             if (controllerInstructionDone) {
-                //slmVersion.setText("SLM-API-Version: " + client.info[0]);
-                //slmTime.setText("Timestamp: " + client.info[1]);
-                //slmType.setText("Activation type: " + client.info[2]);
-                //slmDefault.setText("Default running order: " + slmComboBox.getItemAt(Integer.parseInt(client.info[3])));
-                slmSelect.setText("Selected running order: " + slmComboBox.getItemAt(Integer.parseInt(controllerClient.deviceInfo[4])));
-                //slmRepertoir.setText("Repertoir name: " + client.info[5]);
-            }
-        } catch (NullPointerException ex) {
-            System.err.println("Error while refreshing SLM-GUI");
-            showText("[fairSIM] Error while refreshing SLM-GUI");
+                slmSelect.setText("Selected running order: " + slmComboBox.getItemAt(Integer.parseInt(controllerClient.deviceInfo)));
         }
     }
     
@@ -492,6 +520,12 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
             }
         });
 
+        slmComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                slmComboBoxActionPerformed(evt);
+            }
+        });
+
         slmDisconnectButton.setText("Disconnect SLM");
         slmDisconnectButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -545,6 +579,9 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
                 .addContainerGap()
                 .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(slmPanelLayout.createSequentialGroup()
+                        .addComponent(slmSelect)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, slmPanelLayout.createSequentialGroup()
                         .addComponent(slmComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(slmSelectButton)
@@ -552,37 +589,35 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
                         .addComponent(slmActivateButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(slmDeactivateButton)
-                        .addContainerGap())
-                    .addGroup(slmPanelLayout.createSequentialGroup()
-                        .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(slmPanelLayout.createSequentialGroup()
-                                .addComponent(slmConnectButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(slmDisconnectButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(slmRebootButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(slmRefreshButton))
-                            .addComponent(slmSelect))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, slmPanelLayout.createSequentialGroup()
+                        .addComponent(slmConnectButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(slmDisconnectButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(slmRebootButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(slmRefreshButton)
                         .addGap(0, 0, Short.MAX_VALUE))))
         );
         slmPanelLayout.setVerticalGroup(
             slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, slmPanelLayout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(slmConnectButton)
                     .addComponent(slmDisconnectButton)
                     .addComponent(slmRebootButton)
                     .addComponent(slmRefreshButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(slmPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(slmComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(slmSelectButton)
                     .addComponent(slmActivateButton)
-                    .addComponent(slmDeactivateButton)
-                    .addComponent(slmSelectButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(slmDeactivateButton))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(slmSelect)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         arduinoPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Arduino-Controller"));
@@ -683,7 +718,7 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
                         .addComponent(arduinoGreenButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(arduinoBlueButton)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(0, 182, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         arduinoPanelLayout.setVerticalGroup(
@@ -719,10 +754,10 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(slmPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(slmPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(arduinoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -820,11 +855,15 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
         slmRefresh();
     }//GEN-LAST:event_slmRefreshButtonActionPerformed
 
+    private void slmComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_slmComboBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_slmComboBoxActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JToggleButton arduinoBlueButton;
-    private javax.swing.JTextField arduinoBreakTimeTextField;
-    private javax.swing.JComboBox<String> arduinoComboBox;
+    javax.swing.JTextField arduinoBreakTimeTextField;
+    javax.swing.JComboBox<String> arduinoComboBox;
     private javax.swing.JButton arduinoConnectButton;
     private javax.swing.JLabel arduinoDelayLabel;
     private javax.swing.JButton arduinoDisconnectButton;
