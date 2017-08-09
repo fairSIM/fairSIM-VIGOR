@@ -21,13 +21,15 @@ import com.forthdd.commlib.exceptions.AbstractException;
 import com.forthdd.commlib.exceptions.CommException;
 import com.forthdd.commlib.r4.R4CommLib;
 import com.forthdd.commlib.core.CommLib;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.fairsim.utils.Tool;
 
 /**
  *
  * @author m.lachetta
  */
-public class FlcosController {
+public class FlcosController implements SlmController {
     
     ControllerServerGui gui;
    
@@ -41,7 +43,7 @@ public class FlcosController {
         // Loding SLM-API-Library
         String wd = System.getProperty("user.dir")+"\\";
         String libName = "R4CommLib";
-        this.gui.showText("Slm: loading "+libName+".dll from "+wd);
+        this.gui.showText("Flcos: loading "+libName+".dll from "+wd);
         System.load(wd+libName+".dll");
     }
     
@@ -62,7 +64,8 @@ public class FlcosController {
      * @param ro new running order
      * @param out String-output-Stream of the server
      */
-    String setRo(int ro) {
+    @Override
+    public String setRo(int ro) {
         //out.println("Try to set running order to: " + ro);
         try {
             R4CommLib.rpcRoDeactivate();
@@ -79,7 +82,8 @@ public class FlcosController {
      *
      * @param out String-output-Stream of the server
      */
-    String activateRo() {
+    @Override
+    public String activateRo() {
         //out.println("Try to activate selected running order");
         try {
             R4CommLib.rpcRoActivate();
@@ -95,7 +99,8 @@ public class FlcosController {
      *
      * @param out String-output-Stream of the server
      */
-    String deactivateRo() {
+    @Override
+    public String deactivateRo() {
         //out.println("Try to deactivate current running order");
         try {
             R4CommLib.rpcRoDeactivate();
@@ -111,34 +116,42 @@ public class FlcosController {
      *
      * @param out String-output-Stream of the server
      */
-    String getSlmInfo() {
+    @Override
+    public String getSlmSelectedRo() {
         //out.println("Try to transfer Slm Information");
+//        try {
+//            String[] info = new String[6];
+//            info[0] = R4CommLib.libGetVersion();
+//            info[1] = R4CommLib.rpcMicroGetCodeTimestamp().split("\n")[0];
+//            byte at = R4CommLib.rpcRoGetActivationType();
+//            if (at == 1) {
+//                info[2] = "Immediate";
+//            } else if (at == 1) {
+//                info[2] = "Software";
+//            } else if (at == 4) {
+//                info[2] = "Hardware";
+//            } else {
+//                info[2] += "UNKNOWN";
+//            }
+//            info[3] = Integer.toString(R4CommLib.rpcRoGetDefault());
+//            info[4] = Integer.toString(R4CommLib.rpcRoGetSelected());
+//            info[5] = R4CommLib.rpcSysGetRepertoireName();
+//            gui.showText("Info-Array constructed");
+//            String serverOut = "Transfering info";
+//            for (String output : info) {
+//                serverOut += ";" + output;
+//            }
+//            return serverOut;
+//        } catch (AbstractException ex) {
+//            return catchedAbstractException(ex);
+//        }
+    String string;
         try {
-            String[] info = new String[6];
-            info[0] = R4CommLib.libGetVersion();
-            info[1] = R4CommLib.rpcMicroGetCodeTimestamp().split("\n")[0];
-            byte at = R4CommLib.rpcRoGetActivationType();
-            if (at == 1) {
-                info[2] = "Immediate";
-            } else if (at == 1) {
-                info[2] = "Software";
-            } else if (at == 4) {
-                info[2] = "Hardware";
-            } else {
-                info[2] += "UNKNOWN";
-            }
-            info[3] = Integer.toString(R4CommLib.rpcRoGetDefault());
-            info[4] = Integer.toString(R4CommLib.rpcRoGetSelected());
-            info[5] = R4CommLib.rpcSysGetRepertoireName();
-            gui.showText("Info-Array constructed");
-            String serverOut = "Transfering info";
-            for (String output : info) {
-                serverOut += ";" + output;
-            }
-            return serverOut;
+            string = Integer.toString(R4CommLib.rpcRoGetSelected());
         } catch (AbstractException ex) {
             return catchedAbstractException(ex);
         }
+    return "Transfering info;" + string;
     }
 
     /**
@@ -146,7 +159,8 @@ public class FlcosController {
      *
      * @param out String-output-Stream of the server
      */
-    String getRoList() {
+    @Override
+    public String getRoList() {
         //out.println("Try to transfer running orders");
         try {
             int len = R4CommLib.rpcRoGetCount();
@@ -173,11 +187,12 @@ public class FlcosController {
      *
      * @param out String-output-Stream of the server
      */
-    String rebootSlm() {
+    @Override
+    public String rebootSlm() {
         //out.println("Try to reboot the SLM");
         try {
             R4CommLib.rpcSysReboot();
-            gui.showText("SLM is rebooting");
+            gui.showText("Flcos is rebooting");
             return "Reboot of the SLM. This may takes more than 20 seconds";
         } catch (AbstractException ex) {
             return catchedAbstractException(ex);
@@ -189,15 +204,16 @@ public class FlcosController {
      *
      * @param out String-output-Stream of the server
      */
-    String connectSlm() {
+    @Override
+    public String connectSlm() {
         //out.println("Try to connect to the SLM");
         try {
             String[] devEnumerateWinUSB = CommLib.devEnumerateWinUSB(R4CommLib.R4_WINUSB_GUID); //need to test the other funktion
             try {
                 String devPath = devEnumerateWinUSB[0].split(":")[0];
                 CommLib.devOpenWinUSB(devPath, 1000);
-                gui.showText("Connection to the SLM opened.");
-                return "Connected to the SLM";
+                gui.showText("Connection to the Flcos opened.");
+                return "Connected to the Flcos";
             } catch (ArrayIndexOutOfBoundsException e) {
                 throw new CommException("No device found", 7);
             }
@@ -211,11 +227,12 @@ public class FlcosController {
      *
      * @param out String-output-Stream of the server
      */
-    String disconnectSlm() {
+    @Override
+    public String disconnectSlm() {
         //out.println("Try to disconnect from the SLM");
         try {
             CommLib.devClose();
-            gui.showText("Connection to the SLM closed.");
+            gui.showText("Connection to the Flcos closed.");
             return "Disconnected from the SLM";
         } catch (AbstractException ex) {
             return catchedAbstractException(ex);
