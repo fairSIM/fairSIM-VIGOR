@@ -26,7 +26,7 @@ import org.fairsim.utils.Tool;
  * @author m.lachetta
  */
 public class ControllerClient extends AbstractClient {
-    String[] deviceInfo;
+    String deviceInfo;
     String[] deviceList;
     ArduinoRunningOrder[] arduinoRos;
 
@@ -50,7 +50,7 @@ public class ControllerClient extends AbstractClient {
     protected void handleServerAnswer(String answer) {
         if (answer.startsWith("Slm: Transfering info")) {
             // updates the information of the device
-            deviceInfo = Tool.decodeArray(answer);
+            deviceInfo = Tool.decodeString(answer);
         } else if (answer.startsWith("Slm: Transfering rolist")) {
             // updates running orders of the device
             deviceList = Tool.decodeArray(answer);
@@ -71,13 +71,17 @@ public class ControllerClient extends AbstractClient {
 
     @Override
     protected void handleTimeout(String command) {
-        gui.showText("Timeout for command: " + command);
+        String message = "Timeout for command: " + command;
+        Tool.error(message, false);
+        gui.showText(message);
         gui.interruptInstruction();
     }
 
     @Override
     protected void handleInterrupt(String command) {
-        gui.showText("Interrupt for command: " + command);
+        String message = "Interrupt for command: " + command;
+        Tool.error(message, false);
+        gui.showText(message);
         gui.interruptInstruction();
     }
     
