@@ -18,7 +18,12 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 
 package org.fairsim.controller;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import static org.fairsim.controller.ControllerServer.startControllerServer;
+import org.fairsim.utils.Tool;
 
 /**
  * Gui for the controller server
@@ -27,7 +32,7 @@ import static org.fairsim.controller.ControllerServer.startControllerServer;
 public class ControllerServerGui extends javax.swing.JFrame implements AbstractServer.ServerGui{
 
     ControllerServer server;
-    FlcosController slm;
+    SlmController slm;
     ArduinoController arduino;
 
     /**
@@ -35,10 +40,34 @@ public class ControllerServerGui extends javax.swing.JFrame implements AbstractS
      */
     public ControllerServerGui() {
         initComponents();
-        slm = new FlcosController(this);
+        slm = initController();
         arduino = new ArduinoController(this);
-        server = startControllerServer(this, slm, arduino);
+        if(slm !=null){
+            server = startControllerServer(this, slm, arduino);
+        }
     }
+   
+    final SlmController initController(){
+        SlmController slm1 = new DmdController(this);
+        SlmController slm2 = new FlcosController(this);
+        String string1 = slm1.connectSlm();
+        String string2 = slm2.connectSlm();
+        if(string1=="Connected to the DMD" & string2=="Connected to the Flcos"){
+            showText("Please connect only one SLM.");
+            return null;
+        }
+        else if(string1=="Connected to the DMD"){
+            return slm1;
+        }
+        else if(string2=="Connected to the Flcos"){
+            return slm2;
+        }
+        else{
+            showText("No SLM connected.");
+            return null;
+        }
+    }
+
     
     /**
      * Shows text in the ServerGui
@@ -120,7 +149,7 @@ public class ControllerServerGui extends javax.swing.JFrame implements AbstractS
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new ControllerServerGui().setVisible(true);
+                    new ControllerServerGui().setVisible(true);
             }
         });
     }
