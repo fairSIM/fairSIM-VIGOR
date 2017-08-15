@@ -151,19 +151,18 @@ public class DmdController implements SlmController {
         String[] list;
         this.selectedRo = ro;
         try {
+            
             if (!isActive()) {
                 activateBoard();
             }
-
-            if (getMode() == 2 || getMode() == 0) {
-                setMode(3);
-            }
+                       
+            setMode(3);         
 
             list = ros;
 
             String file = "C:\\Users\\cwenzel\\Documents\\NetBeansProjects\\fairSIMproject\\vigor-tmp\\" + list[ro] + ".txt";
             
-            if(isSequenceRunning()){return "Error: stop sequence before starting a new one";}
+            if(isSequenceRunning()) stopSequence();
             
             new Thread(new Runnable() {
                 @Override

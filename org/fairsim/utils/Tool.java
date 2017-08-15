@@ -239,6 +239,11 @@ public final class Tool {
 	    return String.format("%10.3f ms",(outtime/1000000.));
 	}
     }
+    //the methode is to devide the string and output the second part
+    public static String decodeString(String encoded){
+        String[] split = encoded.split(";");
+        return split[1];
+    }
     
     public static String[] decodeArray(String encodedArray) {
         String[] split = encodedArray.split(";");

@@ -18,10 +18,6 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 
 package org.fairsim.controller;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import static org.fairsim.controller.ControllerServer.startControllerServer;
 import org.fairsim.utils.Tool;
 
@@ -42,32 +38,28 @@ public class ControllerServerGui extends javax.swing.JFrame implements AbstractS
         initComponents();
         slm = initController();
         arduino = new ArduinoController(this);
-        if(slm !=null){
-            server = startControllerServer(this, slm, arduino);
-        }
+        server = startControllerServer(this, slm, arduino);
     }
    
-    final SlmController initController(){
-        SlmController slm1 = new DmdController(this);
-        SlmController slm2 = new FlcosController(this);
-        String string1 = slm1.connectSlm();
-        String string2 = slm2.connectSlm();
-        if(string1=="Connected to the DMD" & string2=="Connected to the Flcos"){
-            showText("Please connect only one SLM.");
-            return null;
-        }
-        else if(string1=="Connected to the DMD"){
+    final SlmController initController() throws RuntimeException{
+        
+        try{
+            SlmController slm1 = new DmdController(this);
+            String string1 = slm1.connectSlm();
             return slm1;
-        }
-        else if(string2=="Connected to the Flcos"){
-            return slm2;
-        }
-        else{
-            showText("No SLM connected.");
-            return null;
+               
+        }catch(UnsatisfiedLinkError ex){
+            try{
+                SlmController slm2 = new FlcosController(this);
+                String string2 = slm2.connectSlm();
+                    return slm2;
+            }catch(UnsatisfiedLinkError exc){
+                Tool.error("libary of all SLM's missing", true);
+                throw new RuntimeException();
+            }
+            
         }
     }
-
     
     /**
      * Shows text in the ServerGui

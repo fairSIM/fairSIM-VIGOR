@@ -1,7 +1,7 @@
 <fairsim>
 <vigor-settings>
 
-<ControllerAdress type="string">Atana</ControllerAdress>
+<ControllerAdress type="string">localhost</ControllerAdress>
 <TCPPort type="int">32322</TCPPort>
 
 <RawPxlCount type="int">512</RawPxlCount>
@@ -18,6 +18,7 @@
 
 <ParamFolder type="string">C:\Users\cwenzel\Documents\NetBeansProjects\fairSIMproject\vigor-tmp</ParamFolder>
 <RegistrationFolder type="string">C:\Users\cwenzel\Documents\NetBeansProjects\fairSIMproject\vigor-tmp</RegistrationFolder>
+<DmdRoFolder type="string">C:\Users\cwenzel\Documents\NetBeansProjects\fairSIMproject\vigor-tmp</DmdRoFolder>
 
 <SyncFrameFreq type="int">1</SyncFrameFreq>
 <SyncFrameAvr type="int">8000</SyncFrameAvr>
@@ -30,7 +31,7 @@
 
 <offset type="decimal">200</offset>
 <ChannelNumber type="int">525</ChannelNumber>
-<CamAdress type="string">localhost</CamAdress>
+<CamAdress type="string">525Camera</CamAdress>
 
 <sim-param>
 <nr-angles type="int"> 3 </nr-angles>
