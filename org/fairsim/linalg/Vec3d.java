@@ -113,6 +113,10 @@ public final class Vec3d {
 	 *  x-y-slice of the vector to the provided input */
 	public void setSlice( int z, Vec2d.Real dat );
 
+	/** Set the z'th 
+	 *  x-y-slice of the vector to the provided input */
+	public void setSlice( int z, Vec2d.Cplx dat );
+
     }
     
     // =======================================================

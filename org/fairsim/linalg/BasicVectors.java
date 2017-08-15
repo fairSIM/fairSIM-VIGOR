@@ -411,10 +411,40 @@ public class BasicVectors extends VectorFactory {
 	    data[ x + y*width + z*width*height ] = a;
 	}
 
-	@Override
+	/*@Override
 	public void setSlice( int z, Vec2d.Real vec ) {
 	    // TODO: Actually implement this
 	    throw new RuntimeException("Not jet implemented");
+	}*/
+	@Override
+	public void setSlice( int z, Vec2d.Real vec ) {
+	    if (( vec.vectorWidth() != width ) ||
+		( vec.vectorHeight() != height ) ||
+		z<0 || z>= depth )
+		throw new RuntimeException("Index mismatch");
+
+	    float [] in = vec.vectorData();
+
+	    for (int y=0; y<height; y++)
+	    for (int x=0; x<width; x++) {
+		data[ x + width*y + z*width*height ] = in[ x + width*y ];
+	    }
+	
+	}
+	@Override
+	public void setSlice( int z, Vec2d.Cplx vec ) {
+	    if (( vec.vectorWidth() != width ) ||
+		( vec.vectorHeight() != height ) ||
+		z<0 || z>= depth )
+		throw new RuntimeException("Index mismatch");
+
+	    float [] in = vec.vectorData();
+
+	    for (int y=0; y<height; y++)
+	    for (int x=0; x<width; x++) {
+		data[ x + width*y + z*width*height ] = in[ 2*( x + width*y )+0 ];
+	    }
+	
 	}
 
     }

@@ -18,12 +18,10 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 
 package org.fairsim.transport;
 
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 
 import java.net.Socket;
-import java.net.ServerSocket;
 import java.net.InetAddress;
 
 import java.util.List;
@@ -41,8 +39,6 @@ public class ImageSender {
    
     // list of TCP connections to use
     List<SendingThread> connection = new ArrayList<SendingThread>();
-    
-    long seqNr = (long)(Math.random() * Math.pow(2, 30)) << 32;
 
     /** Start ImageSender without initial connection */
     public ImageSender() {
@@ -88,8 +84,6 @@ public class ImageSender {
      * queued for sending. */
     public boolean queueImage( ImageWrapper img ) {
 	if (img==null) return false;
-        img.seqNr = seqNr;
-        seqNr++;
 	return imageQueue.offer( img);
     }
 

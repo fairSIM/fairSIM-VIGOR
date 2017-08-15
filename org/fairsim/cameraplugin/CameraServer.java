@@ -175,7 +175,7 @@ public class CameraServer extends AbstractServer {
             String output = "New config has been set";
             gui.showText(output);
             return output;
-        } catch (CameraException ex) {
+        } catch (CameraException | IllegalArgumentException ex) {
             return ex.toString();
         }
     }

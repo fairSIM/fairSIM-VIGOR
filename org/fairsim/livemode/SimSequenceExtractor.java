@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.awt.Color;
 import java.nio.BufferOverflowException;
-import java.util.zip.DataFormatException;
 
 import org.fairsim.transport.ImageReceiver;
 import org.fairsim.transport.ImageWrapper;

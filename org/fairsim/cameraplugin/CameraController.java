@@ -22,7 +22,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.DataFormatException;
 import org.fairsim.cameraplugin.CameraPlugin.CameraException;
 import org.fairsim.transport.ImageSender;
@@ -39,10 +41,10 @@ public class CameraController {
     private final CameraPlugin cp;
     private final CameraServerGui gui;
     private AcquisitionThread acquisitionThread;
-    private final int channel;
+    private final int[] channels;
     private final List<String> sendIps;
     private final CameraGroup[] groups;
-    private static final int CAMBUFFER = 1000;
+    private static final int CAMBUFFER = 512;
     private static final int FPSCOUNTS = 59;
     private int[] roi;
     private final int[] bigRoi, smallRoi;
@@ -71,7 +73,9 @@ public class CameraController {
         String filename = Tool.getFile(System.getProperty("user.home") + "/documents/fastsim-camera.xml").getAbsolutePath();
         try {
             Conf.Folder cfg = Conf.loadFile(filename).r().cd("camera-settings");
-            channel = cfg.getInt("Channel").val();
+            channels = cfg.getInt("Channel").vals();
+            if (channels.length < cp.getChannelCount()) throw new IOException(cp.getChannelCount() +
+                    " cams in use, but only " + channels.length + " in config file " + filename);
             String[] flags = cfg.getStr("Flags").val().split(" ");
             bigRoi = cfg.getInt("BigRoi").vals();
             smallRoi = cfg.getInt("SmallRoi").vals();
@@ -92,6 +96,7 @@ public class CameraController {
         } catch (Conf.SomeIOException ex) {
             throw new FileNotFoundException(filename);
         } catch (Conf.EntryNotFoundException ex) {
+            ex.printStackTrace();
             throw new IOException("Entry not found: " + filename);
         }
 
@@ -108,8 +113,8 @@ public class CameraController {
         this.gui = new CameraServerGui(imageWidth, imageHeight, this);
     }
     
-    int getChannel() {
-        return channel;
+    int[] getChannels() {
+        return channels;
     }
 
     /**
@@ -224,7 +229,8 @@ public class CameraController {
      * with micro manager went wrong
      */
     void setConfig(int groupId, int configId) throws CameraException {
-        cp.setConfig(groups[groupId].getNmae(), groups[groupId].getConfig(configId));
+        if (groupId >= 0 && configId >= 0) cp.setConfig(groups[groupId].getNmae(), groups[groupId].getConfig(configId));
+        else throw new IllegalArgumentException("Group or config id < 0");
     }
 
     /**
@@ -261,6 +267,11 @@ public class CameraController {
      */
     void startNetworkAcquisition() {
         gui.startButton.setEnabled(false);
+        try {
+            if (cp.isSequenceRunning()) return;
+        } catch (CameraException ex) {
+            throw new RuntimeException(ex);
+        }
         acquisitionThread = new AcquisitionThread();
         acquisitionThread.start();
     }
@@ -282,6 +293,7 @@ public class CameraController {
         boolean acquisition;
         boolean imagesQueued;
         boolean imagesSended;
+        private final Map<Integer, Long> seqNrMapping = new HashMap<>();
         
         /**
          * offers an image to send it over network
@@ -289,17 +301,26 @@ public class CameraController {
          * @param count frame number of the image
          * @param timeStamp timestamp of the image
          */
-        private void queueImage(short[] imgData, int count, long timeStamp) {
-            ImageWrapper iw;
-            //System.out.println(mirrored + "/" + sendPixelSize);
+        private void queueImage(int channelIdx, short[] imgData, int count, long timeStamp) {
+            ImageWrapper iw;            
             if (mirrored) {
-                iw = ImageWrapper.copyImageCropMirrorXCentered(imgData, sendImageSize, sendImageSize, imageWidth, imageHeight, 0, 0, 0, channel, count);
+                iw = ImageWrapper.copyImageCropMirrorXCentered(imgData, sendImageSize, sendImageSize, imageWidth, imageHeight, 0, 0, 0, channels[channelIdx], count);
                 
             } else {
-                iw = ImageWrapper.copyImageCropCentered(imgData, sendImageSize, sendImageSize, imageWidth, imageHeight, 0, 0, 0, channel, count);
+                iw = ImageWrapper.copyImageCropCentered(imgData, sendImageSize, sendImageSize, imageWidth, imageHeight, 0, 0, 0, channels[channelIdx], count);
             }
             iw.setTimeCamera(timeStamp);
             iw.setTimeCapture(System.currentTimeMillis() * 1000);
+            
+            // set seqNr
+            Long sn = seqNrMapping.get(channelIdx);
+            if (sn == null) {
+                sn = (long) (Math.random() * Math.pow(2, 30)) << 32;
+                seqNrMapping.put(channelIdx, sn);
+            }
+            iw.setSeqNr(sn);
+            seqNrMapping.put(channelIdx, sn + 1);
+            
             imagesQueued = imagesQueued && isend.queueImage(iw);
             imagesSended = imagesSended && isend.canSend();
         }
@@ -317,7 +338,7 @@ public class CameraController {
                 }
                 
                 // starting acquisition
-                cp.startSequenceAcquisition();
+                //cp.startSequenceAcquisition();
                 int count = 0;
                 Tool.Timer t1 = Tool.getTimer();
                 t1.start();
@@ -327,12 +348,13 @@ public class CameraController {
                     }
                     if (cp.getRemainingImageCount() > 0) {
                         // retrieve image from camera
-                        short[] imgData;
-                        imgData = (short[]) cp.getNextImage();
+                        CameraPlugin.ChanneldImage chImg = cp.getNextImage();
+                        int chIdx = chImg.chIdx;
+                        short[] imgData = chImg.img;
                         count++;
                         long timeStamp = Tool.decodeBcdTimestamp(imgData);
                         // send image to reconstruction / capture
-                        queueImage(imgData, count, timeStamp);
+                        queueImage(chIdx, imgData, count, timeStamp);
                         // display image all 59 images & updates queuing/sending color & fps
                         if (count % FPSCOUNTS == 0) {
                             t1.stop();
@@ -346,11 +368,11 @@ public class CameraController {
                             queued = imagesQueued;
                             sended = imagesSended;
                             imagesQueued = imagesSended = true;
-                            gui.view.newImage(0, imgData);
+                            gui.view.newImage(chIdx, imgData);
                             gui.view.refresh();
                         }
                     } else {
-                        cp.sleepCam(2);
+                        cp.sleep(2);
                     }
                     if (isInterrupted()) {
                         acquisition = false;
@@ -367,8 +389,9 @@ public class CameraController {
                 gui.resetSendingColor();
             } catch (UnknownHostException | CameraException ex) {
                 acquisition = false;
-                System.err.println(ex);
+                System.err.println("AcquisitionThread: " + ex);
                 gui.showText("AcquisitionThread: " + ex.toString());
+                ex.printStackTrace();
                 gui.closeWholePlugin();
             }
         }

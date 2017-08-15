@@ -36,6 +36,29 @@ public class Converter {
     // Marcels Kram
     
     /**
+     * Create real 2D vector from image file.
+     * 
+     * @param fileLocation image location
+     * @param vf vector factory to create the vector
+     */
+    public static void fileToVec2d(String fileLocation, Vec2d.Real vec) {
+        Opener opener = new Opener();
+	ImagePlus imp = opener.openImage(fileLocation);
+        
+        final int w = imp.getWidth();
+        final int h = imp.getHeight();
+        
+        ImageProcessor ip = imp.getStack().getProcessor(1).convertToFloat();
+        float[] values = (float[]) ip.getPixels();
+
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                vec.set(x, y, values[y*w + x]);
+            }
+        }
+    }
+    
+    /**
      * Create complex 2D vector from image file.
      * 
      * @param fileLocation image location
@@ -44,7 +67,7 @@ public class Converter {
     public static Vec2d.Cplx fileToVec2dCplx(String fileLocation, VectorFactory vf) {
         Opener opener = new Opener();
 	ImagePlus imp = opener.openImage(fileLocation);
-
+        
         final int w = imp.getWidth();
         final int h = imp.getHeight();
         
@@ -61,6 +84,31 @@ public class Converter {
         Vec2d.Cplx vecCplx = vf.createCplx2D(w, h);
         vecCplx.copy(vecReal);
         return vecCplx;
+    }
+
+    /**
+     * Create complex 3D vector from image file.
+     * 
+     * @param fileLocation image location
+     * @param vf vector factory to create the vector
+     */
+    public static void fileToVec3dReal(String fileLocation, Vec3d.Real vec) {
+        Opener opener = new Opener();
+	ImagePlus imp = opener.openImage(fileLocation);
+        
+        final int w = imp.getWidth();
+        final int h = imp.getHeight();
+        final int d = imp.getStackSize();
+        
+        for (int z = 0; z < d; z++) {
+            ImageProcessor ip = imp.getStack().getProcessor(z + 1).convertToFloat();
+            float[] values = (float[]) ip.getPixels();
+            for (int y = 0; y < h; y++) {
+                for (int x = 0; x < w; x++) {
+                    vec.set(x, y, z, values[y*w + x]);
+                }
+            }
+        }
     }
 
     /**
@@ -113,6 +161,39 @@ public class Converter {
 
         ImagePlus img = new ImagePlus("", ip);
         new FileSaver(img).saveAsTiff(fileLocation);
+    }
+
+    /**
+     * Create and save TIFF file from complex 3D vector.
+     * Only the real part of the vector is used.
+     * 
+     * @param vec input vector
+     * @param fileLocation location for saving file
+     */
+    public static void vec3dRealToFile(Vec3d.Real vec, String fileLocation) {
+        final int w = vec.vectorWidth();
+        final int h = vec.vectorHeight();
+        final int d = vec.vectorDepth();
+        ImageStack stack = new ImageStack(w, h);
+        
+        for(int z = 0; z < d; z++) {
+            float[] values = new float[w*h];
+            for (int y = 0; y < h; y++) {
+                for (int x = 0; x < w; x++) {
+                    values[y*w + x] = vec.get(x, y, z);
+                }
+            }
+            ImageProcessor ip = new FloatProcessor(w, h, values);
+            stack.addSlice(ip);
+        }
+
+        ImagePlus imp = new ImagePlus("", stack);
+        
+        // convert imageplus object from 32bit to 16bit
+        ImageConverter c = new ImageConverter(imp);
+        c.convertToGray16();
+        
+        new FileSaver(imp).saveAsTiff(fileLocation);
     }
 
     /**

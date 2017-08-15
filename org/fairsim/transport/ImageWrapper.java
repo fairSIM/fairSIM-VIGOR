@@ -25,6 +25,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.fairsim.linalg.Vec2d;
 import org.fairsim.utils.Tool;
@@ -32,16 +34,16 @@ import org.fairsim.utils.Tool;
 /** Class to encapsulate image data for network send */
 public class ImageWrapper {
 
-    final int maxWidth, maxHeight;
+    private final int maxWidth, maxHeight;
     
-    long seqNr;
-    int width, height, bpp;
-    int posA, posB, pos0, pos1, pos2;
+    private long seqNr;
+    private int width, height, bpp;
+    private int posA, posB, pos0, pos1, pos2;
 
-    long timeCamera=0, timeCapture=0, timeRecord=0;
+    private long timeCamera=0, timeCapture=0, timeRecord=0;
 
-    byte []	buffer;
-    ByteBuffer	header;
+    private byte []	buffer;
+    private ByteBuffer	header;
     
     /** Create a new ImageWrapper, for images sized maxBytes */
     public ImageWrapper( int maxWidth, int maxHeight ) {
@@ -50,6 +52,10 @@ public class ImageWrapper {
 	buffer = new byte[ maxWidth * maxHeight*2 + 128+ 2];
 	header = ByteBuffer.wrap( buffer, 0, 128);
 	header.order( ByteOrder.LITTLE_ENDIAN );
+    }
+    
+    public void setSeqNr(long seqNr) {
+        this.seqNr = seqNr;
     }
 
     /** Create an ImageWrapper from 2-byte pxl data */
@@ -152,14 +158,16 @@ public class ImageWrapper {
 	System.arraycopy( dat, 0, buffer, 128, w*h);
     }
 
-
+    
     /** Obtain a reference to the internal buffer (for sending) */
+    /*
     public byte [] refBuffer(long sqNr) {
 	seqNr=sqNr;
 	writeHeader();
 	return buffer;
     }
-
+    */
+    
     /** Obtain a reference to the internal buffer (w/o new header, for streaming to disk) */
     public byte [] refBuffer() {
 	return buffer;
@@ -430,8 +438,7 @@ public class ImageWrapper {
 	    throw new RuntimeException("Index out of bound");
 	pos0 = i0; pos1 = i1; pos2 = i2;
     }
-
-
+    
     public void setTimeCamera( long val ) {
 	timeCamera = val;
     }

@@ -17,7 +17,11 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
  */
 package org.fairsim.cameraplugin;
 
+import java.util.LinkedList;
+import java.util.List;
 import mmcorej.CMMCore;
+import mmcorej.TaggedImage;
+import org.json.JSONObject;
 import org.micromanager.api.ScriptInterface;
 
 /**
@@ -26,11 +30,16 @@ import org.micromanager.api.ScriptInterface;
  */
 public class CameraPlugin implements org.micromanager.api.MMPlugin {
 
-    public static String menuName = "Fast-SIM Camera Controller";
-    public static String tooltipDescription = "Micro manager plugin to controll the cameras of the fast SIM setup";
+    public static String menuName = "fairSIM Camera Controller";
+    public static String tooltipDescription = "Micro manager plugin to controll the cameras with fairSIM";
     private static final int ROILENGTH = 4;
     CMMCore mmc;
     CameraController cc;
+    String[] cams;
+    
+    public int getChannelCount() {
+        return cams.length;
+    }
     
     /**
      * starts camera acquisition
@@ -39,7 +48,10 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
      */
     public void startSequenceAcquisition() throws CameraException {
         try {
-            mmc.startContinuousSequenceAcquisition(1);
+            for (String cam : cams) {
+                mmc.setCameraDevice(cam);
+                mmc.startContinuousSequenceAcquisition(1);
+            }
         } catch (Exception ex) {
             throw new CameraException("Starting Acquisition went wrong");
         }
@@ -52,7 +64,10 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
      */
     public void stopSequenceAcquisition() throws CameraException {
         try {
-            mmc.stopSequenceAcquisition();
+            for (String cam : cams) {
+                mmc.setCameraDevice(cam);
+                mmc.stopSequenceAcquisition();
+            }
         } catch (Exception ex) {
             throw new CameraException("Stopping Acquisition went wrong");
         }
@@ -81,7 +96,11 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
      */
     public boolean isSequenceRunning() throws CameraException {
         try {
-            return mmc.isSequenceRunning();
+            boolean output = false;
+            for (String cam : cams) {
+                output = output || mmc.isSequenceRunning(cam);
+            }
+            return output;
         } catch (Exception ex) {
             throw new CameraException("Getting sequence running went wrong");
         }
@@ -107,11 +126,48 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
      * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if anything
      * went wrong
      */
-    public short[] getNextImage() throws CameraException {
+    public ChanneldImage getNextImage() throws CameraException {
         try {
-            return (short[]) mmc.popNextImage();
+            TaggedImage img = mmc.popNextTaggedImage();
+            
+            // get channel idx
+            JSONObject md = img.tags;
+            int chIdx = -1;
+            String cName = md.getString("Camera");
+            for (int i = 0; i < cams.length; i++) {
+                if (cName.equals(cams[i])) {
+                    chIdx = i;
+                    break;
+                }
+            }
+            if (chIdx == -1) throw new CameraException("No channel found");
+            
+            // get pixels
+            short[] pix;
+            try {
+                pix = (short[]) img.pix;
+            } catch (ClassCastException ex) {
+                byte[] bytes = (byte[]) img.pix;
+                pix = new short[bytes.length];
+                for (int i = 0; i < bytes.length; i++) {
+                    pix[i] = bytes[i];
+                }
+            }
+            
+            return new ChanneldImage(chIdx, pix);
         } catch (Exception ex) {
-            throw new CameraException("Getting next image went wrong");
+            ex.printStackTrace();
+            throw new CameraException("Getting next image went wrong: " + ex);
+        }
+    }
+    
+    static class ChanneldImage {
+        int chIdx;
+        short[] img;
+        
+        ChanneldImage(int chIdx, short[] img) {
+            this.chIdx = chIdx;
+            this.img = img;
         }
     }
     
@@ -121,7 +177,7 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
      * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if anything
      * went wrong
      */
-    public void sleepCam(int time) throws CameraException {
+    public void sleep(int time) throws CameraException {
         try {
             mmc.sleep(time);
         } catch (Exception ex) {
@@ -139,9 +195,12 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
      * went wrong
      */
     public void setROI(int x, int y, int w, int h) throws CameraException {
-        try {;
-            mmc.clearROI();
-            mmc.setROI(x, y, w, h);
+        try {
+            for (String cam : cams) {
+                mmc.setCameraDevice(cam);
+                mmc.clearROI();
+                mmc.setROI(x, y, w, h);
+            }
         } catch (Exception ex) {
             throw new CameraException("Set ROI went wrong");
         }
@@ -182,21 +241,26 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
      * went wrong
      */
     public int[] getRoi() throws CameraException {
-        int[] x = new int[1];
-        int[] y = new int[1];
-        int[] w = new int[1];
-        int[] h = new int[1];
-        try {
-            mmc.getROI(x, y, w, h);
-        } catch (Exception ex) {
-            throw new CameraException("Getting ROI went wrong");
+        int[][][] roi = new int [ROILENGTH][cams.length][1];
+
+        for (int i = 0; i < cams.length; i++) {
+            try {
+                mmc.setCameraDevice(cams[i]);
+                mmc.getROI(roi[0][i], roi[1][i], roi[2][i], roi[3][i]);
+                for (int r = 0; r < ROILENGTH; r++) {
+                    if(roi[r][0][0] != roi[r][i][0]) throw new CameraException("Rois of cams unequal");
+                }
+            } catch (Exception ex) {
+                throw new CameraException("Getting ROI went wrong");
+            }
         }
-        int[] roi = new int[ROILENGTH];
-        roi[0] = x[0];
-        roi[1] = y[0];
-        roi[2] = w[0];
-        roi[3] = h[0];
-        return roi;
+        
+        int[] roiOut = new int[ROILENGTH];
+        for (int i = 0; i < ROILENGTH; i++) {
+            roiOut[i] = roi[i][0][0];
+        }
+        
+        return roiOut;
     }
     
     /**
@@ -207,7 +271,9 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
      */
     public void setExposure(double time) throws CameraException {
         try {
-            mmc.setExposure(time);
+            for (String cam : cams) {
+                mmc.setExposure(cam, time);
+            }
         } catch (Exception ex) {
             throw new CameraException("Set exposure time went wrong");
         }
@@ -221,7 +287,13 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
      */
     public double getExposure() throws CameraException {
         try {
-            return mmc.getExposure();
+            double[] exposure = new double[cams.length];
+            for (int i = 0; i < cams.length; i++) {
+                mmc.setCameraDevice(cams[i]);
+                exposure[i] = mmc.getExposure();
+                if (exposure[0] != exposure[i]) throw new CameraException("Exposure time of cams unequal");
+            }
+            return exposure[0];
         } catch (Exception ex) {
             throw new CameraException("Getting exposure time went wrong");
         }
@@ -298,9 +370,31 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
     public void setApp(ScriptInterface si) {
         try {
             mmc = si.getMMCore();
+            
+            // init multi camera devices
+            String[] devices = mmc.getLoadedDevicesOfType(mmcorej.DeviceType.CameraDevice).toArray();
+            
+            boolean multiFound = false;
+            List<String> camList = new LinkedList();
+            for (String device : devices) {
+                mmc.setCameraDevice(device);
+                String name = mmc.getDeviceName(device);
+                String library = mmc.getDeviceLibrary(device);
+                if (name.equals("Multi Camera") && library.equals("Utilities")) {
+                    if (multiFound) throw new CameraException("Found more than 1 multi cam adapter");
+                    multiFound = true;
+                } else {
+                    camList.add(device);
+                }
+            }
+            cams = new String[camList.size()];
+            cams = camList.toArray(cams);
+            if (cams.length <= 1 && multiFound) throw new CameraException("Found multi cam only");
+            
             cc = new CameraController(this);
         } catch (Exception ex) {
             si.showError(ex);
+            ex.printStackTrace();
         }
     }
 
