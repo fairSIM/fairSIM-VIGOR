@@ -61,7 +61,7 @@ public class ArduinoCommunicator {
     /**
      * constructor
      */
-    ArduinoCommunicator(int dataRate) {
+    public ArduinoCommunicator(int dataRate) {
         DATA_RATE = dataRate;
         serialInput = new LinkedBlockingQueue<>();
         arduinoCommands = new LinkedBlockingQueue<>();

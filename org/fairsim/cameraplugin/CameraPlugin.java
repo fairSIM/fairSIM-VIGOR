@@ -132,6 +132,15 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
             
             // get channel idx
             JSONObject md = img.tags;
+            
+            /*
+            Iterator<String> keys = md.keys();
+            //while(keys.hasNext()) {
+            //    System.out.println(keys.next());
+            //}
+            System.out.println("elapsed time 0 " + md.get("ElapsedTime-ms"));
+            */
+            
             int chIdx = -1;
             String cName = md.getString("Camera");
             for (int i = 0; i < cams.length; i++) {
