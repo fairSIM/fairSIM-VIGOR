@@ -21,7 +21,7 @@ RM = rm -vf
 
 .PHONY:	all org/fairsim/git-version.txt
 
-all:	jtrans
+all:	
 	$(JC) $(JFLAGS) org/fairsim/*/*.java
 
 accelarator:
@@ -44,54 +44,51 @@ utils:
 	$(JC) $(JFLAGS) org/fairsim/utils/*.java
 
 
-jtrans:	org/fairsim/extern/jtransforms/FloatFFT_2D.class
-org/fairsim/extern/jtransforms/FloatFFT_2D.class: $(wildcard org/fairsim/extern/jtransforms/*.java)
-	$(JC) $(JFLAGS) org/fairsim/extern/jtransforms/*.java
-
 # misc rules
-
 git-version :
 	git rev-parse HEAD > org/fairsim/git-version.txt  ; \
 	git tag --contains >> org/fairsim/git-version.txt ; \
 	echo "n/a" >> org/fairsim/git-version.txt
 	 	
 
-jarsrc	: git-verison
-	$(JAR) -cvfm fairSIM-source_$(shell head -c 10 org/fairsim/git-version.txt).jar \
-	Manifest.txt plugins.config \
-	org/fairsim/git-version.txt \
-	org/fairsim/*/*.class  org/fairsim/extern/*/*.class  \
-	org/fairsim/resources/* \
-	Makefile org/fairsim/*/*.java  org/fairsim/extern/*/*.java
-
-tarsrc	: git-version
-	tar -cvjf fairSIM-source_$(shell head -c 10 org/fairsim/git-version.txt).tar.bz2 \
-	Manifest.txt plugins.config \
+jar:	git-version jtransforms-fork
+	$(JAR) -cfm fairSIM_plugin_$(shell head -c 10 org/fairsim/git-version.txt).jar \
+	Manifest.txt \
+	org/fairsim/*/*.class  org/fairsim/extern/*/*.class \
 	org/fairsim/git-version.txt \
 	org/fairsim/resources/* \
-	Makefile org/fairsim/*/*.java  org/fairsim/extern/*/*.java
-    
+	plugins.config 
 
-jar:	git-version	
-	$(JAR) -cvfm fairSIM_plugin_$(shell head -c 10 org/fairsim/git-version.txt).jar \
-	Manifest.txt plugins.config \
+jar-wo-extern: git-version
+	$(JAR) -cfm fairSIM_woJTransforms_plugin_$(shell head -c 10 org/fairsim/git-version.txt).jar \
+	Manifest.txt \
+	org/fairsim/*/*.class \
 	org/fairsim/git-version.txt \
 	org/fairsim/resources/* \
-	org/fairsim/*/*.class  org/fairsim/extern/*/*.class 
+	plugins.config 
 
 
+# shorthand for extracting the jtransforms-fork is necessary
+jtransforms-fork: org/fairsim/extern/jtransforms/FloatFFT_3D.class
+
+org/fairsim/extern/jtransforms/FloatFFT_3D.class:	
+	$(JAR) -xvf external/jtransforms_fairSIM_fork.jar org/fairsim/extern/jtransforms 	
+
+clean-jtransforms:
+	$(RM) org/fairsim/external
+	$(RM) org/fairsim/git-version-jtransforms.txt
+
+# shorthand for generating the doc
 doc:	doc/index.html
 
 doc/index.html : $(wildcard org/fairsim/*/*.java) 
 	javadoc -d doc/ -classpath ./ -extdirs ${EXTDIR} \
 	-subpackages org.fairsim -exclude org.fairsim.extern.jtransforms 
-#	org/fairsim/*/*.java
 
-clean :
+clean : clean-jtransforms
 	$(RM) fairSIM_*.jar fairSIM_*.tar.bz2
 	$(RM) org/fairsim/*/*.class org/fairsim/git-version.txt
-	$(RM) -r doc/*
-
-clean-all: clean
 	$(RM) org/fairsim/extern/*/*.class
+	$(RM) -r doc/*
+	$(RM) -r target
 

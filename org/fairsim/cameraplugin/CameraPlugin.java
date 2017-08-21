@@ -384,7 +384,7 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
             String[] devices = mmc.getLoadedDevicesOfType(mmcorej.DeviceType.CameraDevice).toArray();
             
             boolean multiFound = false;
-            List<String> camList = new LinkedList();
+            List<String> camList = new LinkedList<String>();
             for (String device : devices) {
                 mmc.setCameraDevice(device);
                 String name = mmc.getDeviceName(device);

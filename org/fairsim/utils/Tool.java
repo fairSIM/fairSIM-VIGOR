@@ -85,7 +85,7 @@ public final class Tool {
     }
    
     /** Write an error message */
-    static public final void error(String message, boolean fatal ) {
+    static public final void error(final String message, boolean fatal ) {
         new Thread(new Runnable() {
             public void run() {
                 if (!errorShown) {
