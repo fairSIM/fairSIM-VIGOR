@@ -1,0 +1,9 @@
+<fairsim>
+    <camera-settings>
+        <Channel type="int">488 568 647</Channel>
+        <MirroredX type="string">true false true</MirroredX> 
+        <BigRoi type="int">761 765 520 520 512</BigRoi> <!-- top left X, top left Y, width, height, squared croped size -->
+        <SmallRoi type="int">901 897 256 260 256</SmallRoi> <!-- top left X, top left Y, width, height, squared croped size -->
+        <SendIps type="string">localhost</SendIps>
+    </camera-settings>
+</fairsim>

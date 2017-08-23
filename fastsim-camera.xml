@@ -1,9 +1,0 @@
-<fairsim>
-    <camera-settings>
-        <Channel type="int">568</Channel>
-        <Flags type="string">mirrored</Flags>
-        <BigRoi type="int">768 768 512 512 512</BigRoi>
-        <SmallRoi type="int">896 896 256 256 256</SmallRoi>
-        <SendIps type="string">localhost</SendIps>
-    </camera-settings>
-</fairsim>

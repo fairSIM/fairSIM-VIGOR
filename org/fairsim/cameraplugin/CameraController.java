@@ -51,7 +51,7 @@ public class CameraController {
     private int imageWidth;
     private int imageHeight;
     private int sendImageSize;
-    private boolean mirrored;
+    private final boolean[] mirrored;
     private final ImageSender isend;
     double  fps;
     boolean queued;
@@ -70,22 +70,23 @@ public class CameraController {
         sendIps = new ArrayList<>();
         
         // readin config from .xlm
-        String filename = Tool.getFile(System.getProperty("user.home") + "/documents/fastsim-camera.xml").getAbsolutePath();
+        String filename = Tool.getFile(System.getProperty("user.home") + "/documents/fairsim-camera.xml").getAbsolutePath();
         try {
             Conf.Folder cfg = Conf.loadFile(filename).r().cd("camera-settings");
             channels = cfg.getInt("Channel").vals();
             if (channels.length < cp.getChannelCount()) throw new IOException(cp.getChannelCount() +
                     " cams in use, but only " + channels.length + " in config file " + filename);
-            String[] flags = cfg.getStr("Flags").val().split(" ");
+            String[] mx = cfg.getStr("MirroredX").val().split(" ");
+            if (mx.length != channels.length) throw new IOException("Amount of MirroredX flags unequal to amount of channels");
+            mirrored = new boolean[mx.length];
+            for (int i = 0; i < mx.length; i++) {
+                if (mx[i].equals("true")) mirrored[i] = true;
+                else if (mx[i].equals("false")) mirrored[i] = false;
+                else throw new IOException("Only true or false as MirroredX flags allowed");
+            }
             bigRoi = cfg.getInt("BigRoi").vals();
             smallRoi = cfg.getInt("SmallRoi").vals();
             String[] ips = cfg.getStr("SendIps").val().split(" ");
-            mirrored = false;
-            for (String flag : flags) {
-                if (flag.equals("mirrored")) {
-                    mirrored = true;
-                }
-            }
             try {
                 setRoi(bigRoi[0], bigRoi[1], bigRoi[2], bigRoi[3], bigRoi[4], true);
             } catch (DataFormatException ex) {
@@ -110,7 +111,7 @@ public class CameraController {
         }
 
         // starts the GUI
-        this.gui = new CameraServerGui(imageWidth, imageHeight, this);
+        this.gui = new CameraServerGui(sendImageSize, sendImageSize, this);
     }
     
     int[] getChannels() {
@@ -177,7 +178,7 @@ public class CameraController {
         if (imageWidth < sendImageSize) sendImageSize = imageWidth;
         if (imageHeight < sendImageSize) sendImageSize = imageHeight;
         if (!firstTime) {
-            gui.refreshView(imageWidth, imageHeight);
+            gui.refreshView(sendImageSize, sendImageSize);
         }
         if (roi[0] != x || roi[1] != y || roi[2] != width || roi[3] != height) {
             throw new DataFormatException("ROI was set wrong");
@@ -301,9 +302,9 @@ public class CameraController {
          * @param count frame number of the image
          * @param timeStamp timestamp of the image
          */
-        private void queueImage(int channelIdx, short[] imgData, int count, long timeStamp) {
+        private short[] queueImage(int channelIdx, short[] imgData, int count, long timeStamp) {
             ImageWrapper iw;            
-            if (mirrored) {
+            if (mirrored[channelIdx]) {
                 iw = ImageWrapper.copyImageCropMirrorXCentered(imgData, sendImageSize, sendImageSize, imageWidth, imageHeight, 0, 0, 0, channels[channelIdx], count);
                 
             } else {
@@ -323,6 +324,8 @@ public class CameraController {
             
             imagesQueued = imagesQueued && isend.queueImage(iw);
             imagesSended = imagesSended && isend.canSend();
+            
+            return iw.getPixels();
         }
 
         /**
@@ -354,7 +357,7 @@ public class CameraController {
                         count++;
                         long timeStamp = Tool.decodeBcdTimestamp(imgData);
                         // send image to reconstruction / capture
-                        queueImage(chIdx, imgData, count, timeStamp);
+                        short[] sendData = queueImage(chIdx, imgData, count, timeStamp);
                         // display image all 59 images & updates queuing/sending color & fps
                         if (count % FPSCOUNTS == 0) {
                             t1.stop();
@@ -368,7 +371,7 @@ public class CameraController {
                             queued = imagesQueued;
                             sended = imagesSended;
                             imagesQueued = imagesSended = true;
-                            gui.view.newImage(chIdx, imgData);
+                            gui.view.newImage(chIdx, sendData);
                             gui.view.refresh();
                         }
                     } else {
