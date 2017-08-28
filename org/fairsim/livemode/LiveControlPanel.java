@@ -560,10 +560,10 @@ public class LiveControlPanel {
             p.add(Box.createHorizontalStrut(20));
             p.add(rawSlider);
             p.add(Box.createHorizontalStrut(20));
-
-            mainPanel.add(p, 1);
-            mainPanel.add(Box.createVerticalStrut(20), 1);
-
+            
+            channelsPanel.add(p);
+            //mainPanel.add(Box.createVerticalStrut(20), 1);
+            
         }
     }
 
