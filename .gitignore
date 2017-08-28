@@ -12,3 +12,4 @@ com/*
 *.log.?
 external/*.dmg
 target/*
+*_sync_*
