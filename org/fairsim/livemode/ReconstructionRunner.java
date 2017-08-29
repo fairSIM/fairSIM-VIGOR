@@ -291,7 +291,7 @@ public class ReconstructionRunner {
     }
 
     public int maxInFinalQueue() {
-        return nrThreads * 16;
+        return 1;
     }
 
     /**

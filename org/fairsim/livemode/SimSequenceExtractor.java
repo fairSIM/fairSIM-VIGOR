@@ -40,7 +40,7 @@ public class SimSequenceExtractor {
 
     final ImageReceiver imgRecv;
     final ReconstructionRunner reconRunner;
-    final int nrChannels;
+    final int nrChannels, rawsPerRecon;
 
     int seqCount;
     int syncFrameAvr;
@@ -66,13 +66,14 @@ public class SimSequenceExtractor {
         this.seqCount = cfg.getInt("SyncFrameFreq").val();
         this.syncFrameAvr = cfg.getInt("SyncFrameAvr").val();
         this.syncFrameDelay = cfg.getInt("SyncFrameDelay").val();
-
+        
+        rawsPerRecon = reconRunner.nrPhases * reconRunner.nrDirs;
         pause = false;
 
         channelMapping = new TreeMap<Integer, PerChannelBuffer>();
         channels = new PerChannelBuffer[nrChannels];
         for (int i = 0; i < nrChannels; i++) {
-            channels[i] = new PerChannelBuffer(9 * 9 * 10,
+            channels[i] = new PerChannelBuffer(rawsPerRecon * rawsPerRecon * 10,
                     reconRunner.getChannel(i).chNumber, i);
             Tool.trace("Created receive buffer for channel: "
                     + reconRunner.getChannel(i).chNumber);
@@ -236,8 +237,8 @@ public class SimSequenceExtractor {
             this.chNumber = chNumber;
             this.chIndex = chIndex;
             rawImgs = new ArrayBlockingQueue<>(queueSize);
-            simSeq = new ArrayBlockingQueue<short[][]>(queueSize);
-            sortBuffer = new SortBuffer(10);
+            simSeq = new ArrayBlockingQueue<>(queueSize);
+            sortBuffer = new SortBuffer(20);
             restartThread = false;
         }
         
@@ -312,7 +313,7 @@ public class SimSequenceExtractor {
         void setSeqNr() {
             sortBuffer.buffer.clear();
             seqNr = Long.MAX_VALUE;
-            while (!sortBuffer.isFull()) {
+            while (sortBuffer.buffer.size() < rawsPerRecon) {
                 try {
                     ImageWrapper iw = rawImgs.take();
                     sortBuffer.add(iw);

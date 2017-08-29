@@ -248,6 +248,11 @@ public class CameraController {
     void startAcquisition() {
         gui.startButton.setEnabled(false);
         gui.stopButton.setEnabled(true);
+        try {
+            if (cp.isSequenceRunning()) return;
+        } catch (CameraException ex) {
+            throw new RuntimeException(ex);
+        }
         acquisitionThread = new AcquisitionThread();
         acquisitionThread.start();
     }

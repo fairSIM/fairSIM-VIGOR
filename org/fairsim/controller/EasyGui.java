@@ -635,7 +635,7 @@ public class EasyGui extends javax.swing.JPanel {
         } else {
             if(lcp.record()) lcp.record();
             for(Cam c : camGuis) {
-                c.stopMovie();
+                //c.stopMovie();
             }
             controller.stopMovie();
             setStatus("Recording images stopped");
@@ -677,7 +677,7 @@ public class EasyGui extends javax.swing.JPanel {
         }
         controller.takePhoto();
         for(Cam c : camGuis) {
-            c.stopMovie();
+            //c.stopMovie();
         }
         setStatus("Captured a photo");
     }//GEN-LAST:event_photoButtonActionPerformed
@@ -695,7 +695,7 @@ public class EasyGui extends javax.swing.JPanel {
             setStatus("Capturing images started");
         } else {
             for(Cam c : camGuis) {
-                c.stopMovie();
+                //c.stopMovie();
             }
             controller.stopMovie();
             setStatus("Capturing images stopped");
