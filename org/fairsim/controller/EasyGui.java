@@ -626,17 +626,11 @@ public class EasyGui extends javax.swing.JPanel {
             lcp.getSequenceExtractor().clearBuffers();
             disableControllers();
             if (runRecDelaySlider.getValue() != 0) this.sync.setFreq(1);
-            for(Cam c : camGuis) {
-                c.startMovie();
-            }
             controller.setDelay(runRecDelay);
             controller.startMovie();
             setStatus("Recording images started");
         } else {
             if(lcp.record()) lcp.record();
-            for(Cam c : camGuis) {
-                //c.stopMovie();
-            }
             controller.stopMovie();
             setStatus("Recording images stopped");
             enableControllers();
@@ -672,13 +666,7 @@ public class EasyGui extends javax.swing.JPanel {
 
     private void photoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_photoButtonActionPerformed
         lcp.getSequenceExtractor().clearBuffers();
-        for(Cam c : camGuis) {
-            c.startMovie();
-        }
         controller.takePhoto();
-        for(Cam c : camGuis) {
-            //c.stopMovie();
-        }
         setStatus("Captured a photo");
     }//GEN-LAST:event_photoButtonActionPerformed
 
@@ -687,16 +675,10 @@ public class EasyGui extends javax.swing.JPanel {
             lcp.getSequenceExtractor().clearBuffers();
             disableControllers();
             if (runDelaySlider.getValue() != 0) this.sync.setFreq(1);
-            for(Cam c : camGuis) {
-                c.startMovie();
-            }
             controller.setDelay(runDelay);
             controller.startMovie();
             setStatus("Capturing images started");
         } else {
-            for(Cam c : camGuis) {
-                //c.stopMovie();
-            }
             controller.stopMovie();
             setStatus("Capturing images stopped");
             enableControllers();
@@ -905,12 +887,18 @@ public class EasyGui extends javax.swing.JPanel {
      * wrong
      */
     private void setRo() throws EasyGuiException {
+        for (Cam c : camGuis) {
+            c.stopMovie();
+        }
         RunningOrder ro = possibleRos.get(itList.getSelectedIndex());
-        advanced.setRo(ro);
         controller.setRo(ro);
-        sync.setRo(ro);
         for (Cam c : camGuis) {
             c.setRo(ro);
+        }
+        advanced.setRo(ro);
+        sync.setRo(ro);
+        for (Cam c : camGuis) {
+            c.startMovie();
         }
         setStatus("Running order: " + ro.device + "_" + ro.name);
     }

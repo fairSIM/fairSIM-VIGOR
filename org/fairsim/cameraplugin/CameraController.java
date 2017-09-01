@@ -384,14 +384,14 @@ public class CameraController {
                     }
                     if (isInterrupted()) {
                         acquisition = false;
-                        for (String ip : sendIps) {
-                            isend.shutdownThreads();
-                        }
                     }
                 }
                 // stops and resets acqusition
                 t1.stop();
                 cp.stopSequenceAcquisition();
+                for (String ip : sendIps) {
+                    isend.shutdownThreads();
+                }
                 gui.resetFps();
                 gui.resetQueuingColor();
                 gui.resetSendingColor();

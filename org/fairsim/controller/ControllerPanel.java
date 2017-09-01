@@ -367,12 +367,16 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
     /**
      * starts the selected photo running order of the arduino from this gui
      */
-    void arduinoPhoto() {
+   void arduinoPhoto() {
         seqDetection.resetChannelBufferThreads();
         sendArduinoInstruction("photo;" + arduinoComboBox.getSelectedIndex());
         if (controllerInstructionDone) {
             setRGBButtonSelected(false);
         }
+    }
+    
+    void arduinoWakeUpCams() {
+        sendArduinoInstruction("c");
     }
     
     /**
@@ -866,6 +870,7 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
     
     @Override
     public void setRo(EasyGui.RunningOrder ro) throws EasyGui.EasyGuiException {
+        arduinoWakeUpCams();
         arduinoComboBox.setSelectedIndex(ro.arduinoRo);
         if (ro.device.equals("slm")) slmComboBox.setSelectedIndex(ro.deviceRo);
         else throw new EasyGui.EasyGuiException("Controller: Not supported device: " + ro.device);

@@ -433,6 +433,7 @@ public class SimSequenceExtractor {
                         Tool.error("Image sorting thread [" + this.chIndex + "] interupted, why?", false);
                     } else {
                         restartThread = false;
+                        setSeqNr();
                         continue;
                     }
                 }
