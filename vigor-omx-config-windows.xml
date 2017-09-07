@@ -7,6 +7,10 @@
 <RawPxlCount type="int">512</RawPxlCount>
 <RawPxlSize type="decimal">0.08</RawPxlSize>
 
+<Microscope type="string">fastSIM</Microscope>
+<Objective type="string">TODO</Objective>
+<SamplePxlSize type="int">79</SamplePxlSize>
+
 <NrPhases type="int">5</NrPhases>
 <NrAngles type="int">3</NrAngles>
 <NrBands type="int">3</NrBands>
@@ -15,7 +19,6 @@
 <NetworkBuffer type="int">600</NetworkBuffer>
 <DiskBuffer type="int">500</DiskBuffer>
 <DiskFolder type="string">d:/vigor-tmp/</DiskFolder>
-
 <ParamFolder type="string">d:/vigor-tmp/</ParamFolder>
 <RegistrationFolder type="string">d:/vigor-registration/</RegistrationFolder>
 
@@ -30,6 +33,7 @@
 
 <offset type="decimal">200</offset>
 <ChannelNumber type="int">488</ChannelNumber>
+<CamType type="string">pco.edge 4.2</CamType>
 <CamAdress type="string">localhost</CamAdress>
 
 <sim-param>
@@ -72,6 +76,7 @@
 
 <offset type="decimal">200</offset>
 <ChannelNumber type="int">568</ChannelNumber>
+<CamType type="string">pco.edge 4.2</CamType>
 <CamAdress type="string">localhost</CamAdress>
 
 <sim-param>
@@ -114,6 +119,7 @@
 
 <offset type="decimal">200</offset>
 <ChannelNumber type="int">647</ChannelNumber>
+<CamType type="string">pco.edge 4.2</CamType>
 <CamAdress type="string">localhost</CamAdress>
 
 <sim-param>

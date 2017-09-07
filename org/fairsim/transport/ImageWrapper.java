@@ -25,17 +25,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.fairsim.linalg.Vec2d;
+import org.fairsim.utils.Base64;
 import org.fairsim.utils.Tool;
 
 /** Class to encapsulate image data for network send */
 public class ImageWrapper {
 
     private final int maxWidth, maxHeight;
-    
+    public static final int HEADERSIZE = 128, WIDTHPOSITION = 32, HEIGHTPOSITION = 34;
     private long seqNr;
     private int width, height, bpp;
     private int posA, posB, pos0, pos1, pos2;
@@ -49,9 +48,28 @@ public class ImageWrapper {
     public ImageWrapper( int maxWidth, int maxHeight ) {
 	this.maxWidth = maxWidth;
 	this.maxHeight= maxHeight;
-	buffer = new byte[ maxWidth * maxHeight*2 + 128+ 2];
-	header = ByteBuffer.wrap( buffer, 0, 128);
+	buffer = new byte[ maxWidth * maxHeight*2 + HEADERSIZE+ 2];
+	header = ByteBuffer.wrap( buffer, 0, HEADERSIZE);
 	header.order( ByteOrder.LITTLE_ENDIAN );
+    }
+    
+    ImageWrapper(ByteBuffer header) throws BrokenHeaderException {
+        this(header.getShort(WIDTHPOSITION), header.getShort(HEIGHTPOSITION));
+        if (header.capacity() != HEADERSIZE) throw new BrokenHeaderException("Headersize missmatch: " + header.capacity() + " " + HEADERSIZE);
+        this.header.put(header);
+        parseHeader();
+    }
+    
+    static ByteBuffer readImageWrapperHeader(InputStream is) throws IOException {
+        ByteBuffer iwHeader = ByteBuffer.wrap(new byte[HEADERSIZE]);
+        iwHeader.order(ByteOrder.LITTLE_ENDIAN);
+        int plen=0;
+	while (plen<HEADERSIZE) {
+	    int i=is.read( iwHeader.array(), plen, HEADERSIZE-plen);
+	    if (i<0) throw new IOException("Error while reading LiveStackHeader: " + i);
+	    plen+=i;
+	}
+        return iwHeader;
     }
     
     public void setSeqNr(long seqNr) {
@@ -67,7 +85,7 @@ public class ImageWrapper {
 	if (w>maxWidth || h>maxHeight)
 	    throw new RuntimeException("Input image larger than maximum size");
 
-	ByteBuffer bb = ByteBuffer.wrap( buffer, 128, buffer.length-128);
+	ByteBuffer bb = ByteBuffer.wrap( buffer, HEADERSIZE, buffer.length-HEADERSIZE);
 	bb.order( ByteOrder.LITTLE_ENDIAN );
 	bb.asShortBuffer().put( dat, 0, w*h); 
     }
@@ -87,7 +105,7 @@ public class ImageWrapper {
 	if ((w+offsetX)>maxWidth || (h+offsetY)>maxHeight)
 	    throw new RuntimeException("Input image larger than maximum size");
 
-	ByteBuffer bb = ByteBuffer.wrap( buffer, 128, buffer.length-128);
+	ByteBuffer bb = ByteBuffer.wrap( buffer, HEADERSIZE, buffer.length-HEADERSIZE);
 	bb.order( ByteOrder.LITTLE_ENDIAN );
 	ShortBuffer sb = bb.asShortBuffer();
     
@@ -105,7 +123,7 @@ public class ImageWrapper {
 	if (w>maxWidth || h>maxHeight)
 	    throw new RuntimeException("Input image larger than maximum size");
 
-	ByteBuffer bb = ByteBuffer.wrap( buffer, 128, buffer.length-128);
+	ByteBuffer bb = ByteBuffer.wrap( buffer, HEADERSIZE, buffer.length-HEADERSIZE);
 	bb.order( ByteOrder.LITTLE_ENDIAN );
 	ShortBuffer sb = bb.asShortBuffer();
 
@@ -132,7 +150,7 @@ public class ImageWrapper {
 	if (w>maxWidth || h>maxHeight)
 	    throw new RuntimeException("Input image larger than maximum size");
 
-	ByteBuffer bb = ByteBuffer.wrap( buffer, 128, buffer.length-128);
+	ByteBuffer bb = ByteBuffer.wrap( buffer, HEADERSIZE, buffer.length-HEADERSIZE);
 	bb.order( ByteOrder.LITTLE_ENDIAN );
 	ShortBuffer sb = bb.asShortBuffer();
 
@@ -155,7 +173,7 @@ public class ImageWrapper {
 	if (w>maxWidth || h>maxHeight)
 	    throw new RuntimeException("Input image larger than maximum size");
 
-	System.arraycopy( dat, 0, buffer, 128, w*h);
+	System.arraycopy( dat, 0, buffer, HEADERSIZE, w*h);
     }
 
     
@@ -175,15 +193,14 @@ public class ImageWrapper {
     
     /** Query how many bytes of the buffer to send */
     public int bytesToSend() {
-	return width*height*bpp+128;
+	return width*height*bpp+HEADERSIZE;
     }
-
 
     /** read the header from an input stream */
     public int readHeader(InputStream inStr) throws IOException {
 	int plen=0;
-	while (plen<128) {
-	    int i=inStr.read( buffer, plen, 128-plen);
+	while (plen<HEADERSIZE) {
+	    int i=inStr.read( buffer, plen, HEADERSIZE-plen);
 	    if (i<0) return -1;	// EOF, Stream closed
 	    plen+=i;
 	}
@@ -197,7 +214,7 @@ public class ImageWrapper {
     public int readData( InputStream inStr ) throws IOException {
 	int plen=0, fullLen = width*height*bpp;
 	while ( plen < fullLen ) {
-	    int i=inStr.read( buffer, plen+128, fullLen-plen);
+	    int i=inStr.read( buffer, plen+HEADERSIZE, fullLen-plen);
 	    if (i<0) return -1;	// EOF, Stream closed
 	    plen+=i;
 	}
@@ -223,12 +240,12 @@ public class ImageWrapper {
 	short [] ret = new short[ width*height ];
 	
 	if ( bpp == 2) {
-	    ByteBuffer bb = ByteBuffer.wrap( buffer, 128, buffer.length-128);
+	    ByteBuffer bb = ByteBuffer.wrap( buffer, HEADERSIZE, buffer.length-HEADERSIZE);
 	    bb.order( ByteOrder.LITTLE_ENDIAN );
 	    bb.asShortBuffer().get( ret, 0, width*height); 
 	} else {
 	    for (int i=0; i< width*height; i++)
-		ret[i] = buffer[i+128];
+		ret[i] = buffer[i+HEADERSIZE];
 	}
 	return ret;
     }
@@ -243,7 +260,7 @@ public class ImageWrapper {
 
 	if ( bpp == 2 ) {
 	    
-	    ByteBuffer bb = ByteBuffer.wrap( buffer, 128, width*height*2);
+	    ByteBuffer bb = ByteBuffer.wrap( buffer, HEADERSIZE, width*height*2);
 	    bb.order( ByteOrder.LITTLE_ENDIAN );
 	    ShortBuffer sb = bb.asShortBuffer();
 	    for (int y=0; y<height; y++)
@@ -252,8 +269,8 @@ public class ImageWrapper {
 		val = (val>0)?(val):(val+65536);
 		dat[ y * width + x ] = val;
 		//int pos = x + width * y;
-		//byte lb = buffer[ pos*2 + 0 + 128 ];
-		//byte hb = buffer[ pos*2 + 1 + 128 ];
+		//byte lb = buffer[ pos*2 + 0 + HEADERSIZE ];
+		//byte hb = buffer[ pos*2 + 1 + HEADERSIZE ];
 		//if ( lb < 0 ) lb+= 256;
 		//if ( hb < 0 ) hb+= 256;
 		//dat[pos] = hb*256+lb;
@@ -263,7 +280,7 @@ public class ImageWrapper {
 	if ( bpp == 1 ) {
 	    for (int y=0; y<height; y++)
 	    for (int x=0; x<width; x++)
-		dat[ y * width + x ] = buffer[ y * width + x + 128 ]; 
+		dat[ y * width + x ] = buffer[ y * width + x + HEADERSIZE ]; 
 	}
    
 	vec.syncBuffer();
@@ -278,7 +295,7 @@ public class ImageWrapper {
 	float [] dat = vec.vectorData();
 
 	if ( bpp == 2 ) {
-	    ShortBuffer sb = ByteBuffer.wrap( buffer, 128, width*height*2).asShortBuffer();
+	    ShortBuffer sb = ByteBuffer.wrap( buffer, HEADERSIZE, width*height*2).asShortBuffer();
 	    for (int y=0; y<height; y++)
 	    for (int x=0; x<width; x++) {
 		dat[ (2 * y * width + x) + 0 ] = sb.get(x+y*width); 
@@ -288,7 +305,7 @@ public class ImageWrapper {
 	if ( bpp == 1 ) {
 	    for (int y=0; y<height; y++)
 	    for (int x=0; x<width; x++) {
-		dat[ (2 * y * width + x) + 0 ] = buffer[ y * width + x + 128 ]; 
+		dat[ (2 * y * width + x) + 0 ] = buffer[ y * width + x + HEADERSIZE ]; 
 		dat[ (2 * y * width + x) + 1 ] = 0; 
 	    }
 	}
@@ -360,17 +377,31 @@ public class ImageWrapper {
 	ret.setPos012( pos0, pos1, pos2 );
 	return ret;
     }
+    
+    String encodeHeader() {
+        byte[] iwHeader = new byte[128];
+        System.arraycopy(refBuffer(), 0, iwHeader, 0, HEADERSIZE);
+        return Base64.encode(iwHeader);
+    }
+    
+    ByteBuffer decodeHeader(String header) {
+        byte[] headerBytes = Base64.decode(header);
+        ByteBuffer iwHeader = ByteBuffer.wrap(new byte[HEADERSIZE]);
+        iwHeader.order(ByteOrder.LITTLE_ENDIAN);
+        iwHeader.put(headerBytes);
+        return iwHeader;
+    }
 
     void writeHeader() {
-	Arrays.fill( buffer, 0, 128, (byte)0);
+	Arrays.fill( buffer, 0, HEADERSIZE, (byte)0);
 	
 	header.putLong(   0, seqNr );
 	header.putInt(   12, width*height );
 	header.put(	 16, (byte)1 );	    // protocol version
 	header.put(	 17, (byte)bpp);    // bytes per pxl
 
-	header.putShort( 32, (short)width  );
-	header.putShort( 34, (short)height );
+	header.putShort( WIDTHPOSITION, (short)width  );
+	header.putShort( HEIGHTPOSITION, (short)height );
 	
 	header.putShort( 36, (short)posA );
 	header.putShort( 38, (short)posB );
@@ -392,8 +423,8 @@ public class ImageWrapper {
 	int vers= header.get( 16 );
 	bpp	= header.get( 17 );
 
-	width	= header.getShort( 32 );
-	height	= header.getShort( 34 );
+	width	= header.getShort( WIDTHPOSITION );
+	height	= header.getShort( HEIGHTPOSITION );
 
 	posA	= header.getShort( 36 );
 	posB	= header.getShort( 38 );

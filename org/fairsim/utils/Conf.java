@@ -31,6 +31,7 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.OutputKeys;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.Serializable;
 
 // Node manipulation
 import org.w3c.dom.Document;
@@ -51,7 +52,7 @@ import java.nio.FloatBuffer;
 import java.nio.DoubleBuffer;
 
 /** Wrappers around entries to a configuration file */
-public class Conf {
+public class Conf implements Serializable {
 
     final String namespace;
     final Folder root;
@@ -87,7 +88,7 @@ public class Conf {
     // ------ The different entries ------
 
     /** storing entries */
-    static abstract class Entry {
+    static abstract class Entry implements Serializable {
 	/** Output name and short description of tag */
 	abstract String prettyPrint() ;
 	/** Output the type */

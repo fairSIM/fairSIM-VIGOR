@@ -53,6 +53,7 @@ import org.fairsim.sim_gui.PlainImageDisplay;
 import org.fairsim.linalg.Vec2d;
 import org.fairsim.controller.AdvancedGui;
 import org.fairsim.controller.EasyGui;
+import org.fairsim.transport.LiveStack;
 import org.fairsim.utils.Tool;
 import org.fairsim.utils.SimpleMT;
 
@@ -98,11 +99,14 @@ public class LiveControlPanel {
     SimpleImageForward sif1;
     SimpleImageForward sif2;
     DynamicDisplayUpdate updateThread;
+    
+    Conf.Folder cfg;
 
     public LiveControlPanel(final Conf.Folder cfg,
             VectorFactory avf, String[] channels)
             throws Conf.EntryNotFoundException, java.io.IOException {
         
+        this.cfg = cfg;
         this.channels = channels;
         nrCh = channels.length;
 
@@ -303,7 +307,20 @@ public class LiveControlPanel {
         if (!isRecording) {
             recordButton.setForeground(Color.RED);
             try {
-                liveStreamWriter.startRecording(filePrefix.getText());
+                java.text.DateFormat df = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmss");
+                df.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+                String nowAsISO = df.format(new java.util.Date());
+
+                LiveStack.Header.Channel[] lshc = new LiveStack.Header.Channel[nrCh];
+                for (int i = 0; i < nrCh; i++) {
+                    Conf.Folder fld = cfg.cd("channel-" + channels[i]);
+                    lshc[i] = new LiveStack.Header.Channel(fld.getStr("CamType").val(), "t dye", wfPixelSize, wfPixelSize, 1000, (float) 52.5, Integer.parseInt(channels[i]));
+                }
+
+                LiveStack.Header header = new LiveStack.Header(cfg.getStr("Microscope").val(), nowAsISO, "t sample", cfg.getStr("Objective").val(),
+                        reconRunner.nrPhases, reconRunner.nrDirs, 250, cfg.getInt("SamplePxlSize").val(), lshc);
+
+                liveStreamWriter.startRecording(filePrefix.getText(), header);
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }

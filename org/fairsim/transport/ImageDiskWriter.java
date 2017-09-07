@@ -74,19 +74,17 @@ public class ImageDiskWriter {
 
 
     /** start (or restart to a new file) streaming data to disk */
-    public void startRecording(String prefix) throws java.io.IOException {
+    public void startRecording(String prefix, LiveStack.Header header) throws java.io.IOException {
 
 	// stop current recording process (if any)
 	if (fileRunner != null)
 	    stopRecording();
 
 	// generate filename
-	java.text.DateFormat df = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmss");
-	df.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
-	String nowAsISO = df.format(new java.util.Date());
-	File outfile = new File( saveFolder , prefix+"_"+nowAsISO+".livesim");
+	String nowAsISO = header.timestamp;
+	File outfile = new File( saveFolder , prefix+"_"+nowAsISO+".livestack");
 
-	fileRunner = new ImageSaveThread( outfile, prefix+"_"+nowAsISO );
+	fileRunner = new ImageSaveThread( outfile, prefix+"_"+nowAsISO, header );
 	fileRunner.start();
     }
 
@@ -122,17 +120,25 @@ public class ImageDiskWriter {
     
 	final FileOutputStream outfile ;
 	final String filename;
+        final LiveStack.Header lsHeader;
 	boolean stopSoon = false;
 
-	ImageSaveThread(File out, String name) throws java.io.IOException {
+	ImageSaveThread(File out, String name, LiveStack.Header header) throws java.io.IOException {
 	    outfile  = new FileOutputStream(out);
 	    filename = name;
+            lsHeader = header;
 	}
 
 
 	public void run() {
 	    
 	    Tool.trace("-disk- Writing to "+ filename);
+            try {
+                lsHeader.write(outfile);
+            } catch (java.io.IOException e) {
+                throw new RuntimeException(e);
+            }
+
 	    while (!stopSoon) {
 
 

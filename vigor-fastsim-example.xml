@@ -7,6 +7,10 @@
 <RawPxlCount type="int">512</RawPxlCount>
 <RawPxlSize type="decimal">0.08</RawPxlSize>
 
+<Microscope type="string">fastSIM</Microscope>
+<Objective type="string">TODO</Objective>
+<SamplePxlSize type="int">79</SamplePxlSize>
+
 <NrPhases type="int">3</NrPhases>
 <NrAngles type="int">3</NrAngles>
 <NrBands type="int">2</NrBands>
@@ -29,6 +33,7 @@
 
 <offset type="decimal">140</offset>
 <ChannelNumber type="int">488</ChannelNumber>
+<CamType type="string">pco.edge 4.2</CamType>
 <CamAdress type="string">Bory</CamAdress>
 
 <sim-param>
@@ -72,6 +77,7 @@
 
 <offset type="decimal">140</offset>
 <ChannelNumber type="int">568</ChannelNumber>
+<CamType type="string">pco.edge 4.2</CamType>
 <CamAdress type="string">localhost</CamAdress>
 
 <sim-param>
@@ -120,6 +126,7 @@
 
 <offset type="decimal">140</offset>
 <ChannelNumber type="int">647</ChannelNumber>
+<CamType type="string">pco.edge 4.2</CamType>
 <CamAdress type="string">orca-pc</CamAdress>
 
 <sim-param>
