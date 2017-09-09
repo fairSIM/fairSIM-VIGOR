@@ -25,13 +25,23 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.PriorityQueue;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.PriorityBlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.fairsim.linalg.Vec2d;
 import org.fairsim.utils.Base64;
 import org.fairsim.utils.Tool;
 
 /** Class to encapsulate image data for network send */
-public class ImageWrapper {
+public class ImageWrapper implements Comparable<ImageWrapper> {
 
     private final int maxWidth, maxHeight;
     public static final int HEADERSIZE = 128, WIDTHPOSITION = 32, HEIGHTPOSITION = 34;
@@ -497,23 +507,108 @@ public class ImageWrapper {
 
     public long seqNr() { return seqNr; }
 
+    @Override
+    public int compareTo(ImageWrapper iw) {
+        long res = seqNr - iw.seqNr;
+        if (res > 0) return 1;
+        else if (res < 0) return -1;
+        else return 0;
+    }
+
+    static final class Sorter {
+
+        private long refSeqNr;
+        private final PriorityBlockingQueue<ImageWrapper> sortBuffer;
+        public final int capacity = 20;
+        
+        public Sorter(int capacity) {
+            sortBuffer = new PriorityBlockingQueue<>(capacity);
+            resetRefSeqNr();
+        }
+        
+        public Sorter() {
+            sortBuffer = new PriorityBlockingQueue<>(capacity);
+            resetRefSeqNr();
+        }
+
+        public ImageWrapper poll() throws SorterException {
+            if (refSeqNr == Long.MAX_VALUE) {
+                for (ImageWrapper iw : sortBuffer) {
+                    if (iw.seqNr < refSeqNr) refSeqNr = iw.seqNr;
+                }
+                if (refSeqNr == Long.MAX_VALUE) throw new RuntimeException("this should never happen");
+            }
+            ImageWrapper iw = sortBuffer.poll();
+            if (iw == null) return iw;
+            if (iw.seqNr == refSeqNr) {
+                refSeqNr++;
+                return iw;
+            } else {
+                sortBuffer.put(iw);
+                throw new SorterException("Wrong order " + iw.seqNr + " " + refSeqNr);
+            }
+        }
+        
+        public void add(ImageWrapper iw) throws SorterException {
+            if (!isFull()) sortBuffer.put(iw);
+            else throw new SorterException("Buffer overflow " + sortBuffer.size());
+        }
+        
+        public int size() {
+            return sortBuffer.size();
+        }
+        
+        public boolean isFull() {
+            return sortBuffer.size() >= capacity;
+        }
+        
+        public boolean isEmpty() {
+            return sortBuffer.isEmpty();
+        }
+        
+        public void resetRefSeqNr() {
+            refSeqNr = Long.MAX_VALUE;
+        }
+        
+        public void clear() {
+            sortBuffer.clear();
+        }
+        
+        public class SorterException extends Exception {
+            SorterException(String message) {
+                super(message);
+            }
+        }
+    }
+    
     // just a quick test
-    public static void main( String [] arg ) {
+    public static void main(String[] arg) throws Sorter.SorterException, InterruptedException {
 
-	short [] tmp  = new short[520*520];
-	
-	Tool.Timer t1 = Tool.getTimer();
-
-	ImageWrapper iw =null;
-	
-	for (int i=0; i<1000; i++ ){
-	    iw = ImageWrapper.copyImageCropMirrorX( tmp, 512, 512, 520,520, 0,0,0,0, 1 );
-	}
-
-	t1.stop();
-	System.out.println( "w "+ iw.width() + " h "+iw.height()+" "+t1);
+        Sorter sorter = new Sorter(4);
+        
+        for (int i = 3; i > 0; i--) {
+            System.out.println(i);
+            ImageWrapper iw = new ImageWrapper(512, 512);
+            iw.seqNr = i;
+            sorter.add(iw);
+        }
+        
+        System.out.println(4);
+        ImageWrapper iw = new ImageWrapper(512, 512);
+        iw.seqNr = 4;
+        sorter.add(iw);
+        
+        
+        for (int i = 0; i < 4; i++) {
+            System.out.print(10*i + " : ");
+            ImageWrapper iww = sorter.poll();
+            System.out.println(iww.seqNr);
+        }
+        
+        
 
     }
+
 
 }
 

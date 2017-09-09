@@ -314,11 +314,11 @@ public class LiveControlPanel {
                 LiveStack.Header.Channel[] lshc = new LiveStack.Header.Channel[nrCh];
                 for (int i = 0; i < nrCh; i++) {
                     Conf.Folder fld = cfg.cd("channel-" + channels[i]);
-                    lshc[i] = new LiveStack.Header.Channel(fld.getStr("CamType").val(), "t dye", wfPixelSize, wfPixelSize, 1000, (float) 52.5, Integer.parseInt(channels[i]));
+                    lshc[i] = new LiveStack.Header.Channel(fld.getStr("CamType").val(), "t dye", 1000, (float) 52.5, Integer.parseInt(channels[i]));
                 }
 
                 LiveStack.Header header = new LiveStack.Header(cfg.getStr("Microscope").val(), nowAsISO, "t sample", cfg.getStr("Objective").val(),
-                        reconRunner.nrPhases, reconRunner.nrDirs, 250, cfg.getInt("SamplePxlSize").val(), lshc);
+                        wfPixelSize, wfPixelSize, 1, reconRunner.nrPhases, reconRunner.nrDirs, 250, cfg.getInt("SamplePxlSize").val(), lshc);
 
                 liveStreamWriter.startRecording(filePrefix.getText(), header);
             } catch (Exception ex) {
