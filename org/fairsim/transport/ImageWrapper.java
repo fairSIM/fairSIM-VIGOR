@@ -65,8 +65,10 @@ public class ImageWrapper implements Comparable<ImageWrapper> {
     
     ImageWrapper(ByteBuffer header) throws BrokenHeaderException {
         this(header.getShort(WIDTHPOSITION), header.getShort(HEIGHTPOSITION));
+        //System.out.println(header.getLong(HEIGHTPOSITION));
         if (header.capacity() != HEADERSIZE) throw new BrokenHeaderException("Headersize missmatch: " + header.capacity() + " " + HEADERSIZE);
-        this.header.put(header);
+        byte b = 5;
+        this.header.put(header.array());
         parseHeader();
     }
     
@@ -394,7 +396,7 @@ public class ImageWrapper implements Comparable<ImageWrapper> {
         return Base64.encode(iwHeader);
     }
     
-    ByteBuffer decodeHeader(String header) {
+    static ByteBuffer decodeHeader(String header) {
         byte[] headerBytes = Base64.decode(header);
         ByteBuffer iwHeader = ByteBuffer.wrap(new byte[HEADERSIZE]);
         iwHeader.order(ByteOrder.LITTLE_ENDIAN);
@@ -509,10 +511,9 @@ public class ImageWrapper implements Comparable<ImageWrapper> {
 
     @Override
     public int compareTo(ImageWrapper iw) {
-        long res = seqNr - iw.seqNr;
-        if (res > 0) return 1;
-        else if (res < 0) return -1;
-        else return 0;
+        int resChannel = pos1 - iw.pos1;
+        if (resChannel != 0) return resChannel;
+        else return (int) (seqNr - iw.seqNr);
     }
 
     static final class Sorter {
