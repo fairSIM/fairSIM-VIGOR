@@ -34,10 +34,10 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import org.fairsim.utils.Base64;
-import org.fairsim.utils.Conf;
 import org.fairsim.utils.Tool;
 
 /**
@@ -49,10 +49,6 @@ public class LiveStack {
     private final Header header;
     private final List<ImageWrapper> imgs;
     
-    private enum FileFormat {
-        TIFF, OMETIFF;
-    }
-    
     LiveStack(InputStream is) throws IOException {
         header = Header.read(is);
         imgs = new LinkedList<>();
@@ -62,7 +58,7 @@ public class LiveStack {
     }
     
     LiveStack(ImagePlus ip) throws IOException {
-        String base64Header = ip.getInfoProperty();
+        String base64Header = ip.getInfoProperty().split("encoded header: ")[1];
         header = Header.decode(base64Header);
         imgs = new LinkedList<>();
         ImageStack stack = ip.getStack();
@@ -95,14 +91,15 @@ public class LiveStack {
         final int width, height; // in pixels
         final int zSlices;
         final int nrPhases, nrAngles; // sim
+        final int illuminationTime; // in µs
         final int delayTime; // in ms
-        final float samplePixelSize; // int nm
+        final float samplePixelSizeX, samplePixelSizeY, samplePixelSizeZ; // int nm
         final Channel[] channels;
         
         public Header(String microscope, String timestamp, String sample,
                 String objective, int width, int height, int zSlices,
-                int nrPhases, int nrAngles, int delayTime,
-                float samplePixelSize, Channel[] channels) {
+                int nrPhases, int nrAngles, int illuminationTime, int delayTime,
+                float samplePixelSizeX, float samplePixelSizeY, Channel[] channels) {
             
             this.microscope = microscope;
             this.timestamp = timestamp; //UTC timestamp in "yyyyMMdd'T'HHmmss" format
@@ -113,8 +110,11 @@ public class LiveStack {
             this.zSlices = zSlices;
             this.nrPhases = nrPhases;
             this.nrAngles = nrAngles;
+            this.illuminationTime = illuminationTime;
             this.delayTime = delayTime;
-            this.samplePixelSize = samplePixelSize;
+            this.samplePixelSizeX = samplePixelSizeX;
+            this.samplePixelSizeY = samplePixelSizeY;
+            this.samplePixelSizeZ = 0;
             this.channels = channels;
         }
         
@@ -122,15 +122,13 @@ public class LiveStack {
             
             static final long serialVersionUID = 1;
             final String detector, dye;
-            final int illuminationTime; // in µs
             final float illuminationPower; // in mW
             final int exWavelength; // wavelength of excitation in nm
             
-            public Channel(String detector, String dye, int illuminationTime, float illuminationPower, int exWavelength) {
+            public Channel(String detector, String dye, float illuminationPower, int exWavelength) {
                 
                 this.detector = detector;
                 this.dye = dye;
-                this.illuminationTime = illuminationTime;
                 this.illuminationPower = illuminationPower;
                 this.exWavelength = exWavelength;
             }
@@ -180,7 +178,7 @@ public class LiveStack {
     }
     
     FileSaverThread saveAsTiff(String outFile, boolean dump, int... channels) {
-        FileSaverThread fc = new FileSaverThread(FileFormat.TIFF, outFile, dump, channels);
+        FileSaverThread fc = new FileSaverThread(outFile, dump, channels);
         fc.start();
         return fc;
     }
@@ -189,10 +187,12 @@ public class LiveStack {
         return saveAsTiff(outFile, false, channels);
     }
     
-    FileSaverThread saveAsTiff(String outFile) {
-        return saveAsTiff(outFile, false);
+    static void liveStacktoTiff(String inFile) throws IOException, InterruptedException {
+        LiveStack ls = open(inFile);
+        String outFile = inFile.split(".livestack")[0] + ".tif";
+        FileSaverThread fst = ls.saveAsTiff(outFile);
+        fst.join();
     }
-    
         
     public void sort() {
         imgs.sort(null);
@@ -201,13 +201,11 @@ public class LiveStack {
     private class FileSaverThread extends Thread {
         private String status = "starting";
         private int allCounter, addCounter;
-        public final FileFormat format;
         private final String outFile;
         private final int[] channels;
         private final boolean dump;
         
-        private FileSaverThread(FileFormat format, String outFile, boolean dump, int... channels) {
-            this.format = format;
+        private FileSaverThread(String outFile, boolean dump, int... channels) {
             this.outFile = outFile;
             this.dump = dump;
             
@@ -232,14 +230,40 @@ public class LiveStack {
             return addCounter;
         }
         
-        private void saveAsTiff() {
+        @Override
+        public void run() {
             status = "preparing";
             int nrCh = channels.length;
+            int[] chCounter = new int[nrCh];
+            for (ImageWrapper iw : imgs) {
+                for (int c = 0; c < nrCh; c++) {
+                    if (iw.pos1() == header.channels[c].exWavelength) {
+                        chCounter[c]++;
+                    }
+                }
+            }
+            int max = 0;
+            for (int c : chCounter) {
+                if (c > max) {
+                    max = c;
+                }
+            }
+            for (int c = 0; c < nrCh; c++) {
+                if (chCounter[c] < max) {
+                    int diff = max - chCounter[c];
+                    for (int i = 0; i < diff; i++) {
+                        ImageWrapper iw = new ImageWrapper(header.width, header.height);
+                        iw.copy(new short[header.width * header.height], header.width, header.height);
+                        iw.setPos012(iw.pos0(), header.channels[c].exWavelength, iw.pos2());
+                        imgs.add(iw);
+                    }
+                }
+            }
             sort();
             ImageStack is = new ImageStack(header.width, header.height);
             addCounter = 0;
-            int size = imgs.size();
-            for (allCounter = 0; allCounter < size; allCounter++) {
+            List<Integer> toDelete = new ArrayList<>();
+            for (allCounter = 0; allCounter < imgs.size(); allCounter++) {
                 ImageWrapper iw = dump ? imgs.remove(0) : imgs.get(allCounter);
                 for (int c = 0; c < nrCh; c++) {
                     if (iw.pos1() == channels[c]) {
@@ -247,6 +271,7 @@ public class LiveStack {
                         double avr=0;
                         for ( short p : pixels ) avr += p;
                         avr /= pixels.length;
+                        if (avr == 0) toDelete.add(allCounter);
                         // channel timeCapture avr seqNr HeaderBASE64
                         String sliceLabel = "ch: " + channels[c] +
                                 " time: " + Tool.readableTimeStampMillis(iw.timeCapture() / 1000, true) +
@@ -260,10 +285,33 @@ public class LiveStack {
                 }
                 if (dump && allCounter % 100 == 0) System.gc();
             }
-            
+            for (int i : toDelete) {
+                System.out.println("rm");
+                imgs.remove(i);
+            }
             String info = "";
+            info += "microscope: " + header.microscope + "\n";
+            info += "yyyyMMdd'T'HHmmss timestamp: " + header.timestamp + "\n";
+            info += "sample: " + header.sample + "\n";
+            info += "objective: " + header.objective + "\n";
+            info += "width: " + header.width + " pixels \n";
+            info += "height: " + header.height + " pixels \n";
+            info += "zSlices: " + header.zSlices + "\n";
+            info += "nrPhases: " + header.nrPhases + "\n";
+            info += "nrAngles: " + header.nrAngles + "\n";
+            info += "illuminationTime: " + header.illuminationTime + " ms \n";
+            info += "delayTime: " + header.delayTime + " ms \n";
+            info += "samplePixelSizeX: " + header.samplePixelSizeX + " nm \n";
+            info += "samplePixelSizeY: " + header.samplePixelSizeY + " nm \n";
+            info += "samplePixelSizeZ: " + header.samplePixelSizeZ + " nm \n";
+            for (int c = 0; c < nrCh; c++) {
+                info += "channel " + c + ": detector: " + header.channels[c].detector + "\n";
+                info += "channel " + c + ": dye: " + header.channels[c].dye + "\n";
+                info += "channel " + c + ": illuminationPower: " + header.channels[c].illuminationPower + " mW \n";
+                info += "channel " + c + ": exWavelength: " + header.channels[c].exWavelength + " nm \n";
+            }
             try {
-                info = header.encode();
+                info += "encoded header: " + header.encode();
             } catch (IOException ex) {
                 throw new RuntimeException("this should never happen");
             }
@@ -275,15 +323,6 @@ public class LiveStack {
             fs.saveAsTiffStack(outFile);
             status = "finished";
         }
-        
-        @Override
-        public void run() {
-            if (format == FileFormat.TIFF) {
-                saveAsTiff();
-            } else if (format == FileFormat.OMETIFF) {
-                //TODO
-            }
-        }
     }
     
     
@@ -294,36 +333,12 @@ public class LiveStack {
      * @throws IOException
      * @throws ClassNotFoundException 
      */
-    public static void main(String[] args) throws FileNotFoundException, IOException, ClassNotFoundException, Conf.EntryNotFoundException, InterruptedException {
-        /*
-        long startTime = System.currentTimeMillis();
-        InputStream is = new FileInputStream("D:/vigor-tmp/livestack-test_20170908T173839.livestack");
-        System.out.println("read");
-        LiveStack ls = new LiveStack(is);
-        long tempTime = System.currentTimeMillis();
-        long readTime = tempTime - startTime;
-        System.out.println("save");
-        FileSaverThread fc0 = ls.saveAsTiff("D:/vigor-tmp/livestack-asd.tif");
-        while (fc0.isAlive()) {
-        Thread.sleep(500);
-        System.out.println(fc0.getAllCounter() + " ; " + fc0.getStatus());
-        }
-        long saveTime = System.currentTimeMillis() - tempTime;
-        System.out.println("------------------");
-        System.out.println("read: " + readTime);
-        System.out.println("save: " + saveTime);
-         */
-        /*
-        Opener opener = new Opener();
-        ImagePlus testImg = opener.openImage("D:/vigor-tmp/livestack-asd.tif");
-        String base64Header = testImg.getInfoProperty();
-        Header header = Header.decode(base64Header);
-        System.out.println(header.width);
-        System.out.println(header.objective);
-         */
-        LiveStack ls = open("D:/vigor-tmp/livestack-asd.tif");
-
-        
-        ls.saveAsTiff("D:/vigor-tmp/livestack-488.tif", 488);
+    public static void main(String[] args) throws Exception {
+        liveStacktoTiff("D:/vigor-tmp/ls-test_20170918T132652.livestack");
+        liveStacktoTiff("D:/vigor-tmp/ls-test_20170918T132644.livestack");
+        liveStacktoTiff("D:/vigor-tmp/ls-test_20170918T132639.livestack");
+        liveStacktoTiff("D:/vigor-tmp/ls-test_20170918T132636.livestack");
+        liveStacktoTiff("D:/vigor-tmp/ls-test_20170918T132630.livestack");
+        liveStacktoTiff("D:/vigor-tmp/ls-test_20170918T132005.livestack");
     }
 }

@@ -292,6 +292,20 @@ public class EasyGui extends javax.swing.JPanel {
         blueCheckBox = new javax.swing.JCheckBox();
         greenCheckBox = new javax.swing.JCheckBox();
         redCheckBox = new javax.swing.JCheckBox();
+        blueComboBox = new javax.swing.JComboBox<>();
+        blueTextField = new javax.swing.JTextField();
+        blueLabel = new javax.swing.JLabel();
+        greenTextField = new javax.swing.JTextField();
+        greenLabel = new javax.swing.JLabel();
+        greenComboBox = new javax.swing.JComboBox<>();
+        redTextField = new javax.swing.JTextField();
+        redLabel = new javax.swing.JLabel();
+        redComboBox = new javax.swing.JComboBox<>();
+        blueDyeLabel = new javax.swing.JLabel();
+        greenDyeLabel = new javax.swing.JLabel();
+        redDyeLabel = new javax.swing.JLabel();
+        dyeTextField = new javax.swing.JTextField();
+        addDyeButton = new javax.swing.JButton();
         itPanel = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         itList = new javax.swing.JList<>();
@@ -310,6 +324,9 @@ public class EasyGui extends javax.swing.JPanel {
         enableButton = new javax.swing.JButton();
         statusPanel = new javax.swing.JPanel();
         statusLabel = new javax.swing.JLabel();
+        samplePanel = new javax.swing.JPanel();
+        sampleTextField = new javax.swing.JTextField();
+        jLabel1 = new javax.swing.JLabel();
 
         laserPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Laser Colors"));
         laserPanel.setEnabled(false);
@@ -344,6 +361,42 @@ public class EasyGui extends javax.swing.JPanel {
             }
         });
 
+        blueComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        blueTextField.setText("0000");
+
+        blueLabel.setText("mW");
+
+        greenTextField.setText("0000");
+
+        greenLabel.setText("mW");
+
+        greenComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        greenComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                greenComboBoxActionPerformed(evt);
+            }
+        });
+
+        redTextField.setText("0000");
+
+        redLabel.setText("mW");
+
+        redComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        redComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                redComboBoxActionPerformed(evt);
+            }
+        });
+
+        blueDyeLabel.setText("Dye: ");
+
+        greenDyeLabel.setText("Dye: ");
+
+        redDyeLabel.setText("Dye: ");
+
+        addDyeButton.setText("Add dye");
+
         javax.swing.GroupLayout laserPanelLayout = new javax.swing.GroupLayout(laserPanel);
         laserPanel.setLayout(laserPanelLayout);
         laserPanelLayout.setHorizontalGroup(
@@ -351,20 +404,77 @@ public class EasyGui extends javax.swing.JPanel {
             .addGroup(laserPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(laserPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(blueCheckBox)
-                    .addComponent(greenCheckBox)
-                    .addComponent(redCheckBox))
-                .addContainerGap(31, Short.MAX_VALUE))
+                    .addComponent(dyeTextField, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(laserPanelLayout.createSequentialGroup()
+                        .addComponent(blueDyeLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(blueComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(laserPanelLayout.createSequentialGroup()
+                        .addComponent(greenDyeLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(greenComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(laserPanelLayout.createSequentialGroup()
+                        .addComponent(redDyeLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(redComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(laserPanelLayout.createSequentialGroup()
+                        .addGroup(laserPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(laserPanelLayout.createSequentialGroup()
+                                .addComponent(greenCheckBox)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(greenTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(greenLabel))
+                            .addGroup(laserPanelLayout.createSequentialGroup()
+                                .addComponent(redCheckBox)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(redTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(redLabel))
+                            .addGroup(laserPanelLayout.createSequentialGroup()
+                                .addComponent(blueCheckBox)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(blueTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(blueLabel)))
+                        .addGap(0, 10, Short.MAX_VALUE))
+                    .addComponent(addDyeButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         laserPanelLayout.setVerticalGroup(
             laserPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(laserPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(blueCheckBox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(greenCheckBox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(redCheckBox)
+                .addGroup(laserPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(blueCheckBox)
+                    .addComponent(blueTextField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(blueLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(laserPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(blueComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(blueDyeLabel))
+                .addGap(18, 18, 18)
+                .addGroup(laserPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(greenCheckBox)
+                    .addComponent(greenTextField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(greenLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(laserPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(greenComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(greenDyeLabel))
+                .addGap(18, 18, 18)
+                .addGroup(laserPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(redCheckBox)
+                    .addComponent(redTextField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(redLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(laserPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(redComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(redDyeLabel))
+                .addGap(18, 18, 18)
+                .addComponent(dyeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(addDyeButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -490,7 +600,7 @@ public class EasyGui extends javax.swing.JPanel {
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, controlPanelLayout.createSequentialGroup()
                                 .addComponent(runDelayLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(runDelaySlider, javax.swing.GroupLayout.DEFAULT_SIZE, 36, Short.MAX_VALUE)
+                                .addComponent(runDelaySlider, javax.swing.GroupLayout.DEFAULT_SIZE, 39, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(runMsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addGap(18, 18, 18)
@@ -498,7 +608,7 @@ public class EasyGui extends javax.swing.JPanel {
                             .addGroup(controlPanelLayout.createSequentialGroup()
                                 .addComponent(runRecDelayLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(runRecDelaySlider, javax.swing.GroupLayout.DEFAULT_SIZE, 36, Short.MAX_VALUE)
+                                .addComponent(runRecDelaySlider, javax.swing.GroupLayout.DEFAULT_SIZE, 39, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(runRecMsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(runRecButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
@@ -528,7 +638,7 @@ public class EasyGui extends javax.swing.JPanel {
                 .addComponent(photoButton)
                 .addGap(18, 18, 18)
                 .addComponent(paramButton)
-                .addContainerGap(126, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         enableButton.setText("Enable");
@@ -557,6 +667,31 @@ public class EasyGui extends javax.swing.JPanel {
             .addComponent(statusLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
+        samplePanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Sample"));
+
+        jLabel1.setText("Sample description: ");
+
+        javax.swing.GroupLayout samplePanelLayout = new javax.swing.GroupLayout(samplePanel);
+        samplePanel.setLayout(samplePanelLayout);
+        samplePanelLayout.setHorizontalGroup(
+            samplePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, samplePanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(sampleTextField)
+                .addContainerGap())
+        );
+        samplePanelLayout.setVerticalGroup(
+            samplePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(samplePanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(samplePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(sampleTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel1))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -564,9 +699,10 @@ public class EasyGui extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(samplePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(laserPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(itPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(controlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -584,11 +720,13 @@ public class EasyGui extends javax.swing.JPanel {
                     .addComponent(statusPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(enableButton, javax.swing.GroupLayout.DEFAULT_SIZE, 27, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(laserPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(laserPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(itPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(controlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(samplePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -688,6 +826,14 @@ public class EasyGui extends javax.swing.JPanel {
         paramButton.setEnabled(true);
         enableRunRec();
     }//GEN-LAST:event_runButtonActionPerformed
+
+    private void greenComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_greenComboBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_greenComboBoxActionPerformed
+
+    private void redComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_redComboBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_redComboBoxActionPerformed
     
     /**
      * asks if all necessary devices are connected, if not disables the easy gui
@@ -904,17 +1050,32 @@ public class EasyGui extends javax.swing.JPanel {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton addDyeButton;
     private javax.swing.JCheckBox blueCheckBox;
+    public javax.swing.JComboBox<String> blueComboBox;
+    private javax.swing.JLabel blueDyeLabel;
+    private javax.swing.JLabel blueLabel;
+    public javax.swing.JTextField blueTextField;
     private javax.swing.JPanel controlPanel;
+    private javax.swing.JTextField dyeTextField;
     private javax.swing.JButton enableButton;
     private javax.swing.JCheckBox greenCheckBox;
+    public javax.swing.JComboBox<String> greenComboBox;
+    private javax.swing.JLabel greenDyeLabel;
+    private javax.swing.JLabel greenLabel;
+    public javax.swing.JTextField greenTextField;
     private javax.swing.JList<String> itList;
     private javax.swing.JPanel itPanel;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JPanel laserPanel;
     private javax.swing.JButton paramButton;
     private javax.swing.JButton photoButton;
     private javax.swing.JCheckBox redCheckBox;
+    public javax.swing.JComboBox<String> redComboBox;
+    private javax.swing.JLabel redDyeLabel;
+    private javax.swing.JLabel redLabel;
+    public javax.swing.JTextField redTextField;
     private javax.swing.JToggleButton registrationButton;
     private javax.swing.JToggleButton runButton;
     private javax.swing.JLabel runDelayLabel;
@@ -924,6 +1085,8 @@ public class EasyGui extends javax.swing.JPanel {
     private javax.swing.JLabel runRecDelayLabel;
     private javax.swing.JSlider runRecDelaySlider;
     private javax.swing.JLabel runRecMsLabel;
+    private javax.swing.JPanel samplePanel;
+    public javax.swing.JTextField sampleTextField;
     private javax.swing.JLabel statusLabel;
     private javax.swing.JPanel statusPanel;
     // End of variables declaration//GEN-END:variables

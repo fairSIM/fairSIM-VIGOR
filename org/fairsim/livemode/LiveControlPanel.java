@@ -33,6 +33,7 @@ import java.awt.Color;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.GridLayout;
+import java.io.IOException;
 
 import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
@@ -54,6 +55,7 @@ import org.fairsim.linalg.Vec2d;
 import org.fairsim.controller.AdvancedGui;
 import org.fairsim.controller.EasyGui;
 import org.fairsim.transport.LiveStack;
+import org.fairsim.utils.Conf.EntryNotFoundException;
 import org.fairsim.utils.Tool;
 import org.fairsim.utils.SimpleMT;
 
@@ -150,7 +152,7 @@ public class LiveControlPanel {
                 "raw stream recording"));
         recorderPanel.setLayout(new GridLayout(2, 1, 2, 2));
 
-        filePrefix = new JTextField("VIGOR", 30);
+        filePrefix = new JTextField("fastSIM", 30);
 
         recordButton = new JButton("record");
         recordButton.addActionListener(new ActionListener() {
@@ -314,14 +316,14 @@ public class LiveControlPanel {
                 LiveStack.Header.Channel[] lshc = new LiveStack.Header.Channel[nrCh];
                 for (int i = 0; i < nrCh; i++) {
                     Conf.Folder fld = cfg.cd("channel-" + channels[i]);
-                    lshc[i] = new LiveStack.Header.Channel(fld.getStr("CamType").val(), "t dye", 1000, (float) 52.5, Integer.parseInt(channels[i]));
+                    lshc[i] = new LiveStack.Header.Channel(fld.getStr("CamType").val(), "t dye", (float) 52.5, Integer.parseInt(channels[i]));
                 }
 
                 LiveStack.Header header = new LiveStack.Header(cfg.getStr("Microscope").val(), nowAsISO, "t sample", cfg.getStr("Objective").val(),
-                        wfPixelSize, wfPixelSize, 1, reconRunner.nrPhases, reconRunner.nrDirs, 250, cfg.getInt("SamplePxlSize").val(), lshc);
+                        wfPixelSize, wfPixelSize, 1, reconRunner.nrPhases, reconRunner.nrDirs, 1000, 250, cfg.getInt("SamplePxlSizeX").val(), cfg.getInt("SamplePxlSizeY").val(), lshc);
 
                 liveStreamWriter.startRecording(filePrefix.getText(), header);
-            } catch (Exception ex) {
+            } catch (IOException | EntryNotFoundException ex) {
                 throw new RuntimeException(ex);
             }
             isRecording = true;

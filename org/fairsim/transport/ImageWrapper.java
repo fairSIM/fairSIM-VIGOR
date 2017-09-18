@@ -25,20 +25,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.PriorityQueue;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.PriorityBlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.fairsim.linalg.Vec2d;
 import org.fairsim.utils.Base64;
-import org.fairsim.utils.Tool;
 
 /** Class to encapsulate image data for network send */
 public class ImageWrapper implements Comparable<ImageWrapper> {
