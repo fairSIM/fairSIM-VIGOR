@@ -103,6 +103,10 @@ public final class Tool {
 	if (currentLogger!=null)
 	    currentLogger.writeError( message, fatal );
     }
+    
+    static public final void error(final String message) {
+        error(message, false);
+    }
 
     /** Creates an absolute file from path provided a string.
      *  This especially takes care of "~" to set the users home */

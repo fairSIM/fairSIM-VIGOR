@@ -34,7 +34,6 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import org.fairsim.utils.Base64;
@@ -187,10 +186,10 @@ public class LiveStack {
         return saveAsTiff(outFile, false, channels);
     }
     
-    static void liveStacktoTiff(String inFile) throws IOException, InterruptedException {
+    static void liveStacktoTiff(String inFile, int... channels) throws IOException, InterruptedException {
         LiveStack ls = open(inFile);
         String outFile = inFile.split(".livestack")[0] + ".tif";
-        FileSaverThread fst = ls.saveAsTiff(outFile);
+        FileSaverThread fst = ls.saveAsTiff(outFile, channels);
         fst.join();
     }
         
@@ -216,6 +215,16 @@ public class LiveStack {
                     this.channels[i] = header.channels[i].exWavelength;
                 }
             } else this.channels = channels;
+            for (int channel : this.channels) {
+                boolean found = false;
+                for (Header.Channel hc : header.channels) {
+                    if (channel == hc.exWavelength) {
+                        found = true;
+                        break;
+                    }
+                }
+                if(!found) throw new RuntimeException("channel " + channel + " not found");
+            }
         }
 
         public String getStatus() {
@@ -255,6 +264,7 @@ public class LiveStack {
                         ImageWrapper iw = new ImageWrapper(header.width, header.height);
                         iw.copy(new short[header.width * header.height], header.width, header.height);
                         iw.setPos012(iw.pos0(), header.channels[c].exWavelength, iw.pos2());
+                        iw.writeHeader();
                         imgs.add(iw);
                     }
                 }
@@ -262,7 +272,6 @@ public class LiveStack {
             sort();
             ImageStack is = new ImageStack(header.width, header.height);
             addCounter = 0;
-            List<Integer> toDelete = new ArrayList<>();
             for (allCounter = 0; allCounter < imgs.size(); allCounter++) {
                 ImageWrapper iw = dump ? imgs.remove(0) : imgs.get(allCounter);
                 for (int c = 0; c < nrCh; c++) {
@@ -271,23 +280,19 @@ public class LiveStack {
                         double avr=0;
                         for ( short p : pixels ) avr += p;
                         avr /= pixels.length;
-                        if (avr == 0) toDelete.add(allCounter);
                         // channel timeCapture avr seqNr HeaderBASE64
                         String sliceLabel = "ch: " + channels[c] +
                                 " time: " + Tool.readableTimeStampMillis(iw.timeCapture() / 1000, true) +
                                 " avr: " + avr +
                                 " seqNr " + iw.seqNr() +
                                 " header: " + iw.encodeHeader();
+                        //System.out.println(ImageWrapper.decodeHeader(iw.encodeHeader()).get(17));
                         ShortProcessor sp = new ShortProcessor(iw.width(), iw.height(), pixels, null);
                         is.addSlice(sliceLabel, sp);
                         addCounter++;
                     }
                 }
                 if (dump && allCounter % 100 == 0) System.gc();
-            }
-            for (int i : toDelete) {
-                System.out.println("rm");
-                imgs.remove(i);
             }
             String info = "";
             info += "microscope: " + header.microscope + "\n";
@@ -334,11 +339,7 @@ public class LiveStack {
      * @throws ClassNotFoundException 
      */
     public static void main(String[] args) throws Exception {
-        liveStacktoTiff("D:/vigor-tmp/ls-test_20170918T132652.livestack");
-        liveStacktoTiff("D:/vigor-tmp/ls-test_20170918T132644.livestack");
-        liveStacktoTiff("D:/vigor-tmp/ls-test_20170918T132639.livestack");
-        liveStacktoTiff("D:/vigor-tmp/ls-test_20170918T132636.livestack");
-        liveStacktoTiff("D:/vigor-tmp/ls-test_20170918T132630.livestack");
-        liveStacktoTiff("D:/vigor-tmp/ls-test_20170918T132005.livestack");
+        liveStacktoTiff("D:/vigor-tmp/fastSIM_20170919T140051.livestack");
+        LiveStack open = open("D:/vigor-tmp/fastSIM_20170919T140051.tif");
     }
 }

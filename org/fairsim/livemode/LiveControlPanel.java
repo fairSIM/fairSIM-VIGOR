@@ -86,7 +86,7 @@ public class LiveControlPanel {
     final ReconstructionRunner reconRunner;
     final SimSequenceExtractor seqDetection;
 
-    
+    EasyGui easyGui;
 
     final JTextArea statusField;
     final JTextField statusMessage;
@@ -277,7 +277,7 @@ public class LiveControlPanel {
 
         tabbedPane.addTab("Main", mainPanel);
         AdvancedGui advancedGui = new AdvancedGui(cfg, channels, this);
-        EasyGui easyGui = new EasyGui(this, advancedGui);
+        easyGui = new EasyGui(this, advancedGui);
         tabbedPane.addTab("Easy", easyGui);
         tabbedPane.addTab("Advanced", advancedGui);
 
@@ -314,12 +314,12 @@ public class LiveControlPanel {
                 String nowAsISO = df.format(new java.util.Date());
 
                 LiveStack.Header.Channel[] lshc = new LiveStack.Header.Channel[nrCh];
-                for (int i = 0; i < nrCh; i++) {
-                    Conf.Folder fld = cfg.cd("channel-" + channels[i]);
-                    lshc[i] = new LiveStack.Header.Channel(fld.getStr("CamType").val(), "t dye", (float) 52.5, Integer.parseInt(channels[i]));
+                for (int c = 0; c < nrCh; c++) {
+                    Conf.Folder fld = cfg.cd("channel-" + channels[c]);
+                    lshc[c] = new LiveStack.Header.Channel(fld.getStr("CamType").val(), easyGui.getDye(c), (float) 52.5, Integer.parseInt(channels[c]));
                 }
 
-                LiveStack.Header header = new LiveStack.Header(cfg.getStr("Microscope").val(), nowAsISO, "t sample", cfg.getStr("Objective").val(),
+                LiveStack.Header header = new LiveStack.Header(cfg.getStr("Microscope").val(), nowAsISO, easyGui.sampleTextField.getText(), cfg.getStr("Objective").val(),
                         wfPixelSize, wfPixelSize, 1, reconRunner.nrPhases, reconRunner.nrDirs, 1000, 250, cfg.getInt("SamplePxlSizeX").val(), cfg.getInt("SamplePxlSizeY").val(), lshc);
 
                 liveStreamWriter.startRecording(filePrefix.getText(), header);

@@ -57,7 +57,6 @@ public class ImageWrapper implements Comparable<ImageWrapper> {
         this(header.getShort(WIDTHPOSITION), header.getShort(HEIGHTPOSITION));
         //System.out.println(header.getLong(HEIGHTPOSITION));
         if (header.capacity() != HEADERSIZE) throw new BrokenHeaderException("Headersize missmatch: " + header.capacity() + " " + HEADERSIZE);
-        byte b = 5;
         this.header.put(header.array());
         parseHeader();
     }
@@ -447,7 +446,7 @@ public class ImageWrapper implements Comparable<ImageWrapper> {
 	if ( len != width*height )
 	    throw new BrokenHeaderException("Width x Height != Len");
 	if ( bpp != 1 && bpp != 2 )
-	    throw new BrokenHeaderException("bpp neither 1 nor 2");
+            throw new BrokenHeaderException("bpp neither 1 nor 2");
 	if (vers!=1)
 	    throw new BrokenHeaderException("unsupported version");
 
