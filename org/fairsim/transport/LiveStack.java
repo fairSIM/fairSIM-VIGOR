@@ -164,11 +164,11 @@ public class LiveStack {
         }
     }
     
-    void writeHeader(OutputStream os) throws IOException {
+    private void writeHeader(OutputStream os) throws IOException {
         header.write(os);
     }
     
-    static ImageWrapper readImageWrapper(InputStream is) throws IOException {
+    public static ImageWrapper readImageWrapper(InputStream is) throws IOException {
         ByteBuffer bbHeader = ImageWrapper.readImageWrapperHeader(is);
         ImageWrapper iw = new ImageWrapper(bbHeader);
         iw.readData(is);
@@ -176,25 +176,21 @@ public class LiveStack {
         return iw;
     }
     
-    FileSaverThread saveAsTiff(String outFile, boolean dump, int... channels) {
+    public FileSaverThread saveAsTiff(String outFile, boolean dump, int... channels) {
         FileSaverThread fc = new FileSaverThread(outFile, dump, channels);
         fc.start();
         return fc;
     }
     
-    FileSaverThread saveAsTiff(String outFile, int... channels) {
+    public FileSaverThread saveAsTiff(String outFile, int... channels) {
         return saveAsTiff(outFile, false, channels);
     }
     
-    static void liveStacktoTiff(String inFile, int... channels) throws IOException, InterruptedException {
+    public static void liveStacktoTiff(String inFile, int... channels) throws IOException, InterruptedException {
         LiveStack ls = open(inFile);
-        String outFile = inFile.split(".livestack")[0] + ".tif";
+        String outFile = inFile + ".tif";
         FileSaverThread fst = ls.saveAsTiff(outFile, channels);
         fst.join();
-    }
-        
-    public void sort() {
-        imgs.sort(null);
     }
     
     private class FileSaverThread extends Thread {
@@ -269,7 +265,7 @@ public class LiveStack {
                     }
                 }
             }
-            sort();
+            imgs.sort(null);
             ImageStack is = new ImageStack(header.width, header.height);
             addCounter = 0;
             for (allCounter = 0; allCounter < imgs.size(); allCounter++) {
