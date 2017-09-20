@@ -599,7 +599,7 @@ public class LiveControlPanel {
 
         // following Factory for Linux-GPU-Reconstruction
         if (OS.contains("nix") || OS.contains("nux") || OS.contains("aix")) {
-            String wd = System.getProperty("user.dir") + "/accel/";
+            String wd = System.getProperty("user.dir") + "/";
             Tool.trace("loading library from: " + wd);
             try {
                 System.load(wd + "libcudaimpl.so");

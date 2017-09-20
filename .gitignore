@@ -13,3 +13,4 @@ com/*
 external/*.dmg
 target/*
 *_sync_*
+*.so

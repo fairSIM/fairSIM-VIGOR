@@ -335,7 +335,7 @@ public class LiveStack {
      * @throws ClassNotFoundException 
      */
     public static void main(String[] args) throws Exception {
-        liveStacktoTiff("D:/vigor-tmp/fastSIM_20170919T140051.livestack");
-        LiveStack open = open("D:/vigor-tmp/fastSIM_20170919T140051.tif");
+        liveStacktoTiff("/vol/ssd-cache/VIGOR-stream/fastSIM-test_20170920T125532.livestack");
+        //LiveStack open = open("D:/vigor-tmp/fastSIM_20170919T140051.tif");
     }
 }
