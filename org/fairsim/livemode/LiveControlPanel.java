@@ -316,7 +316,7 @@ public class LiveControlPanel {
                 LiveStack.Header.Channel[] lshc = new LiveStack.Header.Channel[nrCh];
                 for (int c = 0; c < nrCh; c++) {
                     Conf.Folder fld = cfg.cd("channel-" + channels[c]);
-                    lshc[c] = new LiveStack.Header.Channel(fld.getStr("CamType").val(), easyGui.getDye(c), (float) 52.5, Integer.parseInt(channels[c]));
+                    lshc[c] = new LiveStack.Header.Channel(fld.getStr("CamType").val(), easyGui.getDye(c), easyGui.getIlluminationPower(c), Integer.parseInt(channels[c]));
                 }
 
                 LiveStack.Header header = new LiveStack.Header(cfg.getStr("Microscope").val(), nowAsISO, easyGui.sampleTextField.getText(), cfg.getStr("Objective").val(),

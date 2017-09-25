@@ -888,6 +888,36 @@ public class EasyGui extends javax.swing.JPanel {
         }
     }
     
+    public float getIlluminationPower(int channel) {
+        List<Float> powers = new ArrayList<>(3);
+        if (blueCheckBox.isSelected()) {
+            try {
+                powers.add(Float.parseFloat(blueTextField.getText()));
+            } catch (NumberFormatException ex) {
+                powers.add(new Float(0));
+            }
+        }
+        if (greenCheckBox.isSelected()) {
+            try {
+                powers.add(Float.parseFloat(greenTextField.getText()));
+            } catch (NumberFormatException ex) {
+                powers.add(new Float(0));
+            }
+        }
+        if (redCheckBox.isSelected()) {
+            try {
+                powers.add(Float.parseFloat(redTextField.getText()));
+            } catch (NumberFormatException ex) {
+                powers.add(new Float(0));
+            }
+        }
+        try {
+            return powers.get(channel);
+        } catch (IndexOutOfBoundsException ex) {
+            return 0;
+        }
+    }
+    
     private void addToDyeList() {
         String dye = dyeTextField.getText() + "\n";
         if (dye.length() > 1) {
