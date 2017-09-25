@@ -300,7 +300,7 @@ public class LiveStack {
             info += "zSlices: " + header.zSlices + "\n";
             info += "nrPhases: " + header.nrPhases + "\n";
             info += "nrAngles: " + header.nrAngles + "\n";
-            info += "illuminationTime: " + header.illuminationTime + " ms \n";
+            info += "illuminationTime: " + header.illuminationTime + " µs \n";
             info += "delayTime: " + header.delayTime + " ms \n";
             info += "samplePixelSizeX: " + header.samplePixelSizeX + " nm \n";
             info += "samplePixelSizeY: " + header.samplePixelSizeY + " nm \n";
