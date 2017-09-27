@@ -39,6 +39,12 @@ import java.util.List;
 import org.fairsim.utils.Base64;
 import org.fairsim.utils.Tool;
 
+import loci.common.services.ServiceFactory;
+import loci.formats.ImageReader;
+import loci.formats.meta.IMetadata;
+import loci.formats.services.OMEXMLService;
+import loci.formats.out.OMETiffWriter;
+
 /**
  *
  * @author m.lachetta
@@ -326,7 +332,49 @@ public class LiveStack {
         }
     }
     
-    
+    public static void tiffToOme(String... args) throws Exception {
+        if (args.length == 0) {
+            System.out.println("Usage: java ConvertToOmeTiff file1 file2 ...");
+            return;
+        }
+        ImageReader reader = new ImageReader();
+        OMETiffWriter writer = new OMETiffWriter();
+        for (int i = 0; i < args.length; i++) {
+            String id = args[i];
+            int dot = id.lastIndexOf(".");
+            String outId = (dot >= 0 ? id.substring(0, dot) : id) + ".ome.tif";
+            System.out.print("Converting " + id + " to " + outId + " ");
+
+            // record metadata to OME-XML format
+            ServiceFactory factory = new ServiceFactory();
+            OMEXMLService service = factory.getInstance(OMEXMLService.class);
+            IMetadata omexmlMeta = service.createOMEXMLMetadata();
+            reader.setMetadataStore(omexmlMeta);
+            reader.setId(id);
+            // configure OME-TIFF writer
+            writer.setMetadataRetrieve(omexmlMeta);
+            writer.setId(outId);
+            //writer.setCompression("J2K");
+
+            // write out image planes
+            int seriesCount = reader.getSeriesCount();
+            for (int s = 0; s < seriesCount; s++) {
+                reader.setSeries(s);
+                writer.setSeries(s);
+                int planeCount = reader.getImageCount();
+                for (int p = 0; p < planeCount; p++) {
+                    byte[] plane = reader.openBytes(p);
+                    // write plane to output file
+                    writer.saveBytes(p, plane);
+                    System.out.print(".");
+                }
+            }
+            
+            writer.close();
+            reader.close();
+            System.out.println(" [done]");
+        }
+    }
     /**
      * for testing
      * @param args
@@ -335,7 +383,7 @@ public class LiveStack {
      * @throws ClassNotFoundException 
      */
     public static void main(String[] args) throws Exception {
-        liveStacktoTiff("/vol/ssd-cache/VIGOR-stream/fastSIM-test_20170920T125532.livestack");
+        tiffToOme("G:\\vigor-tmp\\test.tif");
         //LiveStack open = open("D:/vigor-tmp/fastSIM_20170919T140051.tif");
     }
 }

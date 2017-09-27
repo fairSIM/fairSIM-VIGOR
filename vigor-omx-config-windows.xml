@@ -19,9 +19,9 @@
 <ReconThreads type="int">2</ReconThreads>
 <NetworkBuffer type="int">600</NetworkBuffer>
 <DiskBuffer type="int">500</DiskBuffer>
-<DiskFolder type="string">d:/vigor-tmp/</DiskFolder>
-<ParamFolder type="string">d:/vigor-tmp/</ParamFolder>
-<RegistrationFolder type="string">d:/vigor-registration/</RegistrationFolder>
+<DiskFolder type="string">g:/vigor-tmp/</DiskFolder>
+<ParamFolder type="string">g:/vigor-tmp/</ParamFolder>
+<RegistrationFolder type="string">g:/vigor-registration/</RegistrationFolder>
 
 <SyncFrameFreq type="int">1</SyncFrameFreq>
 <SyncFrameAvr type="int">8000</SyncFrameAvr>
