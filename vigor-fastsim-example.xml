@@ -11,6 +11,7 @@
 <Objective type="string">fastSIM objective</Objective>
 <SamplePxlSizeX type="int">79</SamplePxlSizeX>
 <SamplePxlSizeY type="int">79</SamplePxlSizeY>
+<SamplePxlSizeZ type="int">79</SamplePxlSizeZ>
 
 <NrPhases type="int">3</NrPhases>
 <NrAngles type="int">3</NrAngles>

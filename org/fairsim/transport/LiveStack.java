@@ -38,15 +38,16 @@ import java.util.LinkedList;
 import java.util.List;
 import org.fairsim.utils.Base64;
 import org.fairsim.utils.Tool;
-
+/*
 import loci.common.services.ServiceFactory;
 import loci.formats.ImageReader;
 import loci.formats.meta.IMetadata;
 import loci.formats.services.OMEXMLService;
 import loci.formats.out.OMETiffWriter;
+*/
 
 /**
- *
+ * Class for converting .livestack data to other formats like tiff
  * @author m.lachetta
  */
 public class LiveStack {
@@ -54,7 +55,13 @@ public class LiveStack {
     private final Header header;
     private final List<ImageWrapper> imgs;
     
-    LiveStack(InputStream is) throws IOException {
+    /**
+     * private constructor for livestack InputStreams
+     * use the open method for creating a livestack instance
+     * @param is InputStream for the livestack instance
+     * @throws IOException 
+     */
+    private LiveStack(InputStream is) throws IOException {
         header = Header.read(is);
         imgs = new LinkedList<>();
         while (is.available() > 0) {
@@ -62,7 +69,12 @@ public class LiveStack {
         }
     }
     
-    LiveStack(ImagePlus ip) throws IOException {
+    /**
+     * private constructor for ImagePlus instance of ImageJ
+     * @param ip livestack imageplus
+     * @throws IOException 
+     */
+    private LiveStack(ImagePlus ip) throws IOException {
         String base64Header = ip.getInfoProperty().split("encoded header: ")[1];
         header = Header.decode(base64Header);
         imgs = new LinkedList<>();
@@ -78,6 +90,12 @@ public class LiveStack {
         }
     }
     
+    /**
+     * creates a livestack instance from a *.livestack or a *.livestack.* file
+     * @param file absolute path of the file
+     * @return livestack instance of the file
+     * @throws IOException 
+     */
     public static LiveStack open(String file) throws IOException {
         LiveStack ls;
         if (file.endsWith(".livestack")) {
@@ -89,6 +107,9 @@ public class LiveStack {
         return ls;
     }
     
+    /**
+     * class for the livestack metadata
+     */
     public static class Header implements Serializable{
         
         static final long serialVersionUID = 1;
@@ -101,10 +122,28 @@ public class LiveStack {
         final float samplePixelSizeX, samplePixelSizeY, samplePixelSizeZ; // int nm
         final Channel[] channels;
         
+        /**
+         * 
+         * @param microscope
+         * @param timestamp
+         * @param sample
+         * @param objective
+         * @param width in pixels
+         * @param height in pixels
+         * @param zSlices amount of z slices
+         * @param nrPhases amount of SIM phases
+         * @param nrAngles amoumt of SIM angles
+         * @param illuminationTime in µs
+         * @param delayTime in ms
+         * @param samplePixelSizeX in nm
+         * @param samplePixelSizeY in nm
+         * @param samplePixelSizeZ in nm
+         * @param channels channel meta data
+         */
         public Header(String microscope, String timestamp, String sample,
                 String objective, int width, int height, int zSlices,
                 int nrPhases, int nrAngles, int illuminationTime, int delayTime,
-                float samplePixelSizeX, float samplePixelSizeY, Channel[] channels) {
+                float samplePixelSizeX, float samplePixelSizeY, float samplePixelSizeZ, Channel[] channels) {
             
             this.microscope = microscope;
             this.timestamp = timestamp; //UTC timestamp in "yyyyMMdd'T'HHmmss" format
@@ -119,10 +158,13 @@ public class LiveStack {
             this.delayTime = delayTime;
             this.samplePixelSizeX = samplePixelSizeX;
             this.samplePixelSizeY = samplePixelSizeY;
-            this.samplePixelSizeZ = 0;
+            this.samplePixelSizeZ = samplePixelSizeZ;
             this.channels = channels;
         }
         
+        /**
+         * class for channel metadata
+         */
         public static class Channel implements Serializable{
             
             static final long serialVersionUID = 1;
@@ -130,6 +172,13 @@ public class LiveStack {
             final float illuminationPower; // in mW
             final int exWavelength; // wavelength of excitation in nm
             
+            /**
+             * 
+             * @param detector
+             * @param dye
+             * @param illuminationPower in mW
+             * @param exWavelength in nm
+             */
             public Channel(String detector, String dye, float illuminationPower, int exWavelength) {
                 
                 this.detector = detector;
@@ -140,13 +189,24 @@ public class LiveStack {
             
         }
         
+        /**
+         * writes this livestack header into an output stream
+         * @param os output stream for writing
+         * @throws IOException 
+         */
         void write(OutputStream os) throws IOException {
             ObjectOutputStream oos = new ObjectOutputStream(os);
             oos.writeObject(this);
             oos.flush();
         }
         
-        static Header read(InputStream is) throws IOException {
+        /**
+         * reads and constructs a header instance from an input stream
+         * @param is input stream to be read
+         * @return header instance
+         * @throws IOException 
+         */
+        private static Header read(InputStream is) throws IOException {
             ObjectInputStream ois = new ObjectInputStream(is);
             try {
                 return (Header) ois.readObject();
@@ -155,7 +215,12 @@ public class LiveStack {
             }
         }
         
-        String encode() throws IOException {
+        /**
+         * encodes this header instance as base64 string
+         * @return encoded base64 string
+         * @throws IOException 
+         */
+        private String encode() throws IOException {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             write(baos);
             baos.close();
@@ -163,18 +228,26 @@ public class LiveStack {
             return Base64.encode(bytes);
         }
         
-        static Header decode(String encoded) throws IOException {
+        /**
+         * decodes a base64 encoded header instance and constructs it
+         * @param encoded base64 encoded header instance
+         * @return decoded header instance
+         * @throws IOException 
+         */
+        private static Header decode(String encoded) throws IOException {
             byte[] bytes = Base64.decode(encoded);
             ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
             return read(bais);
         }
     }
     
-    private void writeHeader(OutputStream os) throws IOException {
-        header.write(os);
-    }
-    
-    public static ImageWrapper readImageWrapper(InputStream is) throws IOException {
+    /**
+     * reads an constructs an ImageWrapper from an input stream
+     * @param is inputstream to be read
+     * @return the read ImageWrapper instance
+     * @throws IOException 
+     */
+    private static ImageWrapper readImageWrapper(InputStream is) throws IOException {
         ByteBuffer bbHeader = ImageWrapper.readImageWrapperHeader(is);
         ImageWrapper iw = new ImageWrapper(bbHeader);
         iw.readData(is);
@@ -182,16 +255,36 @@ public class LiveStack {
         return iw;
     }
     
+    /**
+     * saves this livestack as tiff file
+     * @param outFile absolute file path for saving
+     * @param dump dump images for saving heap space
+     * @param channels channels which should be saved
+     * @return @see FileSaverThread
+     */
     public FileSaverThread saveAsTiff(String outFile, boolean dump, int... channels) {
         FileSaverThread fc = new FileSaverThread(outFile, dump, channels);
         fc.start();
         return fc;
     }
     
+    /**
+     * saves this livestack as tiff file
+     * @param outFile absolute file path for saving
+     * @param channels channels which should be saved
+     * @return @see FileSaverThread
+     */
     public FileSaverThread saveAsTiff(String outFile, int... channels) {
         return saveAsTiff(outFile, false, channels);
     }
     
+    /**
+     * converts a livestack file to a tiff file
+     * @param inFile livestack input file
+     * @param channels channels which should be converted
+     * @throws IOException
+     * @throws InterruptedException 
+     */
     public static void liveStacktoTiff(String inFile, int... channels) throws IOException, InterruptedException {
         LiveStack ls = open(inFile);
         String outFile = inFile + ".tif";
@@ -199,13 +292,22 @@ public class LiveStack {
         fst.join();
     }
     
-    private class FileSaverThread extends Thread {
+    /**
+     * thread for saving files
+     */
+    public class FileSaverThread extends Thread {
         private String status = "starting";
         private int allCounter, addCounter;
         private final String outFile;
         private final int[] channels;
         private final boolean dump;
         
+        /**
+         * private constructor
+         * @param outFile absolute file path for saving
+         * @param dump dump images for saving heap space
+         * @param channels channels which should be saved
+         */
         private FileSaverThread(String outFile, boolean dump, int... channels) {
             this.outFile = outFile;
             this.dump = dump;
@@ -229,18 +331,33 @@ public class LiveStack {
             }
         }
 
+        /**
+         * 
+         * @return status of this thread
+         */
         public String getStatus() {
             return status;
         }
         
+        /**
+         * 
+         * @return preparation counter for all images
+         */
         public int getAllCounter() {
             return allCounter;
         }
         
+        /**
+         * 
+         * @return preparation counter for selected channel images
+         */
         public int getAddCounter() {
             return addCounter;
         }
         
+        /**
+         * saves this livestack instance as file
+         */
         @Override
         public void run() {
             status = "preparing";
@@ -331,7 +448,7 @@ public class LiveStack {
             status = "finished";
         }
     }
-    
+    /*
     public static void tiffToOme(String... args) throws Exception {
         if (args.length == 0) {
             System.out.println("Usage: java ConvertToOmeTiff file1 file2 ...");
@@ -375,15 +492,16 @@ public class LiveStack {
             System.out.println(" [done]");
         }
     }
+    */
+
     /**
      * for testing
      * @param args
-     * @throws FileNotFoundException
-     * @throws IOException
-     * @throws ClassNotFoundException 
+     * @throws Exception 
      */
     public static void main(String[] args) throws Exception {
-        tiffToOme("G:\\vigor-tmp\\test.tif");
+        //tiffToOme("G:\\vigor-tmp\\test.tif");
         //LiveStack open = open("D:/vigor-tmp/fastSIM_20170919T140051.tif");
     }
+    
 }
