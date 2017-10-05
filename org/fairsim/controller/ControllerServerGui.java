@@ -36,9 +36,7 @@ public class ControllerServerGui extends javax.swing.JFrame implements AbstractS
      */
     public ControllerServerGui() {
         initComponents();
-        System.out.println("t0");
         slm = initController();
-        System.out.println("t1");
         arduino = new ArduinoController(this);
         server = startControllerServer(this, slm, arduino);
     }
@@ -47,15 +45,11 @@ public class ControllerServerGui extends javax.swing.JFrame implements AbstractS
         
         try{ // dmd
             SlmController dmd = new DmdController(this);
-            System.out.println("t00");
-            showText(dmd.connectSlm());
-            System.out.println("t01");
             return dmd;
                
         }catch(UnsatisfiedLinkError ex){
             try{ //flcos
                 SlmController flcos = new FlcosController(this);
-                showText(flcos.connectSlm());
                 return flcos;
             }catch(UnsatisfiedLinkError exc){
                 Tool.error("libary of all SLM's missing", true);

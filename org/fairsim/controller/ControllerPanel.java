@@ -37,6 +37,7 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
     private boolean controllerInstructionDone;
     private boolean slmConnected = false, slmReboot = false, arduinoConnected = false;
     SimSequenceExtractor seqDetection;
+    private String type;
     
     /**
      * Creates new form ArduinoPanel
@@ -168,7 +169,10 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
      */
     void handleSlmError(String error) {
         controllerInstructionDone = false;
-        int code = Integer.parseInt(error.split("  ;  ")[1].split(": ")[1]);
+        int code = -1;
+        try {
+            code = Integer.parseInt(error.split("  ;  ")[1].split(": ")[1]);
+        } catch (Exception ex) {}
         if (code == 12) {
             slmDissconnect();
             showText("Gui: Reconnect to the Flcos is necessary");
@@ -180,8 +184,9 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
         } else if (code == 8) {
             slmDissconnect();
             slmConnect();
-        } else if (error.contains("busy")) {
+        } else if (code < 0 && error.contains("busy")) {
             showText(error);
+            /*
             JFrame frame = new JFrame("Warning");
             frame.setPreferredSize(new Dimension(450, 100));
             JPanel panel = new JPanel();
@@ -190,14 +195,10 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
             frame.pack();
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
+            */
             showText("Gui: Please wait until sequence is uploaded.");
-        } else if (error.contains("No ro selected")) {
-            showText("Gui: select a ro.");
-        } else if (error.contains("stop sequence before starting a new one")) {
-            showText("Gui: stop sequence before starting a new one");
         } else {
-            showText(error);
-            showText("Gui: reboot please");
+            showText("Gui: " + error);
         }
     }
 
@@ -296,11 +297,20 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
                     slmComboBox.addItem("[" + i + "]    " + controllerClient.deviceList[i]);
                 }
             }
+            sendSlmInstruction("type");
+            if (controllerInstructionDone) {
+                slmPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(controllerClient.slmType + "-Controller"));
+            }
             slmRefresh();
             enableSlmControllers();
             slmConnectButton.setEnabled(false);
             slmConnected = true;
         }
+    }
+    
+    @Override
+    public String getType() {
+        return this.controllerClient.slmType;
     }
 
     /**
@@ -885,8 +895,8 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
     public void setRo(EasyGui.RunningOrder ro) throws EasyGui.EasyGuiException {
         arduinoWakeUpCams();
         arduinoComboBox.setSelectedIndex(ro.arduinoRo);
-        if (ro.device.equals("slm")) slmComboBox.setSelectedIndex(ro.deviceRo);
-        else throw new EasyGui.EasyGuiException("Controller: Not supported device: " + ro.device);
+        slmComboBox.setSelectedIndex(ro.deviceRo);
+        //else throw new EasyGui.EasyGuiException("Controller: Not supported device: " + ro.device);
         slmDeactivate();
         slmSetSelected();
         slmDeactivate();

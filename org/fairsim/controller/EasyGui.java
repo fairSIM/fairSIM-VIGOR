@@ -88,13 +88,16 @@ public class EasyGui extends javax.swing.JPanel {
         runningOrders.clear();
         for(int i = 0; i < arduinoRos.length; i++) {
             String device = arduinoRos[i].name.split("_", 2)[0];
-            String name = arduinoRos[i].name.split("_", 2)[1];
-            int deviceRo = getDeviceRo(name, deviceRos);
-            if (deviceRo < 0) continue;
-            boolean allowBigRoi = name.split("_")[1].endsWith("ms");
-            runningOrders.add(new RunningOrder(device, name, deviceRo, i,
-                    arduinoRos[i].syncDelay, arduinoRos[i].syncFreq,
-                    arduinoRos[i].exposureTime, allowBigRoi));
+            if(device.equals("dmd") && controller.getType().equals("DMD") ||
+                    device.equals("slm") && controller.getType().equals("FLCOS")) {
+                String name = arduinoRos[i].name.split("_", 2)[1];
+                int deviceRo = getDeviceRo(name, deviceRos);
+                if (deviceRo < 0) continue;
+                boolean allowBigRoi = name.split("_")[1].endsWith("ms");
+                runningOrders.add(new RunningOrder(device, name, deviceRo, i,
+                        arduinoRos[i].syncDelay, arduinoRos[i].syncFreq,
+                        arduinoRos[i].exposureTime, allowBigRoi));
+            }
         }
         enableLaserPanel();
     }
@@ -183,6 +186,8 @@ public class EasyGui extends javax.swing.JPanel {
      * interface for the controller gui of arduino & device
      */
     static interface Ctrl {
+        
+        String getType();
         
         /**
          * preparations for the easy gui

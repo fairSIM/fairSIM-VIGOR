@@ -53,7 +53,7 @@ public class DmdController implements SlmController {
         this.gui.showText("Dmd: loading " + wd + libName + ".dll");
 
         // Loading DMD-API-Library
-        wd = System.getProperty("user.dir") + "//";
+        wd = System.getProperty("user.dir") + "/";
         libName = "dlp6500-java-api";
         System.load(wd + libName + ".dll");
 
@@ -62,6 +62,7 @@ public class DmdController implements SlmController {
         batchDir = new File(System.getProperty("user.home") + "/documents/dlp6500");
         batchDir.mkdirs();
         ros = filelist();
+        for (String s : ros) System.out.println(s);
     }
 
     /**
@@ -78,16 +79,18 @@ public class DmdController implements SlmController {
         String[] stringArray = new String[fileArray.length];
         stringArray = new String[fileArray.length];
         for (int i = 0; i < fileArray.length; i++) {
-            if (fileArray[i].getName().contains("_batch")) {
+            if (fileArray[i].getName().endsWith(".batch.txt")) {
                 try {
                     if (checkfile(fileArray[i].getAbsoluteFile())) {
-                        String fileNameWithOutExtension = fileArray[i].getName();
+                        /*
+                        String fileNameWithOutExtension = fileArray[i].getName().split(".batch.txt")[0];
                         int help;
                         help = fileArray[i].getName().lastIndexOf('.');
                         if (help != -1) {
                             fileNameWithOutExtension = fileNameWithOutExtension.substring(0, help);
                         }
-                        stringArray[i] = fileNameWithOutExtension;
+                        */
+                        stringArray[i] = fileArray[i].getName().split(".batch.txt")[0];
                     } else {
                         stringArray[i] = "null";
                     }
@@ -154,6 +157,7 @@ public class DmdController implements SlmController {
         if (busy) {
             return "Error: Dmd is busy";
         }
+        if (ro < 0) return "Error: No running order selected";
         String[] list;
         this.selectedRo = ro;
         try {
@@ -166,7 +170,7 @@ public class DmdController implements SlmController {
 
             list = ros;
 
-            String file = batchDir.getAbsolutePath() + list[ro] + ".txt";
+            String file = batchDir.getAbsolutePath() + "\\" + list[ro] + ".batch.txt";
             
             if(isSequenceRunning()) stopSequence();
             
@@ -175,7 +179,9 @@ public class DmdController implements SlmController {
                 public void run() {
                     try {
                         busy = true;
+                        System.out.println(file);
                         executeBatchFile(file);
+                        startSequence();
                         busy = false;
                     } catch (DmdException ex) {
                         System.err.println("Exception in setRo, executing batch file, why?");
@@ -258,7 +264,7 @@ public class DmdController implements SlmController {
      */
     @Override
     public String getRoList() {
-        if (ros.length <= 0) {
+        if (ros.length > 0) {
             gui.showText("List of sequences constructed");
             return Tool.encodeArray("Transfering rolist", ros);
         } else {
@@ -319,9 +325,7 @@ public class DmdController implements SlmController {
             return "Error: Dmd is busy";
         }
         try {
-            System.out.println("t000");
             connect();
-            System.out.println("t001");
             selectedRo = -1;
             gui.showText("Connection to the Dmd opened.");
             return "Connected to the DMD";
@@ -479,4 +483,15 @@ public class DmdController implements SlmController {
      */
     native private void stopSequence() throws DmdException;
 
+    public static void main(String[] args) throws DmdException {
+        DmdController dmd = new DmdController(new AbstractServer.ServerGui() {
+            @Override
+            public void showText(String messege) {
+                System.out.println("GUI message: " + messege);
+            }
+        });
+        dmd.connect();
+        dmd.setRo(0);
+        dmd.activateRo();
+    }
 }

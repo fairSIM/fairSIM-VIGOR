@@ -74,6 +74,9 @@ public class ControllerServer extends AbstractServer {
                     serverOut = slm.connectSlm();
                 } else if (input.equals("disconnect")) {
                     serverOut = slm.disconnectSlm();
+                } else if (input.equals("type")) {
+                    if (slm instanceof DmdController) serverOut = "Transfering type;DMD";
+                    else if (slm instanceof SlmController) serverOut = "Transfering type;FLCOS";
                 } else {
                     serverOut = "Slm-Server do not know what to do with '" + input + "'";
                 }

@@ -29,6 +29,7 @@ public class ControllerClient extends AbstractClient {
     String deviceInfo;
     String[] deviceList;
     ArduinoRunningOrder[] arduinoRos;
+    String slmType;
 
     /**
      * Constructor for this
@@ -54,6 +55,9 @@ public class ControllerClient extends AbstractClient {
         } else if (answer.startsWith("Slm: Transfering rolist")) {
             // updates running orders of the device
             deviceList = Tool.decodeArray(answer);
+        } else if (answer.startsWith("Slm: Transfering type")) {
+            // updates running orders of the device
+            slmType = answer.split(";")[1];
         } else if (answer.startsWith("Arduino: Transfering rolist")) {
             // updates running orders of the arduino
             String[] stringRos = Tool.decodeArray(answer);
