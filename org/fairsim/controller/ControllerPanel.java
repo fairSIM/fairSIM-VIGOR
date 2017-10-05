@@ -18,8 +18,12 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 package org.fairsim.controller;
 
 import java.awt.Component;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import org.fairsim.livemode.SimSequenceExtractor;
 
 /**
@@ -167,7 +171,7 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
         int code = Integer.parseInt(error.split("  ;  ")[1].split(": ")[1]);
         if (code == 12) {
             slmDissconnect();
-            showText("Gui: Reconnect to the SLM is necessary");
+            showText("Gui: Reconnect to the Flcos is necessary");
         } else if (code == 7) {
             disableSlmControllers();
             slmConnectButton.setEnabled(true);
@@ -176,6 +180,24 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
         } else if (code == 8) {
             slmDissconnect();
             slmConnect();
+        } else if (error.contains("busy")) {
+            showText(error);
+            JFrame frame = new JFrame("Warning");
+            frame.setPreferredSize(new Dimension(450, 100));
+            JPanel panel = new JPanel();
+            panel.add(new JLabel("Wait until sequence is uploaded. This could take around 15 seconds."));
+            frame.add(panel);
+            frame.pack();
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+            showText("Gui: Please wait until sequence is uploaded.");
+        } else if (error.contains("No ro selected")) {
+            showText("Gui: select a ro.");
+        } else if (error.contains("stop sequence before starting a new one")) {
+            showText("Gui: stop sequence before starting a new one");
+        } else {
+            showText(error);
+            showText("Gui: reboot please");
         }
     }
 
@@ -205,21 +227,12 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
      * refreshes the informations shown in the GUI
      */
     void slmRefresh() {
-        try {
+//        try {
             sendSlmInstruction("info");
             if (controllerInstructionDone) {
-                //slmVersion.setText("SLM-API-Version: " + client.info[0]);
-                //slmTime.setText("Timestamp: " + client.info[1]);
-                //slmType.setText("Activation type: " + client.info[2]);
-                //slmDefault.setText("Default running order: " + slmComboBox.getItemAt(Integer.parseInt(client.info[3])));
-                slmSelect.setText("Selected running order: " + slmComboBox.getItemAt(Integer.parseInt(controllerClient.deviceInfo[4])));
-                //slmRepertoir.setText("Repertoir name: " + client.info[5]);
+                slmSelect.setText("Selected running order: " + slmComboBox.getItemAt(Integer.parseInt(controllerClient.deviceInfo)));
             }
-        } catch (NullPointerException ex) {
-            System.err.println("Error while refreshing SLM-GUI");
-            showText("[fairSIM] Error while refreshing SLM-GUI");
         }
-    }
     
     /**
      * sets the red/green/blue buttons to selected/unselected

@@ -22,7 +22,7 @@ package org.fairsim.controller;
  * interface to control a slm
  * @author m.lachetta
  */
-public abstract class SlmController {
+public interface SlmController {
 
     /**
      * sets a new selected running order
@@ -52,6 +52,8 @@ public abstract class SlmController {
      * @return out String-output-Stream
      */
     abstract String getRoList();
+    
+    abstract String getSlmSelectedRo();
 
     /**
      * Reboots the SLM <br>
@@ -59,7 +61,7 @@ public abstract class SlmController {
      *
      * @return out String-output-Stream
      */
-    abstract int rebootSlm();
+    abstract String rebootSlm();
 
     /**
      * Opens the connection between Server and SLM
@@ -74,4 +76,5 @@ public abstract class SlmController {
      * @return out String-output-Stream
      */
     abstract String disconnectSlm();
+
 }

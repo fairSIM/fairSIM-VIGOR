@@ -19,6 +19,7 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 package org.fairsim.controller;
 
 import static org.fairsim.controller.ControllerServer.startControllerServer;
+import org.fairsim.utils.Tool;
 
 /**
  * Gui for the controller server
@@ -27,7 +28,7 @@ import static org.fairsim.controller.ControllerServer.startControllerServer;
 public class ControllerServerGui extends javax.swing.JFrame implements AbstractServer.ServerGui{
 
     ControllerServer server;
-    FlcosController slm;
+    SlmController slm;
     ArduinoController arduino;
 
     /**
@@ -35,9 +36,33 @@ public class ControllerServerGui extends javax.swing.JFrame implements AbstractS
      */
     public ControllerServerGui() {
         initComponents();
-        slm = new FlcosController(this);
+        System.out.println("t0");
+        slm = initController();
+        System.out.println("t1");
         arduino = new ArduinoController(this);
         server = startControllerServer(this, slm, arduino);
+    }
+    
+    final SlmController initController() {
+        
+        try{ // dmd
+            SlmController dmd = new DmdController(this);
+            System.out.println("t00");
+            showText(dmd.connectSlm());
+            System.out.println("t01");
+            return dmd;
+               
+        }catch(UnsatisfiedLinkError ex){
+            try{ //flcos
+                SlmController flcos = new FlcosController(this);
+                showText(flcos.connectSlm());
+                return flcos;
+            }catch(UnsatisfiedLinkError exc){
+                Tool.error("libary of all SLM's missing", true);
+                throw new RuntimeException();
+            }
+            
+        }
     }
     
     /**
