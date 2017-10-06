@@ -39,7 +39,7 @@ public class CameraServer extends AbstractServer {
      * @throws IOException of connecting went wrong
      */
     private CameraServer(ServerGui gui, CameraController cc) throws IOException {
-        super(gui);
+        super(gui, 32323);
         this.cc = cc;
     }
 

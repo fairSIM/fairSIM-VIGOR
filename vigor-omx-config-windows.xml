@@ -2,7 +2,6 @@
 <vigor-settings>
 
 <ControllerAdress type="string">localhost</ControllerAdress>
-<TCPPort type="int">32322</TCPPort>
 
 <RawPxlCount type="int">512</RawPxlCount>
 <RawPxlSize type="decimal">0.08</RawPxlSize>

@@ -33,7 +33,8 @@ public class AdvancedGui extends javax.swing.JPanel implements EasyGui.AdvGui, M
     LiveControlPanel motherGui;
     private String controllerAdress;
     private final String[] camAdresses;
-    private int port, camCounts;
+    private int camCounts;
+    private static final int camPort = 32323, controllerPort = 32322;
     private static final int CAMCOUNTMAX = 3;
 
     /**
@@ -52,13 +53,6 @@ public class AdvancedGui extends javax.swing.JPanel implements EasyGui.AdvGui, M
             camCounts = CAMCOUNTMAX;
         }
         camAdresses = new String[camCounts];
-        // readin port
-        try {
-            port = cfg.getInt("TCPPort").val();
-        } catch (Conf.EntryNotFoundException ex) {
-            port = 32322;
-            Tool.error("[fairSIM] No TCPPort found. TCPPort set to '32322'", false);
-        }
         // readin controller adress
         try {
             controllerAdress = cfg.getStr("ControllerAdress").val();
@@ -79,37 +73,32 @@ public class AdvancedGui extends javax.swing.JPanel implements EasyGui.AdvGui, M
         //check for doublicates
         for (int i = 0; i < camCounts; i++) {
             if (camAdresses[i] != null) {
-                if (camAdresses[i].equals(controllerAdress)) {
-                    camAdresses[i] = null;
-                    Tool.error("[fairSIM] Camera adress of channel '" + channelNames[i] + "' equals controller adress", false);
-                } else {
-                    for (int j = 0; j < camCounts; j++) {
-                        if (i != j && camAdresses[i].equals(camAdresses[j])) {
-                            camAdresses[j] = null;
-                            Tool.error("[fairSIM] Camera adress of channel '" + channelNames[j] + "' equals camera adress of channel " + channelNames[i], false);
-                        }
+                for (int j = 0; j < camCounts; j++) {
+                    if (i != j && camAdresses[i].equals(camAdresses[j])) {
+                        camAdresses[j] = null;
+                        Tool.error("[fairSIM] Camera adress of channel '" + channelNames[j] + "' equals camera adress of channel " + channelNames[i], false);
                     }
                 }
             }
         }
         // init controller panel
-        controllerPanel.enablePanel(this, controllerAdress, port, motherGui.getSequenceExtractor());
+        controllerPanel.enablePanel(this, controllerAdress, controllerPort, motherGui.getSequenceExtractor());
         serverLabel.setText("Controller: " + controllerAdress);
         // init camera panels
         if (camCounts > 0 && camAdresses[0] != null) {
-            camControllerPanel0.enablePanel(this, camAdresses[0], port, channelNames[0]);
+            camControllerPanel0.enablePanel(this, camAdresses[0], camPort, channelNames[0]);
             serverLabel.setText(serverLabel.getText() + "   Camera_0: " + camAdresses[0]);
         } else {
             camControllerPanel0.disablePanel();
         }
         if (camCounts > 1 && camAdresses[1] != null) {
-            camControllerPanel1.enablePanel(this, camAdresses[1], port, channelNames[1]);
+            camControllerPanel1.enablePanel(this, camAdresses[1], camPort, channelNames[1]);
             serverLabel.setText(serverLabel.getText() + "   Camera_1: " + camAdresses[1]);
         } else {
             camControllerPanel1.disablePanel();
         }
         if (camCounts > 2 && camAdresses[2] != null) {
-            camControllerPanel2.enablePanel(this, camAdresses[2], port, channelNames[2]);
+            camControllerPanel2.enablePanel(this, camAdresses[2], camPort, channelNames[2]);
             serverLabel.setText(serverLabel.getText() + "   Camera_2: " + camAdresses[2]);
         } else {
             camControllerPanel2.disablePanel();

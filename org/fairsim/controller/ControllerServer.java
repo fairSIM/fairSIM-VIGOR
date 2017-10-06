@@ -41,7 +41,7 @@ public class ControllerServer extends AbstractServer {
      * @throws IOException if TCP-Connection failed
      */
     private ControllerServer(ServerGui gui, SlmController slm, ArduinoController arduino) throws IOException {
-        super(gui);
+        super(gui, 32322);
         this.slm = slm;
         this.arduino = arduino;
     }

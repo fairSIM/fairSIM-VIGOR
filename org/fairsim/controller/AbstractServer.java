@@ -44,9 +44,9 @@ public abstract class AbstractServer extends Thread {
      * @param gui gui for this server
      * @throws IOException if creating went wrong
      */
-    protected AbstractServer(ServerGui gui) throws IOException {
+    protected AbstractServer(ServerGui gui, int port) throws IOException {
         this.gui = gui;
-        port = 32322;
+        this.port = port;
         server = new ServerSocket(port);
         interrupted = false;
     }
