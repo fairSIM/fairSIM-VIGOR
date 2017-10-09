@@ -32,6 +32,11 @@ if [ ! -e commons-math3-3.6.1.jar ] ; then
     wget http://central.maven.org/maven2/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar
 fi
 
+# Get the bioformats library (current version while editing this file) to write OME-TIFFs
+if [ ! -e bioformats_package.jar ] ; then
+    fileMissing=1
+    wget https://downloads.openmicroscopy.org/bio-formats/5.7.1/artifacts/bioformats_package.jar
+
 
 # This fetches the java 1.6 runtime, needed for backwards-compatible
 # compilation to Java 6 with newer compilers
