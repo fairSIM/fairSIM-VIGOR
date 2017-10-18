@@ -46,14 +46,14 @@ public class DmdController implements SlmController {
         //this.ros = new String[1];
         this.busy = false;
         // Loading hidapi-Library
-        String wd = System.getProperty("user.dir") + "/";
+        String wd = System.getProperty("user.home") + "/documents/";
         String libName = "hidapi";
+        
         System.load(wd + libName + ".dll");
 
         this.gui.showText("Dmd: loading " + wd + libName + ".dll");
 
         // Loading DMD-API-Library
-        wd = System.getProperty("user.dir") + "/";
         libName = "dlp6500-java-api";
         System.load(wd + libName + ".dll");
 

@@ -53,7 +53,7 @@ public class ControllerServerGui extends javax.swing.JFrame implements AbstractS
                 return flcos;
             }catch(UnsatisfiedLinkError exc){
                 Tool.error("libary of all SLM's missing", true);
-                throw new RuntimeException();
+                throw exc;
             }
             
         }

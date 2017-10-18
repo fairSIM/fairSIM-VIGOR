@@ -39,7 +39,7 @@ public class FlcosController implements SlmController {
         this.gui = serverGui;
         
         // Loding FLCoS-API-Library
-        String wd = System.getProperty("user.dir")+"/";
+        String wd = System.getProperty("user.home")+"/documents/";
         String libName = "R4CommLib";
         this.gui.showText("Flcos: loading "+libName+".dll from "+wd);
         System.load(wd+libName+".dll");
