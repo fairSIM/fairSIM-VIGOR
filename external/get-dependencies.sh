@@ -6,36 +6,49 @@ fileMissing=0
 if [ ! -e ij149v.jar ] ; then
     fileMissing=1
     wget https://imagej.nih.gov/ij/download/jars/ij149v.jar
+    else
+    echo "found ImageJ"
 fi
 
 # Get our forked version of JTransforms 
 if [ ! -e jtransforms_fairSIM_fork.jar ] ; then
     fileMissing=1
     wget https://github.com/fairSIM/JTransforms/releases/download/v1.0.0/jtransforms_fairSIM_fork.jar
+    else
+    echo "found JTransforms"
 fi
 
 # Get the original version of JTransforms
 if [ ! -e JTransforms-3.1.jar ] ; then 
     fileMissing=1
     wget http://central.maven.org/maven2/com/github/wendykierp/JTransforms/3.1/JTransforms-3.1.jar
+    else
+    echo "found JTransforms"
 fi
 
 # Get JTransforms JLargeArray dependency
 if [ ! -e JLargeArrays-1.6.jar ] ; then
     fileMissing=1
     wget http://central.maven.org/maven2/pl/edu/icm/JLargeArrays/1.6/JLargeArrays-1.6.jar
+    else
+    echo "found JTransforms JLargeArray"
 fi
 
 # Get the Apache fast math dependencies
 if [ ! -e commons-math3-3.6.1.jar ] ; then
     fileMissing=1
     wget http://central.maven.org/maven2/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar
+    else
+    echo "found Apache fast math"
 fi
 
 # Get the bioformats library (current version while editing this file) to write OME-TIFFs
 if [ ! -e bioformats_package.jar ] ; then
     fileMissing=1
     wget https://downloads.openmicroscopy.org/bio-formats/5.7.1/artifacts/bioformats_package.jar
+    else
+    echo "found bioformats"
+fi
 
 
 # This fetches the java 1.6 runtime, needed for backwards-compatible
@@ -65,7 +78,8 @@ if [ ! -e rt-1.6.jar ] ; then
 
     rm -rf tmp-rt-jar
     echo "Done."
-
+else
+    echo "found Java 1.6 runtime"
 fi
 
 
@@ -73,6 +87,8 @@ fi
 if [ ! -e nrjavaserial-3.12.0.jar ] ; then
     fileMissing=1
     wget https://github.com/NeuronRobotics/nrjavaserial/releases/download/3.12.0/nrjavaserial-3.12.0.jar
+else
+    echo "found serial comm library"
 fi
 
 # This extracts the MicroManager jars we need to compile the camera
@@ -106,7 +122,8 @@ if [ ! -e MMCoreJ.jar -o ! -e MMJ_.jar ] ; then
     # delete all the unused stuff
     cd ..
     rm -rf tmp-mm-jar
-
+else
+    echo "found MicroManager-jars"
 fi
 
 
@@ -114,6 +131,8 @@ fi
 if [ ! -e bUnwarpJ_-2.6.5.jar ] ; then
     fileMissing=1
     wget -c https://github.com/fiji/bUnwarpJ/releases/download/v2.6.5/bUnwarpJ_-2.6.5.jar
+    else
+    echo "found bUnwarpJ"
 fi
 
 
@@ -121,6 +140,8 @@ fi
 if [ ! -e forthDD-API.jar ] ; then
     fileMissing=1
     wget -c https://github.com/biophotonics-bielefeld/forthDD-API/releases/download/v1.0/forthDD-API.jar
+    else
+    echo "found ForthDD SLM API"
 fi
 
 
@@ -129,4 +150,3 @@ fi
 if [ $fileMissing -eq 0 ] ; then
     echo "All files found, fairSIM should compile"
 fi
-
