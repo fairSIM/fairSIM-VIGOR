@@ -1,17 +1,17 @@
 /*
  * This file is part of Free Analysis and Interactive Reconstruction
  * for Structured Illumination Microscopy (fairSIM).
- * 
+ *
  * fairSIM is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * fairSIM is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
  */
@@ -19,6 +19,8 @@ package org.fairsim.transport;
 
 import ij.ImagePlus;
 import ij.ImageStack;
+import java.io.File;
+import java.io.FilenameFilter;
 import ij.io.Opener;
 import ij.plugin.HyperStackConverter;
 import ij.process.ShortProcessor;
@@ -32,11 +34,15 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
 import org.fairsim.utils.Base64;
 import org.fairsim.utils.Tool;
 /*
@@ -159,7 +165,7 @@ public class LiveStack {
          * @param height in pixels
          * @param zSlices amount of z slices
          * @param nrPhases amount of SIM phases
-         * @param nrAngles amoumt of SIM angles
+         * @param nrAngles amount of SIM angles
          * @param illuminationTime in µs
          * @param delayTime in ms
          * @param samplePixelSizeX in nm
@@ -291,13 +297,13 @@ public class LiveStack {
         iw.parseHeader();
         return iw;
     }
-    
+
     public FileSaverThread saveAsOmeTiff(String outFile, boolean dump, int... channels) {
         FileSaverThread fc = new FileSaverThread(outFile, dump, true, false, channels);
         fc.start();
         return fc;
     }
-    
+
     public FileSaverThread saveAsOmeTiff(String outFile, int... channels) {
         return saveAsOmeTiff(outFile, false, channels);
     }
@@ -578,8 +584,12 @@ public class LiveStack {
         @Override
         public void run() {
             preparation();
-            if (omeTiff) saveOmeTiff();
-            if (tiff) saveTiff();
+            if (omeTiff) {
+                saveOmeTiff();
+            }
+            if (tiff) {
+                saveTiff();
+            }
         }
     }
     
@@ -613,15 +623,195 @@ public class LiveStack {
 
         ReconstructionRunner recRunner = new ReconstructionRunner(vf, 1, imageSizeInPixels, nrPhases, nrDirs, nrBands, perChannels);
     }
-    
+
     /**
      * for testing
      *
      * @param args
      * @throws Exception
      */
-    public static void main(String[] args) throws Exception {
-        LiveStack ls0 = open("G:\\vigor-tmp\\fastSIM_20171018T173240.livestack");
+    
+   
+        private void prepare() {
+            this.imgs.set(170,this.imgs.get(171));
+//        this.imgs.sort();
+        System.out.println("This shall remove all the syncframes and broken SIM-sequences");
+        this.imgs.remove(53);
+        int nImgs = this.imgs.size();
+        System.out.println("    nImgs = "+nImgs);
+        this.imgs.set(95,this.imgs.get(96));
+        int syncFrameDelay = 13000;
+        int syncFrameDelayJitter = 14;
+        int nrSimFrames = 9;
+        int nrSyncFrames = 2;
+
+        //Get timestamps
+        long[] timestamps = new long[nImgs];
+        for (int i = 0; i < nImgs; i++) {
+            timestamps[i] = this.imgs.get(i).timeCamera();
+        }
+
+        //find syncframes
+        System.out.println("    finding syncframes");
+        List<Integer> syncFrameList = this.findSyncFrames(timestamps, syncFrameDelay, syncFrameDelayJitter);
+
+        //search for sim-sequencs between syncframes, add broken sets to remove-list
+        List<Integer> nonSimFrameList = this.findNonSimFrames(syncFrameList, nrSimFrames, nrSyncFrames);
+
+        //add syncframes to remove-list
+        if(nrSyncFrames > 0) {
+            for (int i = 0; i < syncFrameList.size(); i++) {
+                int s = syncFrameList.get(i);
+                for(int j = nrSyncFrames-1; j>=0; j--) {
+                    if (s-j >= 0) nonSimFrameList.add(s-j);
+                }
+            }
+        }
+        
+        //remove syncframes and known broken sim-sequences
+        System.out.println("    removing syncframes and known broken sim-sequences: ");
+        this.reduce(nonSimFrameList);
+        nImgs = this.imgs.size();
+
+        //check sequence numbers
+        System.out.println("    checking sequence-numbers of remaining images");
+        List<Integer> brokenSeqNrList = this.checkSeqNr(nrSimFrames);
+        System.out.println("    removing newly found broken sim-sequences");
+
+        this.reduce(brokenSeqNrList);
+
+        System.out.println("prepraring done");
     }
 
+    private List<Integer> findNonSimFrames(List<Integer> syncFrameList, int nrSimFrames, int nrSyncFrames) {
+        System.out.print("        finding non-SIM-frames... ");
+        Collections.sort(syncFrameList);
+        int nImgs = this.imgs.size();
+        List<Integer> nonSimFrameList = new ArrayList<>();
+        nonSimFrameList.add(0);
+        if (((syncFrameList.get(0) + 1 - nrSyncFrames) % nrSimFrames) != 0) {
+            nonSimFrameList.set(0,nonSimFrameList.get(0)+1);
+            for (int s = 0; s <= syncFrameList.get(0) - nrSyncFrames; s++) {
+                nonSimFrameList.add(s);                                         
+                System.out.print(s+",");
+            }
+        }
+        if (syncFrameList.size() > 1) {
+            for (int i = 1; i < syncFrameList.size(); i++) {
+                if (((syncFrameList.get(i) - syncFrameList.get(i - 1) - nrSyncFrames ) % nrSimFrames) != 0) {
+                    nonSimFrameList.set(0,nonSimFrameList.get(0)+1);
+                    for (int s = syncFrameList.get(i - 1) + 1; s <= syncFrameList.get(i) - nrSyncFrames; s++) {
+                        nonSimFrameList.add(s);                                 
+                        System.out.print(s+",");
+                    }
+                }
+            }
+        }
+        int lastSyncFrame = syncFrameList.get(syncFrameList.size() - 1);
+        if (((nImgs -1 - lastSyncFrame ) % nrSimFrames) != 0) {
+            nonSimFrameList.set(0,nonSimFrameList.get(0)+1);
+            for (int s = lastSyncFrame + 1; s < nImgs; s++) {
+                nonSimFrameList.add(s);                                         
+                System.out.print(s+",");
+            }
+        }
+        System.out.println("found "+(nonSimFrameList.size()-1)+" frames in "+nonSimFrameList.get(0)+" incomplete sequences");
+        nonSimFrameList.remove(0);
+        return nonSimFrameList;
+    }
+
+    private List<Integer> findSyncFrames(long[] timestamps, int syncFrameDelay, int syncFrameDelayJitter) {
+        int nImgs = this.imgs.size();
+        List<Integer> syncFrameList = new ArrayList<>();
+        System.out.print("        found Syncframes: ");
+        for (int i = 1; i < nImgs; i++) {
+            if (Math.abs(timestamps[i] - timestamps[i - 1] - syncFrameDelay) < syncFrameDelayJitter) {
+                syncFrameList.add(i);
+                System.out.print(i + ", ");
+            }
+        }
+        System.out.println("done");
+        if (syncFrameList.size() == 0) {
+            System.err.println("        No Sync-frames found");
+            System.exit(1);
+        }
+        return syncFrameList;
+    }
+
+    private void reduce(List<Integer> red) {
+        if(red.size() == 0) {
+            System.out.println("        nothing to remove");
+            return;
+        }
+        Collections.sort(red);
+        System.out.print("        removing "+red.size()+" frames from list with length "+this.imgs.size()+": ");
+        for (int i = red.size() - 1; i >= 0; i--) {
+//            System.out.print(red.get(i)+", ");
+            this.imgs.remove((int)red.get(i));
+        }
+        System.out.println("done, new length: "+this.imgs.size());
+        return;
+    }
+    
+    private List<Integer> checkSeqNr(int nrSimFrames) {
+        System.out.println("        checking seq Nrs. Mismatches: ");
+        int nImgs = this.imgs.size();
+        List<Integer> brokenSeqNrList = new ArrayList<>();
+        for (int i=0; i<nImgs/nrSimFrames;i+=nrSimFrames) {
+            boolean broken=FALSE;
+            for (int j=0;j<nrSimFrames-1;j++) {
+                if ((this.imgs.get(i+j).seqNr()-this.imgs.get(i+j+1).seqNr())!= -1) {
+                    broken = TRUE;
+                    System.out.println((i+j)+"="+this.imgs.get(i+j).seqNr()+"x"+this.imgs.get(i+j+1).seqNr()+"="+(i+j+1)+", ");
+                }
+            }
+            if (broken) {
+                for (int j=0; j<nrSimFrames; j++) {
+                brokenSeqNrList.add(i+j);
+                }
+            }
+        }
+        System.out.println("done");
+        return brokenSeqNrList;
+    }
+
+    private void rec() {
+        System.out.println("This is being created by Mario");
+    }
+
+    private void save() {
+        System.out.println("This would save the images as whatever");
+    }
+
+    public static void main(String[] args) throws Exception {
+        if (args.length != 24) {
+            System.out.println("# Usage:\n\tFolder\n\tOmero-identifier\n\tsimFramesPerSync\n\tsyncFrameInterval\n\tminAvrIntensity\n\tsyncFrameDelay\n\tsyncFrameDelayJitter\n\tnrBands\n\tnrDirs\n\tnrPhases\n\temWavelen\n\totfNA\n\totfCorr\n\tpxSize\n\twienParam\n\tattStrength\n\tattFWHM\n\tbkg(to subtract)\n\tdoAttenuation\n\totfBeforeShift\n\tfindPeak\n\trefinePhase\n\tnrSlices\n\toverwriteFiles");
+            return;
+        }
+        File dir = new File(args[0]);
+        File[] foundFiles;
+        try {
+            foundFiles = dir.listFiles(new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return name.startsWith(args[1]) && name.endsWith(".livestack");
+                }
+            });
+            System.out.println("found " + foundFiles.length + " files");
+            if (foundFiles.length < 1) {
+                System.out.println("No files found?");
+                return;
+            }
+            System.out.println(foundFiles[0]);
+            System.out.println("opening " + foundFiles[0].getAbsolutePath());
+            System.out.println("done");
+            LiveStack ls = open(foundFiles[0].getAbsolutePath());
+            ls.prepare();
+            ls.rec();
+            ls.save();
+        } catch (NullPointerException e) {
+            System.err.println("File not found");
+            System.exit(1);
+        }
+        System.exit(0);
+    }
 }
