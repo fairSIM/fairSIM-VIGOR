@@ -28,8 +28,8 @@ import org.fairsim.linalg.Vec3d;
  *  conversions etc. can happen in this class instead of cluttering other
  *  code.
  * */
-public class SimParam implements Vec2d.Size, Vec3d.Size {
-
+public class SimParam implements Vec2d.Size, Vec3d.Size, java.io.Serializable {
+    static final long serialVersionUID = 1;
     public enum FilterStyle {
 	Wiener("Wiener filter"),	
 	RLin("RL on input"), 
@@ -375,8 +375,8 @@ public class SimParam implements Vec2d.Size, Vec3d.Size {
     // ----------------------------------------------------------------------------------
 
     /** Parameters for each pattern orientation. */
-    public class Dir {
-	
+    public class Dir implements java.io.Serializable {
+	static final long serialVersionUID = 1;
 	private final int nrBands;  // how many bands
 	private final int nrPhases; // how many phases
 	private int thisBand;	    // which band is this

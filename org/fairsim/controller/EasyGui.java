@@ -55,6 +55,10 @@ public class EasyGui extends javax.swing.JPanel {
     private int runDelay = 0;
     private int runRecDelay = 0;
     private final String dyeFile;
+    private int illuminationTime = -1;
+    private int delayTime = -1;
+    private int syncDelayTime = -1;
+    private int syncFreq = -1;
     
     /**
      * Creates new form EasyGui
@@ -801,6 +805,7 @@ public class EasyGui extends javax.swing.JPanel {
             disableControllers();
             if (runRecDelaySlider.getValue() != 0) this.sync.setFreq(1);
             controller.setDelay(runRecDelay);
+            delayTime = runRecDelay;
             controller.startMovie();
             setStatus("Recording images started");
         } else {
@@ -818,6 +823,7 @@ public class EasyGui extends javax.swing.JPanel {
         runRecDelay = runRecDelaySlider.getValue() * 50;
         runRecMsLabel.setText(runRecDelay + " ms");
         controller.setDelay(runRecDelay);
+        delayTime = runRecDelay;
     }//GEN-LAST:event_runRecDelaySliderStateChanged
 
     private void paramButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_paramButtonActionPerformed
@@ -829,6 +835,7 @@ public class EasyGui extends javax.swing.JPanel {
         runDelay = runDelaySlider.getValue() * 50;
         runMsLabel.setText(runDelay + " ms");
         controller.setDelay(runDelay);
+        delayTime = runDelay;
     }//GEN-LAST:event_runDelaySliderStateChanged
 
     private void registrationButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_registrationButtonActionPerformed
@@ -841,6 +848,7 @@ public class EasyGui extends javax.swing.JPanel {
     private void photoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_photoButtonActionPerformed
         lcp.getSequenceExtractor().clearBuffers();
         controller.takePhoto();
+        delayTime = -2; // identifier delay time for photo mode
         setStatus("Captured a photo");
     }//GEN-LAST:event_photoButtonActionPerformed
 
@@ -850,6 +858,7 @@ public class EasyGui extends javax.swing.JPanel {
             disableControllers();
             if (runDelaySlider.getValue() != 0) this.sync.setFreq(1);
             controller.setDelay(runDelay);
+            delayTime = runDelay;
             controller.startMovie();
             setStatus("Capturing images started");
         } else {
@@ -921,6 +930,22 @@ public class EasyGui extends javax.swing.JPanel {
         } catch (IndexOutOfBoundsException ex) {
             return 0;
         }
+    }
+    
+    public int getIlluminationTime() {
+        return illuminationTime;
+    }
+    
+    public int getDelayTime() {
+        return delayTime;
+    }
+    
+    public int getSyncDelayTime() {
+        return syncDelayTime;
+    }
+    
+    public int getSyncFreq() {
+        return syncFreq;
     }
     
     private void addToDyeList() {
@@ -1178,6 +1203,9 @@ public class EasyGui extends javax.swing.JPanel {
         for (Cam c : camGuis) {
             c.startMovie();
         }
+        illuminationTime = Integer.parseInt(ro.illuminationTime.substring(0, ro.illuminationTime.length()-2));
+        syncDelayTime = ro.syncDelay;
+        syncFreq = ro.syncFreq;
         setStatus("Running order: " + ro.device + "_" + ro.name);
     }
 

@@ -1,17 +1,17 @@
 /*
  * This file is part of Free Analysis and Interactive Reconstruction
  * for Structured Illumination Microscopy (fairSIM).
- *
+ * 
  * fairSIM is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
- *
+ * 
  * fairSIM is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
  */
@@ -19,8 +19,6 @@ package org.fairsim.transport;
 
 import ij.ImagePlus;
 import ij.ImageStack;
-import java.io.File;
-import java.io.FilenameFilter;
 import ij.io.Opener;
 import ij.plugin.HyperStackConverter;
 import ij.process.ShortProcessor;
@@ -34,13 +32,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
-import static java.lang.Boolean.FALSE;
-import static java.lang.Boolean.TRUE;
 import java.nio.ByteBuffer;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import org.fairsim.utils.Base64;
 import org.fairsim.utils.Tool;
 /*
@@ -65,6 +61,10 @@ import ome.xml.model.primitives.*;
 
 import ome.units.UNITS;
 import ome.units.quantity.*;
+import org.fairsim.accel.AccelVectorFactory;
+import org.fairsim.linalg.Vec;
+import org.fairsim.linalg.VectorFactory;
+import org.fairsim.livemode.ReconstructionRunner;
 
 /**
  * Class for converting .livestack data to other formats like tiff
@@ -121,7 +121,6 @@ public class LiveStack {
      * @throws IOException
      */
     public static LiveStack open(String file) throws IOException {
-        System.out.println("livestack_open");
         LiveStack ls;
         if (file.endsWith(".livestack")) {
             FileInputStream fis = new FileInputStream(file);
@@ -142,9 +141,11 @@ public class LiveStack {
         final String microscope, timestamp, sample, objective;
         final int width, height; // in pixels
         final int zSlices;
-        final int nrPhases, nrAngles; // sim
+        final int nrPhases, nrAngles, nrBands; // sim
         final int illuminationTime; // in µs
         final int delayTime; // in ms
+        final int syncDelayTime; // in µs
+        final int syncFreq; // ammount of sim sequences between syncs
         final float samplePixelSizeX, samplePixelSizeY, samplePixelSizeZ; // int nm
         final Channel[] channels;
 
@@ -168,7 +169,7 @@ public class LiveStack {
          */
         public Header(String microscope, String timestamp, String sample,
                 String objective, int width, int height, int zSlices,
-                int nrPhases, int nrAngles, int illuminationTime, int delayTime,
+                int nrPhases, int nrAngles, int nrBands, int illuminationTime, int delayTime, int syncDelayTime, int syncFreq,
                 float samplePixelSizeX, float samplePixelSizeY, float samplePixelSizeZ, Channel[] channels) {
 
             this.microscope = microscope;
@@ -180,8 +181,11 @@ public class LiveStack {
             this.zSlices = zSlices;
             this.nrPhases = nrPhases;
             this.nrAngles = nrAngles;
+            this.nrBands = nrBands;
             this.illuminationTime = illuminationTime;
             this.delayTime = delayTime;
+            this.syncDelayTime = syncDelayTime;
+            this.syncFreq = syncFreq;
             this.samplePixelSizeX = samplePixelSizeX;
             this.samplePixelSizeY = samplePixelSizeY;
             this.samplePixelSizeZ = samplePixelSizeZ;
@@ -197,6 +201,7 @@ public class LiveStack {
             final String detector, dye;
             final float illuminationPower; // in mW
             final int exWavelength; // wavelength of excitation in nm
+            final ReconstructionRunner.PerChannel perChannel;
 
             /**
              *
@@ -205,12 +210,13 @@ public class LiveStack {
              * @param illuminationPower in mW
              * @param exWavelength in nm
              */
-            public Channel(String detector, String dye, float illuminationPower, int exWavelength) {
+            public Channel(String detector, String dye, float illuminationPower, int exWavelength, ReconstructionRunner.PerChannel perChannel) {
 
                 this.detector = detector;
                 this.dye = dye;
                 this.illuminationPower = illuminationPower;
                 this.exWavelength = exWavelength;
+                this.perChannel = perChannel;
             }
 
         }
@@ -285,13 +291,13 @@ public class LiveStack {
         iw.parseHeader();
         return iw;
     }
-
+    
     public FileSaverThread saveAsOmeTiff(String outFile, boolean dump, int... channels) {
         FileSaverThread fc = new FileSaverThread(outFile, dump, true, false, channels);
         fc.start();
         return fc;
     }
-
+    
     public FileSaverThread saveAsOmeTiff(String outFile, int... channels) {
         return saveAsOmeTiff(outFile, false, channels);
     }
@@ -572,200 +578,50 @@ public class LiveStack {
         @Override
         public void run() {
             preparation();
-            if (omeTiff) {
-                saveOmeTiff();
-            }
-            if (tiff) {
-                saveTiff();
-            }
+            if (omeTiff) saveOmeTiff();
+            if (tiff) saveTiff();
         }
     }
+    
+    private void reconstruct(int imageSizeInPixels, int nrPhases, int nrDirs,
+            int nrBands, ReconstructionRunner.PerChannel[] perChannels) {
+        
+        //loading library
+        VectorFactory vf = null;
+        String hd = System.getProperty("user.home") + "/documents/";
+        String library = "libcudaimpl";
+        String extension = null;
+        Tool.trace("loading " + library + " library from: " + hd);
+        String OS = System.getProperty("os.name").toLowerCase();
+        if (OS.contains("nix") || OS.contains("nux") || OS.contains("aix")) {
+            extension = "so";
+        } else if (OS.contains("win")) {
+            extension = "dll";
+        }
+        try {
+            if (extension == null) {
+                throw new UnsatisfiedLinkError("No unix or windows system found");
+            } else {
+                System.load(hd + library + "." + extension);
+                vf = AccelVectorFactory.getFactory();
+            }
+        } catch (UnsatisfiedLinkError ex) {
+            System.err.println("[fairSIM]: " + ex);
+            System.err.println("[fairSIM]: loading not GPU supported version");
+            vf = Vec.getBasicVectorFactory();
+        }
 
-    public static void convert(String inFile, boolean saveOmeTiff, boolean saveTiff) {
-        // hier weiter machen
+        ReconstructionRunner recRunner = new ReconstructionRunner(vf, 1, imageSizeInPixels, nrPhases, nrDirs, nrBands, perChannels);
     }
-
+    
     /**
      * for testing
      *
      * @param args
      * @throws Exception
      */
-    
-    
-    private void prepare() {
-//        this.imgs.sort();
-        System.out.println("This shall remove all the syncframes and broken SIM-sequences");
-        int nImgs = this.imgs.size();
-        System.out.println("nImgs = "+nImgs);
-        long offset = this.imgs.get(0).seqNr();
-        int syncFrameDelay = 13000;
-        int syncFrameDelayJitter = 14;
-
-        //Get timestamps
-        long[] timestamps = new long[nImgs];
-        for (int i = 0; i < nImgs; i++) {
-            timestamps[i] = this.imgs.get(i).timeCamera();
-        }
-
-        //find syncframes
-        List<Integer> syncFrameList = this.findSyncFrames(timestamps, syncFrameDelay, syncFrameDelayJitter);
-
-        //search for sim-sequencs between syncframes, add broken sets to remove-list
-        List<Integer> nonSimFrameList = this.findNonSimFrames(syncFrameList);
-
-        //add syncframes to remove-list
-        for (int i = 0; i < syncFrameList.size(); i++) {
-            int s = syncFrameList.get(i);
-            nonSimFrameList.add(s);
-            if (s > 0) {
-                nonSimFrameList.add(s - 1);
-            }
-        }
-        
-        //remove syncframes and known broken sim-sequences
-        System.out.println("removing syncframes and known broken sim-sequences: ");
-        this.reduce(nonSimFrameList);
-        nImgs = this.imgs.size();
-
-        //check sequence numbers
-        List<Integer> brokenSeqNrList = this.checkSeqNr();
-        System.out.println("- "+brokenSeqNrList.size());
-        brokenSeqNrList.add(2);
-        System.out.println("- "+brokenSeqNrList.size());
-        this.reduce(brokenSeqNrList);
-        nImgs = this.imgs.size();
-
-        System.out.println("prepraring done");
-    }
-
-    private List<Integer> findNonSimFrames(List<Integer> syncFrameList) {
-        System.out.print("finding non-SIM-frames ");
-        Collections.sort(syncFrameList);
-        int nImgs = this.imgs.size();
-        List<Integer> nonSimFrameList = new ArrayList<>();
-        if (((syncFrameList.get(0) - 1) % 9) != 0) {                            //make 9 variable
-            for (int s = 0; s < syncFrameList.get(0); s++) {
-                nonSimFrameList.add(s);                                         
-                System.out.print(s+",");
-            }
-        }
-        if (syncFrameList.size() > 1) {
-            for (int i = 1; i < syncFrameList.size(); i++) {
-                if (((syncFrameList.get(i)-2 - syncFrameList.get(i - 1) ) % 9) != 0) {  //make 2 and 9 variable
-                    for (int s = syncFrameList.get(i - 1) + 1; s < syncFrameList.get(i); s++) {
-                        nonSimFrameList.add(s);                                 
-                        System.out.print(s+",");
-                    }
-                }
-            }
-        }
-        int lastSyncFrame = syncFrameList.get(syncFrameList.size() - 1);
-        if (((nImgs -1 - lastSyncFrame ) % 9) != 0) {                           //make 9 variable
-            for (int s = lastSyncFrame + 1; s < nImgs; s++) {
-                nonSimFrameList.add(s);                                         
-                System.out.print(s+",");
-            }
-        }
-        System.out.println(" done");
-        return nonSimFrameList;
-    }
-
-    private List<Integer> findSyncFrames(long[] timestamps, int syncFrameDelay, int syncFrameDelayJitter) {
-        int nImgs = this.imgs.size();
-        List<Integer> syncFrameList = new ArrayList<>();
-        System.out.print("found Syncframes: ");
-        for (int i = 1; i < nImgs; i++) {
-            if (Math.abs(timestamps[i] - timestamps[i - 1] - syncFrameDelay) < syncFrameDelayJitter) {
-                syncFrameList.add(i);
-                System.out.print(i + ", ");
-            }
-        }
-        System.out.println("done");
-        if (syncFrameList.size() == 0) {
-            System.err.println("No Sync-frames found");
-            System.exit(1);
-        }
-        return syncFrameList;
-    }
-
-    private void reduce(List<Integer> red) {
-        if(red.size() == 0) {
-            System.out.println("nothing to remove");
-            return;
-        }
-        Collections.sort(red);
-        System.out.print("removing "+red.size()+" frames from list with length "+this.imgs.size()+": ");
-        
-        for (int i = red.size() - 1; i >= 0; i--) {
-            System.out.print(red.get(i)+", ");
-            this.imgs.remove(red.get(i));
-        }
-        System.out.println("done, new length: "+this.imgs.size());
-        return;
-    }
-    
-    private List<Integer> checkSeqNr() {
-        System.out.print("checking seq Nrs mismatches: ");
-        int nImgs = this.imgs.size();
-        List<Integer> brokenSeqNrList = new ArrayList<>();
-        int i = nImgs-1, j = i-9+1;
-        while (j>=0) {
-            boolean broken=FALSE;
-            for (int k=0; k<9-1; k++) {
-                if ((this.imgs.get(i-k).seqNr()-this.imgs.get(i-k-1).seqNr())!=1) {
-                    broken = TRUE;
-                    System.out.print (this.imgs.get(i-k-1).seqNr()+"x"+this.imgs.get(i-k).seqNr()+", ");
-                }
-            }
-            if (broken) {
-                for (int k=0; k<9; k++) {
-                    brokenSeqNrList.add(i-k);
-                }
-            }
-            i-=9; j = i-9+1;
-        }
-        System.out.println("done");
-        return brokenSeqNrList;
-    }
-
-    private void rec() {
-        System.out.println("This is being created by Mario");
-    }
-
-    private void save() {
-        System.out.println("This would save the images as whatever");
-    }
-
     public static void main(String[] args) throws Exception {
-        if (args.length != 24) {
-            System.out.println("# Usage:\n\tFolder\n\tOmero-identifier\n\tsimFramesPerSync\n\tsyncFrameInterval\n\tminAvrIntensity\n\tsyncFrameDelay\n\tsyncFrameDelayJitter\n\tnrBands\n\tnrDirs\n\tnrPhases\n\temWavelen\n\totfNA\n\totfCorr\n\tpxSize\n\twienParam\n\tattStrength\n\tattFWHM\n\tbkg(to subtract)\n\tdoAttenuation\n\totfBeforeShift\n\tfindPeak\n\trefinePhase\n\tnrSlices\n\toverwriteFiles");
-            return;
-        }
-        File dir = new File(args[0]);
-        File[] foundFiles;
-        try {
-            foundFiles = dir.listFiles(new FilenameFilter() {
-                public boolean accept(File dir, String name) {
-                    return name.startsWith(args[1]) && name.endsWith(".livestack");
-                }
-            });
-            System.out.println("found " + foundFiles.length + " files");
-            if (foundFiles.length < 1) {
-                System.out.println("No files found?");
-                return;
-            }
-            System.out.println(foundFiles[0]);
-            System.out.println("opening " + foundFiles[0].getAbsolutePath());
-            System.out.println("done");
-            LiveStack ls = open(foundFiles[0].getAbsolutePath());
-            ls.prepare();
-            ls.rec();
-            ls.save();
-        } catch (NullPointerException e) {
-            System.err.println("File not found");
-            System.exit(1);
-        }
-        System.exit(0);
+        LiveStack ls0 = open("G:\\vigor-tmp\\fastSIM_20171018T173240.livestack");
     }
+
 }

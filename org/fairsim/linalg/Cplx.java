@@ -125,8 +125,8 @@ public class Cplx {
 
 
     /** Float-valued complex numbers */
-    static public class Float {
-
+    static public class Float implements java.io.Serializable {
+        static final long serialVersionUID = 1;
 	/** real component. Final, thus read-only */
 	final public float re; 
 	/** imaginary component. Final, thus read-only */

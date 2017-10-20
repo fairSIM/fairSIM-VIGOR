@@ -29,8 +29,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.DataFormatException;
 import org.fairsim.registration.Registration;
 
@@ -70,8 +68,9 @@ public class ReconstructionRunner {
     /**
      * Parameters that have to be set per-channel
      */
-    public static class PerChannel {
-
+    public static class PerChannel implements java.io.Serializable {
+        static final long serialVersionUID = 1;
+        
         int chNumber;
         float offset;
         final double[] startingPx, startingPy;
@@ -121,7 +120,7 @@ public class ReconstructionRunner {
         return ok;
     }
 
-    public ReconstructionRunner(Conf.Folder cfg,
+    ReconstructionRunner(Conf.Folder cfg,
             VectorFactory avf, String[] whichChannels)
             throws Conf.EntryNotFoundException {
         this(cfg, avf, whichChannels, true);
@@ -130,7 +129,7 @@ public class ReconstructionRunner {
     /**
      * Reads from cfg-folder all channels in 'channels'
      */
-    public ReconstructionRunner(Conf.Folder cfg,
+    ReconstructionRunner(Conf.Folder cfg,
             VectorFactory avf, String[] whichChannels, boolean autostart)
             throws Conf.EntryNotFoundException {
 
@@ -163,6 +162,44 @@ public class ReconstructionRunner {
         for (int i = 0; i < nrChannels; i++) {
             Conf.Folder fld = cfg.cd("channel-" + whichChannels[i]);
             channels[i] = new PerChannel(fld, startingImageSize, microns, whichChannels[i], nrDirs);
+        }
+
+        // create and start reconstruction threads
+        reconThreads = new ReconstructionThread[nrThreads];
+        
+        startThreads();
+    }
+    
+    public ReconstructionRunner(VectorFactory avf, int nrThreads,
+            int imageSizeInPixels, int nrPhases, int nrDirs, int nrBands, PerChannel[] perChannels) {
+
+        this.avf = avf;
+        this.autostart = true;
+
+        this.nrThreads = nrThreads;
+        imgsToReconstruct = new ArrayBlockingQueue<short[][][]>(maxInReconQueue());
+        
+        rawOutput = 0;
+        finalWidefield = new ArrayBlockingQueue<Vec2d.Real[]>(maxInWidefieldQueue());
+        finalRecon = new ArrayBlockingQueue<Vec2d.Real[]>(maxInFinalQueue());
+
+        startingImageSize = imageSizeInPixels;
+        height = width = startingImageSize;
+
+        this.nrPhases = nrPhases;
+        this.nrDirs = nrDirs;
+        this.nrBands = nrDirs;
+
+        // init per-channel information
+        this.nrChannels = perChannels.length;
+        latestReconVec = new Vec2d.Real[nrChannels];
+        latestReconLock = new ReentrantLock[nrChannels];
+        channels = new PerChannel[nrChannels];
+        initLatestReconVec();
+
+        // load initial SIM-param from file
+        for (int i = 0; i < nrChannels; i++) {
+            channels[i] = perChannels[i];
         }
 
         // create and start reconstruction threads

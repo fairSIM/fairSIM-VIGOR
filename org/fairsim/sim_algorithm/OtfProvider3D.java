@@ -33,8 +33,8 @@ import org.fairsim.utils.SimpleMT;
  * Provides loading, saving, simple estimation, conversion
  * from 2D (radially symmetric, in phys. units) to 3D vectors.
  * */
-public class OtfProvider3D {
-    
+public class OtfProvider3D implements java.io.Serializable {
+    static final long serialVersionUID = 1;
     // --- internal parameters ----
 
     // vals[band][idx], where idx = cycles / cyclesPerMicron

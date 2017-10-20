@@ -155,8 +155,8 @@ public final class Vec2d {
     // =======================================================
     
     /** Complex-valued, 2-dimensional vector, float base-type */
-    public interface Cplx extends Vec.Cplx, Size { 
-
+    public interface Cplx extends Vec.Cplx, Size, java.io.Serializable { 
+        static final long serialVersionUID = 1;
 	
 	/** Get element x,y */
 	public org.fairsim.linalg.Cplx.Float get(int x, int y);

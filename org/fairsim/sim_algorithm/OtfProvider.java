@@ -18,6 +18,7 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 
 package org.fairsim.sim_algorithm;
 
+import java.io.Serializable;
 import org.fairsim.linalg.Vec2d;
 import org.fairsim.linalg.Cplx;
 import org.fairsim.linalg.MTool;
@@ -32,8 +33,8 @@ import org.fairsim.utils.SimpleMT;
  * Provides loading, saving, simple estimation, conversion
  * from 1D (radially symmetric, in phys. units) to 2D vectors.
  * */
-public class OtfProvider {
-    
+public class OtfProvider implements Serializable {
+    static final long serialVersionUID = 1;
     // --- internal parameters ----
 
     // vals[band][idx], where idx = cycles / cyclesPerMicron

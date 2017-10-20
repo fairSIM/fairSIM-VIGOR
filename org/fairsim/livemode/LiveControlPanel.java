@@ -316,11 +316,11 @@ public class LiveControlPanel {
                 LiveStack.Header.Channel[] lshc = new LiveStack.Header.Channel[nrCh];
                 for (int c = 0; c < nrCh; c++) {
                     Conf.Folder fld = cfg.cd("channel-" + channels[c]);
-                    lshc[c] = new LiveStack.Header.Channel(fld.getStr("CamType").val(), easyGui.getDye(c), easyGui.getIlluminationPower(c), Integer.parseInt(channels[c]));
+                    lshc[c] = new LiveStack.Header.Channel(fld.getStr("CamType").val(), easyGui.getDye(c), easyGui.getIlluminationPower(c), Integer.parseInt(channels[c]), reconRunner.getChannel(c));
                 }
 
                 LiveStack.Header header = new LiveStack.Header(cfg.getStr("Microscope").val(), nowAsISO, easyGui.sampleTextField.getText(), cfg.getStr("Objective").val(),
-                        wfPixelSize, wfPixelSize, 1, reconRunner.nrPhases, reconRunner.nrDirs, 1000, 250, cfg.getInt("SamplePxlSizeX").val(), cfg.getInt("SamplePxlSizeY").val(), cfg.getInt("SamplePxlSizeZ").val(), lshc);
+                        wfPixelSize, wfPixelSize, 1, reconRunner.nrPhases, reconRunner.nrDirs, reconRunner.nrBands, easyGui.getIlluminationTime(), easyGui.getDelayTime(), easyGui.getSyncDelayTime(), easyGui.getSyncFreq(), cfg.getInt("SamplePxlSizeX").val(), cfg.getInt("SamplePxlSizeY").val(), cfg.getInt("SamplePxlSizeZ").val(), lshc);
 
                 liveStreamWriter.startRecording(filePrefix.getText(), header);
             } catch (IOException | EntryNotFoundException ex) {
