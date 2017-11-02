@@ -46,19 +46,19 @@ public class ReconstructionRunner {
     private VectorFactory avf;
     private boolean autostart, stopReconThreads;
 
-    private short[][][] latestImage;
+    protected short[][][] latestImage;
     private Vec2d.Real[] latestReconVec;
     public Lock[] latestReconLock;
 
-    BlockingQueue<short[][][]> imgsToReconstruct;
+    protected BlockingQueue<short[][][]> imgsToReconstruct;
     private int missedDueToQueueFull;
     final private PerChannel[] channels;
 
     BlockingQueue<Vec2d.Real[]> finalWidefield;
-    BlockingQueue<Vec2d.Real[]> finalRecon;
+    protected BlockingQueue<Vec2d.Real[]> finalRecon;
 
-    BlockingQueue<Integer> doFilterUpdate = new ArrayBlockingQueue<Integer>(16);
-    BlockingQueue<Tool.Tuple<Integer, Tool.Callback<SimParam>>> doParameterRefit
+    protected BlockingQueue<Integer> doFilterUpdate = new ArrayBlockingQueue<Integer>(16);
+    protected BlockingQueue<Tool.Tuple<Integer, Tool.Callback<SimParam>>> doParameterRefit
             = new ArrayBlockingQueue<Tool.Tuple<Integer, Tool.Callback<SimParam>>>(16);
 
     private final ReconstructionThread[] reconThreads;

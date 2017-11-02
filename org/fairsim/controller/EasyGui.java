@@ -128,7 +128,7 @@ public class EasyGui extends javax.swing.JPanel {
         final int syncDelay, syncFreq;
         final int exposureTime;
         final int colorCount;
-        final String camGroup = "fastSIM", camConfig = "fastSIM";
+        final String camGroup = "SIM", camConfig = "SIM";
         final String illuminationTime;
         final boolean allowBigRoi;
         final char[] colors;

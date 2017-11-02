@@ -1,0 +1,76 @@
+<fairsim>
+<vigor-settings>
+
+<ControllerAdress type="string">localhost</ControllerAdress>
+<TCPPort type="int">32322</TCPPort>
+
+<RawPxlCount type="int">512</RawPxlCount>
+<RawPxlSize type="decimal">0.08</RawPxlSize>
+
+<Microscope type="string">cSIM</Microscope>
+<Objective type="string">cSIM objective</Objective>
+<SamplePxlSizeX type="int">79</SamplePxlSizeX>
+<SamplePxlSizeY type="int">79</SamplePxlSizeY>
+<SamplePxlSizeZ type="int">79</SamplePxlSizeZ>
+
+<NrPhases type="int">3</NrPhases>
+<NrAngles type="int">3</NrAngles>
+<NrBands type="int">2</NrBands>
+
+<ReconThreads type="int">2</ReconThreads>
+<NetworkBuffer type="int">600</NetworkBuffer>
+<DiskBuffer type="int">2500</DiskBuffer>
+
+<DiskFolder type="string">C:/Users/d3alle/Documents/vigor/stream/</DiskFolder>
+<ParamFolder type="string">C:/Users/d3alle/Documents/vigor/parameters/</ParamFolder>
+<RegistrationFolder type="string">C:/Users/d3alle/Documents/vigor/registrations/</RegistrationFolder>
+
+<SyncFrameFreq type="int">1</SyncFrameFreq>
+<SyncFrameAvr type="int">7000</SyncFrameAvr>
+<SyncFrameDelay type="int">5000</SyncFrameDelay>
+
+<!--- Channel GREEN-ORANGE -->
+
+<channel-532>
+
+<offset type="decimal">140</offset>
+<ChannelNumber type="int">532</ChannelNumber>
+<CamType type="string">uEye UI-306x</CamType>
+<CamAdress type="string">localhost</CamAdress>
+
+<sim-param>
+<nr-angles type="int"> 3 </nr-angles>
+<microns-per-pxl type="decimal"> 7.80000e-02 </microns-per-pxl>
+<wiener-parameter type="decimal"> 5.00000e-02 </wiener-parameter>
+<nr-bands type="int"> 2 </nr-bands>
+<img-size-pxl type="int"> 512 </img-size-pxl>
+<apodization-cutoff type="decimal"> 2.00000e+00 </apodization-cutoff>
+<nr-phases type="int"> 3 </nr-phases>
+<img-seq type="string">PZA</img-seq>
+<timestamp type="timepoint"> 1481205767740 </timestamp>
+<dir-2>
+<shift type="decimal"> -2.37889e+01 -1.72878e+02 </shift>
+<phase-offset type="decimal"> -9.78978e-01 </phase-offset>
+<modulations type="decimal"> 1.00000e+00 4.93085e-01 </modulations>
+</dir-2>
+<dir-1>
+<shift type="decimal"> -1.67856e+02 -6.87222e+01 </shift>
+<phase-offset type="decimal"> 8.33830e-01 </phase-offset>
+<modulations type="decimal"> 1.00000e+00 4.59405e-01 </modulations>
+</dir-1>
+<dir-0>
+<shift type="decimal"> 1.37478e+02 -1.06278e+02 </shift>
+<phase-offset type="decimal"> -3.07837e-01 </phase-offset>
+<modulations type="decimal"> 1.00000e+00 6.39470e-01 </modulations>
+</dir-0>
+</sim-param>
+<otf2d>
+<NA type="decimal"> 1.40000e+00 </NA>
+<a-estimate type="decimal"> 3.00000e-01 </a-estimate>
+<emission type="int"> 525 </emission>
+</otf2d>
+
+</channel-532>
+
+</vigor-settings>
+</fairsim>
