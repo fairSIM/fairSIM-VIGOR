@@ -32,7 +32,7 @@
 <RegistrationFolder type="string">~/VIGOR-parameters/registration/</RegistrationFolder>
 
 
-
+<SyncMode type="int">1</SyncMode>
 <SyncFrameFreq type="int">1</SyncFrameFreq>
 <SyncFrameAvr type="int">8000</SyncFrameAvr>
 <SyncFrameDelay type="int">5000</SyncFrameDelay>

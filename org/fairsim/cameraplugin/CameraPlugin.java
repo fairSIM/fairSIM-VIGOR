@@ -17,6 +17,7 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
  */
 package org.fairsim.cameraplugin;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import mmcorej.CMMCore;
@@ -135,11 +136,13 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
             
             /*
             Iterator<String> keys = md.keys();
-            //while(keys.hasNext()) {
-            //    System.out.println(keys.next());
-            //}
-            System.out.println("elapsed time 0 " + md.get("ElapsedTime-ms"));
+            while(keys.hasNext()) {
+                System.out.println(keys.next());
+            }
             */
+            ////System.out.println("IDS uEye-ReadoutTime " + md.get("IDS uEye-ReadoutTime"));
+            //System.out.println("uEye-Timestamp " + md.get("uEye-Timestamp"));
+            ////System.out.println("ElapsedTime-ms " + md.get("ElapsedTime-ms"));
             
             int chIdx = -1;
             String cName = md.getString("Camera");

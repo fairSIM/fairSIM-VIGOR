@@ -628,22 +628,21 @@ public class LiveStack {
         return vf;
     }
 
-    List<Vec2d.Real[]> recon() {
+    void recon() {
         ReconstructionRunner.PerChannel[] pc = new ReconstructionRunner.PerChannel[header.channels.length];
         for (int i = 0; i < header.channels.length; i++) {      //get reconstructionParameters from LiveReconstruction
             pc[i] = header.channels[i].perChannel;
         }
         int nThreads=1;
-//        System.out.println("header nrBands = "+header.nrBands);
+        System.out.println("header nrBands = "+header.nrBands);
         Reconstructor reconstructorObject = new Reconstructor(nThreads, header.width, header.nrPhases, header.nrAngles, header.nrBands, pc);
-        return reconstructorObject.reconstructChannelByChannel();
+        reconstructorObject.reconstructChannelByChannel();
     }
 
     private class Reconstructor extends ReconstructionRunner {
 
-        private List<Vec2d.Real[]> reconstructChannelByChannel() {
+        private void reconstructChannelByChannel() {
             List<List<ImageWrapper>> iwListList = new ArrayList<List<ImageWrapper>>();
-            int outNr = imgs.size();
             for (int c = 0; c < header.channels.length; c++) {
                 List<ImageWrapper> iwList = new ArrayList<>();
                 for (ImageWrapper iw : imgs) {
@@ -654,12 +653,13 @@ public class LiveStack {
                 }
                 prepare(iwList);
                 iwListList.add(iwList);
-                outNr = Math.min(outNr, iwList.size());
             }
 
-            List<short[][][]> raws = new ArrayList<>();
 
-            for (int out = 0; out < outNr; out++) {
+
+
+            List<short[][][]> raws = new ArrayList<>();
+            for (int out = 0; out < 1; out++) {
                 short[][][] raw = new short[header.channels.length][header.nrPhases*header.nrAngles][];
                 for(int c = 0; c<header.channels.length; c++) {
                     for (int i = 0; i < header.nrPhases*header.nrAngles; i++) {
@@ -669,11 +669,8 @@ public class LiveStack {
                 }
                 raws.add(raw);
             }
-                System.out.println("--------------------------- raws.size() = "+raws.size());
             List<Vec2d.Real[]> recons = reconstruct(raws);
-            System.out.println("--------------------------- recons.size() = "+recons.size());
-            return recons;
-            
+            new ij.io.FileSaver(new ImagePlus("test", new ij.process.FloatProcessor(1024, 1024, recons.get(0)[0].vectorData()))).saveAsTiff("/home/andi/test123213.tiff");
         }
 
         private void prepare(List<ImageWrapper> iwList) {
@@ -682,7 +679,7 @@ public class LiveStack {
             System.out.println("    nImgs = " + nImgs);
             int syncFrameDelay = header.syncDelayTime;
             int syncFrameDelayJitter = 14;
-            int nrSimFrames = header.nrAngles*header.nrPhases*header.syncFreq;
+            int nrSimFrames = 9;
             int nrSyncFrames = 2;
 
             //Get timestamps
@@ -834,12 +831,12 @@ public class LiveStack {
         }
 
         void checkDimension(short[][][] img) {
-//            System.out.println(img[0][0] == null);
-//             System.out.println(img[0][0].length);
-//             System.out.println(img[0].length);
-//             System.out.println(img.length);
-//             System.out.println(height);
-//             System.out.println(width);
+            System.out.println(img[0][0] == null);
+             System.out.println(img[0][0].length);
+             System.out.println(img[0].length);
+             System.out.println(img.length);
+             System.out.println(height);
+             System.out.println(width);
              
             if (img[0][0].length != width * height || img[0].length != nrPhases * nrDirs || img.length != nrChannels) {
                 Tool.error("LiveStack.Reconstructor: Missmatch in dimensions");
@@ -860,7 +857,7 @@ public class LiveStack {
                 public void run() {
                     for (int i = 0; i < nrImgs; i++) {
                         short[][][] raw = raws.get(i);          //extract next images for reconstruction
-//                        System.out.println(raw==null);
+                        System.out.println(raw==null);
                         checkDimension(raw);
                         try {
                             imgsToReconstruct.put(raw);         //push to reconstruction-queue
@@ -961,7 +958,7 @@ public class LiveStack {
         System.out.println("opening " + foundFiles[0].getAbsolutePath());
         System.out.println("done");
         LiveStack ls = open(foundFiles[0].getAbsolutePath());
-        new ij.io.FileSaver(new ImagePlus("test", new ij.process.FloatProcessor(1024, 1024, ls.recon().get(0)[0].vectorData()))).saveAsTiff(foundFiles[0].getAbsolutePath()+".tiff");
+        ls.recon();
         }
         catch (NullPointerException e) {
         System.err.println("File not found_");

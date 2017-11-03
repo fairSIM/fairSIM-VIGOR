@@ -74,7 +74,7 @@ public class SimSequenceExtractor {
         channels = new PerChannelBuffer[nrChannels];
         for (int i = 0; i < nrChannels; i++) {
             channels[i] = new PerChannelBuffer(rawsPerRecon * rawsPerRecon * 10,
-                    reconRunner.getChannel(i).chNumber, i);
+                    reconRunner.getChannel(i).chNumber, i, cfg.getInt("SyncMode").val());
             Tool.trace("Created receive buffer for channel: "
                     + reconRunner.getChannel(i).chNumber);
             channelMapping.put(reconRunner.getChannel(i).chNumber, channels[i]);
@@ -223,6 +223,8 @@ public class SimSequenceExtractor {
         int noSyncSince = 0;
         long syncFrameCount = 0;
         long seqNr;
+        final int syncMode;
+        static final int SYNCJITTER = 50;
 
         int queryRaw() {
             return rawImgs.size();
@@ -232,10 +234,11 @@ public class SimSequenceExtractor {
             return simSeq.size();
         }
 
-        PerChannelBuffer(int queueSize, int chNumber, int chIndex) {
+        PerChannelBuffer(int queueSize, int chNumber, int chIndex, int syncMode) {
             this.queueSize = queueSize;
             this.chNumber = chNumber;
             this.chIndex = chIndex;
+            this.syncMode = syncMode;
             rawImgs = new ArrayBlockingQueue<>(queueSize);
             simSeq = new ArrayBlockingQueue<>(queueSize);
             sortBuffer = new SortBuffer(20);
@@ -334,6 +337,10 @@ public class SimSequenceExtractor {
             }
         }
         
+        private boolean isTimeDelaySync(long curTimeStamp, long lastTimeStamp) {
+            return curTimeStamp - lastTimeStamp  > syncFrameDelay;
+        }
+        
         /**
          * 
          * @param curTimeStamp current timestamp
@@ -341,7 +348,7 @@ public class SimSequenceExtractor {
          * @return true if two timestamps are sync timestamps
          */
         private boolean isTimeStampSync(long curTimeStamp, long lastTimeStamp) {
-            return Math.abs(curTimeStamp - lastTimeStamp - syncFrameDelay) < 50;
+            return Math.abs(curTimeStamp - lastTimeStamp - syncFrameDelay) < SYNCJITTER;
         }
         
         /**
@@ -374,29 +381,46 @@ public class SimSequenceExtractor {
                         // take a frame, get it's timestamp
                         ImageWrapper iwSync = getSorted();
                         curTimeStamp = iwSync.timeCamera();
+                        if(syncMode == 0) {
+                            // version 0 (for camera with time-stamp, like IDS µEye)
+                            if (isTimeDelaySync(curTimeStamp, lastTimeStamp)) {
+                                sortBuffer.add(iwSync);
+                                syncFrameCount++;
+                                long count = syncFrameCount / 5;
+                                Color bg = (count % 2 == 0) ? (Color.BLACK) : (Color.GREEN);
+                                livePanel.syncButtons[chIndex].setBackground(bg);
+                                break;
+                            }
+                        } else if (syncMode == 1) {
+                            // version 1 (for camera with precise time-stamp, like PCO)
+                            if (isTimeStampSync(curTimeStamp, lastTimeStamp)) {
+                                //Tool.tell("SYNC "+chNumber+": via timestamp/PCO");
+                                syncFrameCount++;
+                                long count = syncFrameCount / 5;
+                                Color bg = (count % 2 == 0) ? (Color.BLACK) : (Color.GREEN);
+                                livePanel.syncButtons[chIndex].setBackground(bg);
+                                break;
+                            }
 
-                        // version 1 (for camera with precise time-stamp, like PCO)
-                        if (isTimeStampSync(curTimeStamp, lastTimeStamp)) {
-                            //Tool.tell("SYNC "+chNumber+": via timestamp/PCO");
-                            syncFrameCount++;
-                            long count = syncFrameCount / 5;
-                            Color bg = (count % 2 == 0) ? (Color.BLACK) : (Color.GREEN);
-                            livePanel.syncButtons[chIndex].setBackground(bg);
-                            break;
-                        }
-                        //System.out.println( "time diff: " + (curTimeStamp - lastTimeStamp) );
-                        lastTimeStamp = curTimeStamp;
 
-                        // version 2 (for camera w/o timestamp, bright LED):
-                        short pxl[] = iwSync.getPixels();
-                        if (isAvrSync(pxl)) {
-                            syncFrameCount++;
-                            long count = syncFrameCount / 5;
-                            Color bg = (count % 2 == 0) ? (Color.BLACK) : (Color.GREEN);
-                            livePanel.syncButtons[chIndex].setBackground(bg);
-                            //Tool.tell("SYNC "+chNumber+": via bright frame");
-                            getSorted(); // ignore the next frame
-                            break;
+
+                            lastTimeStamp = curTimeStamp;
+
+                            // version 2 (for camera w/o timestamp, bright LED):
+                            short pxl[] = iwSync.getPixels();
+                            if (isAvrSync(pxl)) {
+                                syncFrameCount++;
+                                long count = syncFrameCount / 5;
+                                Color bg = (count % 2 == 0) ? (Color.BLACK) : (Color.GREEN);
+                                livePanel.syncButtons[chIndex].setBackground(bg);
+                                //Tool.tell("SYNC "+chNumber+": via bright frame");
+                                getSorted(); // ignore the next frame
+                                break;
+                            }
+                        } else {
+                            String error = "missmatch in syncMode, expected 0 or 1, found " + syncMode;
+                            Tool.error(error);
+                            throw new RuntimeException(error);
                         }
                         counter++;
                         if (counter >= nrRawPerSeq * seqCount) {

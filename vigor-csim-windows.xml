@@ -25,6 +25,7 @@
 <ParamFolder type="string">C:/Users/d3alle/Documents/vigor/parameters/</ParamFolder>
 <RegistrationFolder type="string">C:/Users/d3alle/Documents/vigor/registrations/</RegistrationFolder>
 
+<SyncMode type="int">0</SyncMode>
 <SyncFrameFreq type="int">1</SyncFrameFreq>
 <SyncFrameAvr type="int">7000</SyncFrameAvr>
 <SyncFrameDelay type="int">5000</SyncFrameDelay>
