@@ -188,7 +188,7 @@ public class ReconstructionRunner {
 
         this.nrPhases = nrPhases;
         this.nrDirs = nrDirs;
-        this.nrBands = nrDirs;
+        this.nrBands = nrBands;
 
         // init per-channel information
         this.nrChannels = perChannels.length;
