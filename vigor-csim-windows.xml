@@ -17,7 +17,7 @@
 <NrAngles type="int">3</NrAngles>
 <NrBands type="int">2</NrBands>
 
-<ReconThreads type="int">2</ReconThreads>
+<ReconThreads type="int">1</ReconThreads>
 <NetworkBuffer type="int">600</NetworkBuffer>
 <DiskBuffer type="int">2500</DiskBuffer>
 

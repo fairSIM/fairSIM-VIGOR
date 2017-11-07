@@ -22,6 +22,8 @@ import java.util.LinkedList;
 import java.util.List;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
+import org.fairsim.utils.Tool;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.ScriptInterface;
 
@@ -142,8 +144,10 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
             */
             ////System.out.println("IDS uEye-ReadoutTime " + md.get("IDS uEye-ReadoutTime"));
             //System.out.println("uEye-Timestamp " + md.get("uEye-Timestamp"));
+            //System.out.println("uEye-rawStamp " + md.get("uEye-rawStamp"));
             ////System.out.println("ElapsedTime-ms " + md.get("ElapsedTime-ms"));
             
+            //get channel index
             int chIdx = -1;
             String cName = md.getString("Camera");
             for (int i = 0; i < cams.length; i++) {
@@ -153,7 +157,7 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
                 }
             }
             if (chIdx == -1) throw new CameraException("No channel found");
-            
+
             // get pixels
             short[] pix;
             try {
@@ -166,7 +170,16 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
                 }
             }
             
-            return new ChanneldImage(chIdx, pix);
+            //get timestamp
+            long timestamp = -1;
+            try {
+                timestamp = (long) (Long.valueOf(md.getString("uEye-rawStamp").split("\\[", 2)[1].split("\\]")[0]) * 0.1);
+            } catch (Exception ex) {
+                timestamp = Tool.decodeBcdTimestamp(pix);
+            }
+            if (chIdx == -1) throw new CameraException("No timestamp found");
+            
+            return new ChanneldImage(chIdx, timestamp, pix);
         } catch (Exception ex) {
             ex.printStackTrace();
             throw new CameraException("Getting next image went wrong: " + ex);
@@ -175,10 +188,12 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
     
     static class ChanneldImage {
         int chIdx;
+        long timestamp;
         short[] img;
         
-        ChanneldImage(int chIdx, short[] img) {
+        ChanneldImage(int chIdx, long timestamp, short[] img) {
             this.chIdx = chIdx;
+            this.timestamp = timestamp;
             this.img = img;
         }
     }

@@ -358,11 +358,11 @@ public class CameraController {
                         // retrieve image from camera
                         CameraPlugin.ChanneldImage chImg = cp.getNextImage();
                         int chIdx = chImg.chIdx;
-                        short[] imgData = chImg.img;
+                        //short[] imgData = chImg.img;
                         count++;
-                        long timeStamp = Tool.decodeBcdTimestamp(imgData);
+                        //long timeStamp = Tool.decodeBcdTimestamp(imgData);
                         // send image to reconstruction / capture
-                        short[] sendData = queueImage(chIdx, imgData, count, timeStamp);
+                        short[] sendData = queueImage(chIdx, chImg.img, count, chImg.timestamp);
                         // display image all 59 images & updates queuing/sending color & fps
                         if (count % FPSCOUNTS == 0) {
                             t1.stop();

@@ -385,6 +385,7 @@ public class SimSequenceExtractor {
                             // version 0 (for camera with time-stamp, like IDS µEye)
                             if (isTimeDelaySync(curTimeStamp, lastTimeStamp)) {
                                 sortBuffer.add(iwSync);
+                                seqNr--;
                                 syncFrameCount++;
                                 long count = syncFrameCount / 5;
                                 Color bg = (count % 2 == 0) ? (Color.BLACK) : (Color.GREEN);
@@ -437,13 +438,19 @@ public class SimSequenceExtractor {
                         for (int i = 0; i < nrRawPerSeq; i++) {
                             ImageWrapper iw = getSorted();
                             simPxls[i] = iw.getPixels();
-                            
-                            curTimeStamp = iw.timeCamera();
-                            if (isTimeStampSync(curTimeStamp, lastTimeStamp))
-                                Tool.trace("TimeStamp sync frame found in sequence " + iw.seqNr());
-                            lastTimeStamp = curTimeStamp;
-                            if (isAvrSync(simPxls[i]))
-                                Tool.trace("Avr sync frame found in sequence " + iw.seqNr());
+                            if(syncMode == 0) {
+                                curTimeStamp = iw.timeCamera();
+                                if (k != 0 && isTimeDelaySync(curTimeStamp, lastTimeStamp))
+                                    Tool.trace("Mode 0 timeStamp sync frame found in sequence " + iw.seqNr());
+                                lastTimeStamp = curTimeStamp;
+                            } else if (syncMode == 1) {
+                                curTimeStamp = iw.timeCamera();
+                                if (isTimeStampSync(curTimeStamp, lastTimeStamp))
+                                    Tool.trace("Mode 1 timeStamp sync frame found in sequence " + iw.seqNr());
+                                lastTimeStamp = curTimeStamp;
+                                if (isAvrSync(simPxls[i]))
+                                    Tool.trace("Mode 1 avr sync frame found in sequence " + iw.seqNr());
+                            }
                         }
 
                         boolean ok = simSeq.offer(simPxls);
