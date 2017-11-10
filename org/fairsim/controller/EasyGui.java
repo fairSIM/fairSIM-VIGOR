@@ -1203,7 +1203,9 @@ public class EasyGui extends javax.swing.JPanel {
         for (Cam c : camGuis) {
             c.startMovie();
         }
+        String illuminationUnit = ro.illuminationTime.substring(ro.illuminationTime.length()-2, ro.illuminationTime.length());
         illuminationTime = Integer.parseInt(ro.illuminationTime.substring(0, ro.illuminationTime.length()-2));
+        if (illuminationUnit.equalsIgnoreCase("ms")) illuminationTime *= 1000;
         syncDelayTime = ro.syncDelay;
         syncFreq = ro.syncFreq;
         setStatus("Running order: " + ro.device + "_" + ro.name);

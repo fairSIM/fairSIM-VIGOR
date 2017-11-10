@@ -19,15 +19,12 @@ package org.fairsim.transport;
 
 import ij.ImagePlus;
 import ij.ImageStack;
-import java.io.File;
-import java.io.FilenameFilter;
 import ij.io.Opener;
 import ij.plugin.HyperStackConverter;
 import ij.process.ShortProcessor;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -37,14 +34,12 @@ import java.io.Serializable;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import loci.common.services.DependencyException;
+import loci.common.services.ServiceException;
 import org.fairsim.utils.Base64;
 import org.fairsim.utils.Tool;
 /*
@@ -60,12 +55,7 @@ import loci.formats.out.OMETiffWriter;
 import loci.formats.*;
 import loci.formats.meta.IMetadata;
 import loci.formats.services.OMEXMLService;
-import loci.formats.ImageReader;
-
-import ome.xml.model.enums.DimensionOrder;
-import ome.xml.model.enums.PixelType;
 import ome.xml.model.enums.*;
-import ome.xml.model.primitives.*;
 
 import ome.units.UNITS;
 import ome.units.quantity.*;
@@ -85,6 +75,11 @@ public class LiveStack {
 
     private final Header header;
     private final List<ImageWrapper> imgs;
+    
+    private LiveStack(Header header, List<ImageWrapper> imgs) {
+        this.header = header;
+        this.imgs = imgs;
+    }
 
     /**
      * private constructor for livestack InputStreams use the open method for
@@ -93,6 +88,7 @@ public class LiveStack {
      * @param is InputStream for the livestack instance
      * @throws IOException
      */
+    /*
     private LiveStack(InputStream is) throws IOException {
         header = Header.read(is);
         imgs = new LinkedList<>();
@@ -100,13 +96,14 @@ public class LiveStack {
             imgs.add(readImageWrapper(is));
         }
     }
-
+    */
     /**
      * private constructor for ImagePlus instance of ImageJ
      *
      * @param ip livestack imageplus
      * @throws IOException
      */
+    /*
     private LiveStack(ImagePlus ip) throws IOException {
         String base64Header = ip.getInfoProperty().split("encoded header: ")[1];
         header = Header.decode(base64Header);
@@ -122,7 +119,7 @@ public class LiveStack {
             imgs.add(iw);
         }
     }
-
+    */
     /**
      * creates a livestack instance from a *.livestack or a *.livestack.* file
      *
@@ -134,10 +131,52 @@ public class LiveStack {
         LiveStack ls;
         if (file.endsWith(".livestack")) {
             FileInputStream fis = new FileInputStream(file);
-            ls = new LiveStack(fis);
+            Header h = Header.read(fis);
+            List<ImageWrapper> i = new LinkedList<>();
+            while (fis.available() > 0) {
+                i.add(readImageWrapper(fis));
+            }
             fis.close();
+            ls = new LiveStack(h, i);
+        } else if (file.endsWith(".livesim")) {
+            FileInputStream fis = new FileInputStream(file);
+            List<ImageWrapper> iws = new LinkedList<>();
+            while (fis.available() > 0) {
+                iws.add(readImageWrapper(fis));
+            }
+            fis.close();
+            int width = iws.get(0).width();
+            int height = iws.get(0).height();
+            List<Integer> c = new ArrayList<>();
+            for (ImageWrapper iw : iws) {
+                if (!c.contains(iw.pos1())) {
+                    c.add(iw.pos1());
+                }
+            }
+            Header.Channel[] channels = new Header.Channel[c.size()];
+            for (int i = 0; i < c.size(); i++) {
+                channels[i] = new Header.Channel("Camera", "unknown", 0, c.get(i), null);
+            }
+            Header h = new Header("fastSIM", "unknown", "fastSIM objective",
+                    "fastSIM objective", width, height, 1, 3, 3, 2, -1, -1,
+                    -1, -1, 79, 79, 79, channels);
+            ls = new LiveStack(h, iws);
         } else {
-            ls = new LiveStack(new Opener().openImage(file));
+            ImagePlus ip = new Opener().openImage(file);
+            String base64Header = ip.getInfoProperty().split("encoded header: ")[1];
+            Header h = Header.decode(base64Header);
+            List<ImageWrapper> iws = new LinkedList<>();
+            ImageStack stack = ip.getStack();
+            for (int i = 1; i < stack.getSize() + 1; i++) {
+                String info = stack.getSliceLabel(i);
+                String encodedIWHeader = info.split("header: ")[1];
+                ByteBuffer bbHeader = ImageWrapper.decodeHeader(encodedIWHeader);
+                ImageWrapper iw = new ImageWrapper(bbHeader);
+                short[] pixels = (short[]) stack.getPixels(i);
+                iw.copy(pixels, iw.width(), iw.height());
+                iws.add(iw);
+            }
+            ls = new LiveStack(h, iws);
         }
         return ls;
     }
@@ -427,7 +466,6 @@ public class LiveStack {
         }
 
         private void preparation() {
-            System.out.println("livestack_run");
             status = "preparing";
             nrCh = channels.length;
             int[] chCounter = new int[nrCh];
@@ -475,7 +513,7 @@ public class LiveStack {
                         avr /= pixels.length;
                         // channel timeCapture avr seqNr HeaderBASE64
                         String sliceLabel = "ch: " + channels[c]
-                                + " time: " + Tool.readableTimeStampMillis(iw.timeCapture() / 1000, true)
+                                + " timestamp: " + iw.timeCamera()
                                 + " avr: " + avr
                                 + " seqNr " + iw.seqNr()
                                 + " header: " + iw.encodeHeader();
@@ -577,8 +615,9 @@ public class LiveStack {
                 writer.close();
                 System.out.println(" [done saving as OME-TIFF]");
 
-            } catch (Exception ex) {
-                throw new RuntimeException("OOOPS");
+            } catch (IOException | DependencyException | ServiceException | FormatException ex) {
+                Tool.error(ex.toString(), true);
+                throw new RuntimeException(ex);
             }
         }
 
@@ -628,191 +667,18 @@ public class LiveStack {
         return vf;
     }
 
-    void recon() {
+    List<Vec2d.Real[]> reconstruct() {
         ReconstructionRunner.PerChannel[] pc = new ReconstructionRunner.PerChannel[header.channels.length];
         for (int i = 0; i < header.channels.length; i++) {      //get reconstructionParameters from LiveReconstruction
             pc[i] = header.channels[i].perChannel;
         }
-        int nThreads=1;
-        System.out.println("header nrBands = "+header.nrBands);
-        Reconstructor reconstructorObject = new Reconstructor(nThreads, header.width, header.nrPhases, header.nrAngles, header.nrBands, pc);
-        reconstructorObject.reconstructChannelByChannel();
+        Reconstructor recRunner = new Reconstructor(1, header.width, header.nrPhases, header.nrAngles, header.nrBands, pc);
+        return recRunner.reconstruct(imgsToShortList());
     }
 
     private class Reconstructor extends ReconstructionRunner {
 
-        private void reconstructChannelByChannel() {
-            List<List<ImageWrapper>> iwListList = new ArrayList<List<ImageWrapper>>();
-            for (int c = 0; c < header.channels.length; c++) {
-                List<ImageWrapper> iwList = new ArrayList<>();
-                for (ImageWrapper iw : imgs) {
-                    if (iw.pos1() == header.channels[c].exWavelength) {
-                        iwList.add(iw);
-                        iwList.sort(null);
-                    }
-                }
-                prepare(iwList);
-                iwListList.add(iwList);
-            }
-
-
-
-
-            List<short[][][]> raws = new ArrayList<>();
-            for (int out = 0; out < 1; out++) {
-                short[][][] raw = new short[header.channels.length][header.nrPhases*header.nrAngles][];
-                for(int c = 0; c<header.channels.length; c++) {
-                    for (int i = 0; i < header.nrPhases*header.nrAngles; i++) {
-                        raw[c][i] = iwListList.get(c).get(i).getPixels();
-//                        raw[c][i] = blue.remove(0).getPixels();
-                    }
-                }
-                raws.add(raw);
-            }
-            List<Vec2d.Real[]> recons = reconstruct(raws);
-            new ij.io.FileSaver(new ImagePlus("test", new ij.process.FloatProcessor(1024, 1024, recons.get(0)[0].vectorData()))).saveAsTiff("/home/andi/test123213.tiff");
-        }
-
-        private void prepare(List<ImageWrapper> iwList) {
-            System.out.println("This shall create a list for each channel, without the syncframes and broken SIM-sequences");
-            int nImgs = iwList.size();
-            System.out.println("    nImgs = " + nImgs);
-            int syncFrameDelay = header.syncDelayTime;
-            int syncFrameDelayJitter = 14;
-            int nrSimFrames = 9;
-            int nrSyncFrames = 2;
-
-            //Get timestamps
-            long[] timestamps = new long[nImgs];
-            for (int i = 0; i < nImgs; i++) {
-                timestamps[i] = iwList.get(i).timeCamera();
-            }
-
-            //find syncframes
-            System.out.println("    finding syncframes");
-            List<Integer> syncFrameList = findSyncFrames(iwList, timestamps, syncFrameDelay, syncFrameDelayJitter);
-
-            //search for sim-sequencs between syncframes, add broken sets to remove-list
-            List<Integer> nonSimFrameList = findNonSimFrames(iwList, syncFrameList, nrSimFrames, nrSyncFrames);
-
-            //add syncframes to remove-list
-            if (nrSyncFrames > 0) {
-                for (int i = 0; i < syncFrameList.size(); i++) {
-                    int s = syncFrameList.get(i);
-                    for (int j = nrSyncFrames - 1; j >= 0; j--) {
-                        if (s - j >= 0) {
-                            nonSimFrameList.add(s - j);
-                        }
-                    }
-                }
-            }
-
-            //remove syncframes and known broken sim-sequences
-            System.out.println("    removing syncframes and known broken sim-sequences: ");
-            reduce(iwList, nonSimFrameList);
-            nImgs = iwList.size();
-
-            //check sequence numbers
-            System.out.println("    checking sequence-numbers of remaining images");
-            List<Integer> brokenSeqNrList = checkSeqNr(iwList, nrSimFrames);
-            System.out.println("    removing newly found broken sim-sequences");
-
-            reduce(iwList, brokenSeqNrList);
-
-            System.out.println("prepraring done");
-        }
-
-        private List<Integer> findNonSimFrames(List<ImageWrapper> iwList, List<Integer> syncFrameList, int nrSimFrames, int nrSyncFrames) {
-            System.out.print("        finding non-SIM-frames... ");
-            Collections.sort(syncFrameList);
-            int nImgs = iwList.size();
-            List<Integer> nonSimFrameList = new ArrayList<>();
-            nonSimFrameList.add(0);
-            if (((syncFrameList.get(0) + 1 - nrSyncFrames) % nrSimFrames) != 0) {
-                nonSimFrameList.set(0, nonSimFrameList.get(0) + 1);
-                for (int s = 0; s <= syncFrameList.get(0) - nrSyncFrames; s++) {
-                    nonSimFrameList.add(s);
-                    System.out.print(s + ",");
-                }
-            }
-            if (syncFrameList.size() > 1) {
-                for (int i = 1; i < syncFrameList.size(); i++) {
-                    if (((syncFrameList.get(i) - syncFrameList.get(i - 1) - nrSyncFrames) % nrSimFrames) != 0) {
-                        nonSimFrameList.set(0, nonSimFrameList.get(0) + 1);
-                        for (int s = syncFrameList.get(i - 1) + 1; s <= syncFrameList.get(i) - nrSyncFrames; s++) {
-                            nonSimFrameList.add(s);
-                            System.out.print(s + ",");
-                        }
-                    }
-                }
-            }
-            int lastSyncFrame = syncFrameList.get(syncFrameList.size() - 1);
-            if (((nImgs - 1 - lastSyncFrame) % nrSimFrames) != 0) {
-                nonSimFrameList.set(0, nonSimFrameList.get(0) + 1);
-                for (int s = lastSyncFrame + 1; s < nImgs; s++) {
-                    nonSimFrameList.add(s);
-                    System.out.print(s + ",");
-                }
-            }
-            System.out.println("found " + (nonSimFrameList.size() - 1) + " frames in " + nonSimFrameList.get(0) + " incomplete sequences");
-            nonSimFrameList.remove(0);
-            return nonSimFrameList;
-        }
-
-        private List<Integer> findSyncFrames(List<ImageWrapper> iwList, long[] timestamps, int syncFrameDelay, int syncFrameDelayJitter) {
-            int nImgs = iwList.size();
-            List<Integer> syncFrameList = new ArrayList<>();
-            System.out.print("        found Syncframes: ");
-            for (int i = 1; i < nImgs; i++) {
-                if (Math.abs(timestamps[i] - timestamps[i - 1] - syncFrameDelay) < syncFrameDelayJitter) {
-                    syncFrameList.add(i);
-                    System.out.print(i + ", ");
-                }
-            }
-            System.out.println("done");
-            if (syncFrameList.size() == 0) {
-                System.err.println("        No Sync-frames found");
-                System.exit(1);
-            }
-            return syncFrameList;
-        }
-
-        private List<Integer> checkSeqNr(List<ImageWrapper> iwList, int nrSimFrames) {
-            System.out.println("        checking seq Nrs. Mismatches: ");
-            int nImgs = iwList.size();
-            List<Integer> brokenSeqNrList = new ArrayList<>();
-            for (int i = 0; i < nImgs / nrSimFrames; i += nrSimFrames) {
-                boolean broken = FALSE;
-                for (int j = 0; j < nrSimFrames - 1; j++) {
-                    if ((iwList.get(i + j).seqNr() - iwList.get(i + j + 1).seqNr()) != -1) {
-                        broken = TRUE;
-                        System.out.println((i + j) + "=" + iwList.get(i + j).seqNr() + "x" + iwList.get(i + j + 1).seqNr() + "=" + (i + j + 1) + ", ");
-                    }
-                }
-                if (broken) {
-                    for (int j = 0; j < nrSimFrames; j++) {
-                        brokenSeqNrList.add(i + j);
-                    }
-                }
-            }
-            System.out.println("done");
-            return brokenSeqNrList;
-        }
-
-        private void reduce(List<ImageWrapper> iwList, List<Integer> red) {
-            if (red.size() == 0) {
-                System.out.println("        nothing to remove");
-                return;
-            }
-            Collections.sort(red);
-            System.out.print("        removing " + red.size() + " frames from list with length " + iwList.size() + ": ");
-            for (int i = red.size() - 1; i >= 0; i--) {
-//            System.out.print(red.get(i)+", ");
-                iwList.remove((int) red.get(i));
-            }
-            System.out.println("done, new length: " + iwList.size());
-            return;
-        }
+        
 
         boolean running = false;
         boolean fitting = false;
@@ -831,19 +697,12 @@ public class LiveStack {
         }
 
         void checkDimension(short[][][] img) {
-            System.out.println(img[0][0] == null);
-             System.out.println(img[0][0].length);
-             System.out.println(img[0].length);
-             System.out.println(img.length);
-             System.out.println(height);
-             System.out.println(width);
-             
             if (img[0][0].length != width * height || img[0].length != nrPhases * nrDirs || img.length != nrChannels) {
                 Tool.error("LiveStack.Reconstructor: Missmatch in dimensions");
             }
         }
 
-        List<Vec2d.Real[]> reconstruct(List<short[][][]> raws) {
+        List<Vec2d.Real[]> reconstruct(List<ImageWrapper[][]> raws) {
             while (running || fitting) {
                 sleeping(50); //wait for fit to finish
             }
@@ -856,8 +715,14 @@ public class LiveStack {
             Thread putThread = new Thread(new Runnable() {          //define new thread that pushes images from list "recons" to reconstruction
                 public void run() {
                     for (int i = 0; i < nrImgs; i++) {
-                        short[][][] raw = raws.get(i);          //extract next images for reconstruction
-                        System.out.println(raw==null);
+                        ImageWrapper[][] iwArray = raws.get(i);          //extract next images for reconstruction
+                        short[][][] raw = new short[header.channels.length][header.nrPhases * header.nrAngles][];
+                        for (int c = 0; c < header.channels.length; c++) {
+                            for (int pa = 0; pa < header.nrPhases * header.nrAngles; pa++) {
+                                raw[c][pa] = iwArray[c][pa].getPixels();
+                            }
+                        }
+//                        System.out.println(raw==null);
                         checkDimension(raw);
                         try {
                             imgsToReconstruct.put(raw);         //push to reconstruction-queue
@@ -914,8 +779,194 @@ public class LiveStack {
                 sleeping(50);
             }
         }
+    }
+    
+    //andis preperation code prepares reconstruction [channels][p*a][pixels]
+    private List<ImageWrapper[][]> imgsToShortList() {
+        List<List<ImageWrapper>> iwListList = new ArrayList<List<ImageWrapper>>();
+        int outNr = imgs.size();
+        for (int c = 0; c < header.channels.length; c++) {
+            List<ImageWrapper> iwList = new ArrayList<>();
+            for (ImageWrapper iw : imgs) {
+                if (iw.pos1() == header.channels[c].exWavelength) {
+                    iwList.add(iw);
+                }
+            }
+            iwList.sort(null);
+            iwList = removeSyncs(iwList);
+            iwListList.add(iwList);
+            outNr = Math.min(outNr, iwList.size());
+        }
+
+        List<ImageWrapper[][]> raws = new ArrayList<>();
+
+        for (int out = 0; out < outNr; out++) {
+            ImageWrapper[][] raw = new ImageWrapper[header.channels.length][header.nrPhases * header.nrAngles];
+            for (int c = 0; c < header.channels.length; c++) {
+                for (int i = 0; i < header.nrPhases * header.nrAngles; i++) {
+                    raw[c][i] = iwListList.get(c).get(i);
+//                  raw[c][i] = blue.remove(0).getPixels();
+                }
+            }
+            raws.add(raw);
+        }
+        System.out.println("--------------------------- raws.size() = " + raws.size());
+        return raws;
 
     }
+
+    private List<ImageWrapper> removeSyncs(List<ImageWrapper> inList) {
+        System.out.println("This shall create a list for each channel, without the syncframes and broken SIM-sequences");
+
+        List<ImageWrapper> outList = new ArrayList<>();
+        for (int i = 0; i < inList.size(); i++) {
+            outList.add(inList.get(i));
+        }
+
+        int nImgs = outList.size();
+        System.out.println("    nImgs = " + nImgs);
+        int syncFrameDelay = header.syncDelayTime;
+        int syncFrameDelayJitter = 14;
+        int nrSimFrames = header.nrAngles * header.nrPhases * header.syncFreq;
+        int nrSyncFrames = 2;
+
+        //Get timestamps
+        long[] timestamps = new long[nImgs];
+        for (int i = 0; i < nImgs; i++) {
+            timestamps[i] = outList.get(i).timeCamera();
+        }
+
+        //find syncframes
+        System.out.println("    finding syncframes");
+        List<Integer> syncFrameList = findSyncFrames(outList, timestamps, syncFrameDelay, syncFrameDelayJitter);
+
+        //search for sim-sequencs between syncframes, add broken sets to remove-list
+        List<Integer> nonSimFrameList = findNonSimFrames(outList, syncFrameList, nrSimFrames, nrSyncFrames);
+
+        //add syncframes to remove-list
+        if (nrSyncFrames > 0) {
+            for (int i = 0; i < syncFrameList.size(); i++) {
+                int s = syncFrameList.get(i);
+                for (int j = nrSyncFrames - 1; j >= 0; j--) {
+                    if (s - j >= 0) {
+                        nonSimFrameList.add(s - j);
+                    }
+                }
+            }
+        }
+
+        //remove syncframes and known broken sim-sequences
+        System.out.println("    removing syncframes and known broken sim-sequences: ");
+        reduce(outList, nonSimFrameList);
+        nImgs = outList.size();
+
+        //check sequence numbers
+        System.out.println("    checking sequence-numbers of remaining images");
+        List<Integer> brokenSeqNrList = checkSeqNr(outList, nrSimFrames);
+        System.out.println("    removing newly found broken sim-sequences");
+
+        outList = reduce(outList, brokenSeqNrList);
+
+        System.out.println("prepraring done");
+        return outList;
+    }
+
+    private List<Integer> findNonSimFrames(List<ImageWrapper> iwList, List<Integer> syncFrameList, int nrSimFrames, int nrSyncFrames) {
+        System.out.print("        finding non-SIM-frames... ");
+        Collections.sort(syncFrameList);
+        int nImgs = iwList.size();
+        List<Integer> nonSimFrameList = new ArrayList<>();
+        nonSimFrameList.add(0);
+        if (((syncFrameList.get(0) + 1 - nrSyncFrames) % nrSimFrames) != 0) {
+            nonSimFrameList.set(0, nonSimFrameList.get(0) + 1);
+            for (int s = 0; s <= syncFrameList.get(0) - nrSyncFrames; s++) {
+                nonSimFrameList.add(s);
+                System.out.print(s + ",");
+            }
+        }
+        if (syncFrameList.size() > 1) {
+            for (int i = 1; i < syncFrameList.size(); i++) {
+                if (((syncFrameList.get(i) - syncFrameList.get(i - 1) - nrSyncFrames) % nrSimFrames) != 0) {
+                    nonSimFrameList.set(0, nonSimFrameList.get(0) + 1);
+                    for (int s = syncFrameList.get(i - 1) + 1; s <= syncFrameList.get(i) - nrSyncFrames; s++) {
+                        nonSimFrameList.add(s);
+                        System.out.print(s + ",");
+                    }
+                }
+            }
+        }
+        int lastSyncFrame = syncFrameList.get(syncFrameList.size() - 1);
+        if (((nImgs - 1 - lastSyncFrame) % nrSimFrames) != 0) {
+            nonSimFrameList.set(0, nonSimFrameList.get(0) + 1);
+            for (int s = lastSyncFrame + 1; s < nImgs; s++) {
+                nonSimFrameList.add(s);
+                System.out.print(s + ",");
+            }
+        }
+        System.out.println("found " + (nonSimFrameList.size() - 1) + " frames in " + nonSimFrameList.get(0) + " incomplete sequences");
+        nonSimFrameList.remove(0);
+        return nonSimFrameList;
+    }
+
+    private List<Integer> findSyncFrames(List<ImageWrapper> iwList, long[] timestamps, int syncFrameDelay, int syncFrameDelayJitter) {
+        int nImgs = iwList.size();
+        List<Integer> syncFrameList = new ArrayList<>();
+        System.out.print("        found Syncframes: ");
+        for (int i = 1; i < nImgs; i++) {
+            if (Math.abs(timestamps[i] - timestamps[i - 1] - syncFrameDelay) < syncFrameDelayJitter) {
+                syncFrameList.add(i);
+                System.out.print(i + ", ");
+            }
+        }
+        System.out.println("done");
+        if (syncFrameList.size() == 0) {
+            System.err.println("        No Sync-frames found");
+            System.exit(1);
+        }
+        return syncFrameList;
+    }
+
+    private List<Integer> checkSeqNr(List<ImageWrapper> iwList, int nrSimFrames) {
+        System.out.println("        checking seq Nrs. Mismatches: ");
+        int nImgs = iwList.size();
+        List<Integer> brokenSeqNrList = new ArrayList<>();
+        for (int i = 0; i < nImgs / nrSimFrames; i += nrSimFrames) {
+            boolean broken = FALSE;
+            for (int j = 0; j < nrSimFrames - 1; j++) {
+                if ((iwList.get(i + j).seqNr() - iwList.get(i + j + 1).seqNr()) != -1) {
+                    broken = TRUE;
+                    System.out.println((i + j) + "=" + iwList.get(i + j).seqNr() + "x" + iwList.get(i + j + 1).seqNr() + "=" + (i + j + 1) + ", ");
+                }
+            }
+            if (broken) {
+                for (int j = 0; j < nrSimFrames; j++) {
+                    brokenSeqNrList.add(i + j);
+                }
+            }
+        }
+        System.out.println("done");
+        return brokenSeqNrList;
+    }
+
+    private List<ImageWrapper> reduce(List<ImageWrapper> inList, List<Integer> brokenSeqNr) {
+        if (brokenSeqNr.size() == 0) {
+            System.out.println("        nothing to remove");
+            return inList;
+        }
+        List<ImageWrapper> outList = new ArrayList<>();
+        for (int i = 0; i < inList.size(); i++) {
+            outList.add(inList.get(i));
+        }
+        Collections.sort(brokenSeqNr);
+        System.out.print("        removing " + brokenSeqNr.size() + " frames from list with length " + outList.size() + ": ");
+        for (int i = brokenSeqNr.size() - 1; i >= 0; i--) {
+//            System.out.print(red.get(i)+", ");
+            outList.remove((int) brokenSeqNr.get(i));
+        }
+        System.out.println("done, new length: " + outList.size());
+        return outList;
+    }
+    
 
     /**
      * for testing
@@ -923,49 +974,42 @@ public class LiveStack {
      * @param args
      * @throws Exception
      */
-    private void rec() {
-        System.out.println("This is being created by Mario");
-    }
-
-    private void save() {
-        System.out.println("This would save the images as whatever");
-    }
-
     public static void main(String[] args) throws Exception {
 
-//        LiveStack ls = open("G:\\vigor-tmp\\fastSIM_20171020T125206.livestack");
-//        ls.testRecon();
+        LiveStack ls = open("G:\\vigor-tmp\\U2OS_liveact_MTDR_20170210T102109.livesim");
+        System.out.println("opened");
+        ls.saveAsTiff("G:\\vigor-tmp\\U2OS_liveact_MTDR_20170210T102109.livesim.tif");
+        System.out.println("saved");
 
-        
+        /*
         if (args.length != 24) {
-        System.out.println("# Usage:\n\tFolder\n\tOmero-identifier\n\tsimFramesPerSync\n\tsyncFrameInterval\n\tminAvrIntensity\n\tsyncFrameDelay\n\tsyncFrameDelayJitter\n\tnrBands\n\tnrDirs\n\tnrPhases\n\temWavelen\n\totfNA\n\totfCorr\n\tpxSize\n\twienParam\n\tattStrength\n\tattFWHM\n\tbkg(to subtract)\n\tdoAttenuation\n\totfBeforeShift\n\tfindPeak\n\trefinePhase\n\tnrSlices\n\toverwriteFiles");
-        return;
+            System.out.println("# Usage:\n\tFolder\n\tOmero-identifier\n\tsimFramesPerSync\n\tsyncFrameInterval\n\tminAvrIntensity\n\tsyncFrameDelay\n\tsyncFrameDelayJitter\n\tnrBands\n\tnrDirs\n\tnrPhases\n\temWavelen\n\totfNA\n\totfCorr\n\tpxSize\n\twienParam\n\tattStrength\n\tattFWHM\n\tbkg(to subtract)\n\tdoAttenuation\n\totfBeforeShift\n\tfindPeak\n\trefinePhase\n\tnrSlices\n\toverwriteFiles");
+            return;
         }
         File dir = new File(args[0]);
         File[] foundFiles;
         try {
-        foundFiles = dir.listFiles(new FilenameFilter() {
-        public boolean accept(File dir, String name) {
-        return name.startsWith(args[1]) && name.endsWith(".livestack");
-        }
-        });
-        System.out.println("found " + foundFiles.length + " files");
-        if (foundFiles.length < 1) {
-        System.out.println("No files found?");
-        return;
-        }
-        System.out.println(foundFiles[0]);
-        System.out.println("opening " + foundFiles[0].getAbsolutePath());
-        System.out.println("done");
-        LiveStack ls = open(foundFiles[0].getAbsolutePath());
-        ls.recon();
-        }
-        catch (NullPointerException e) {
-        System.err.println("File not found_");
-        e.printStackTrace();
-        System.exit(1);
+            foundFiles = dir.listFiles(new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return name.startsWith(args[1]) && name.endsWith(".livestack");
+                }
+            });
+            System.out.println("found " + foundFiles.length + " files");
+            if (foundFiles.length < 1) {
+                System.out.println("No files found?");
+                return;
+            }
+            System.out.println(foundFiles[0]);
+            System.out.println("opening " + foundFiles[0].getAbsolutePath());
+            System.out.println("done");
+            LiveStack ls = open(foundFiles[0].getAbsolutePath());
+            new ij.io.FileSaver(new ImagePlus("test", new ij.process.FloatProcessor(1024, 1024, ls.reconstruct().get(0)[0].vectorData()))).saveAsTiff(foundFiles[0].getAbsolutePath() + ".tiff");
+        } catch (NullPointerException e) {
+            System.err.println("File not found_");
+            e.printStackTrace();
+            System.exit(1);
         }
         System.exit(0);
-         
+         */
     }
 }
