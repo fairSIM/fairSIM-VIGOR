@@ -244,13 +244,13 @@ public class LiveStack {
         /**
          * class for channel metadata
          */
-        public static class Channel implements Serializable {
+        public static class Channel<T> implements Serializable {
 
             static final long serialVersionUID = 1;
             final String detector, dye;
             final float illuminationPower; // in mW
             final int exWavelength; // wavelength of excitation in nm
-            final ReconstructionRunner.PerChannel perChannel;
+            final T perChannel;
 
             /**
              *
@@ -259,7 +259,7 @@ public class LiveStack {
              * @param illuminationPower in mW
              * @param exWavelength in nm
              */
-            public Channel(String detector, String dye, float illuminationPower, int exWavelength, ReconstructionRunner.PerChannel perChannel) {
+            public Channel(String detector, String dye, float illuminationPower, int exWavelength, T perChannel) {
 
                 this.detector = detector;
                 this.dye = dye;
@@ -664,26 +664,28 @@ public class LiveStack {
         if (vf == null) {
             Tool.error("LiveStack: No VectorFactory loaded", true);
         }
+        vf = Vec.getBasicVectorFactory();
         return vf;
     }
 
-    List<Vec2d.Real[]> reconstruct() {
+    List<Vec2d.Real[]> reconstructSim() {
         ReconstructionRunner.PerChannel[] pc = new ReconstructionRunner.PerChannel[header.channels.length];
         for (int i = 0; i < header.channels.length; i++) {      //get reconstructionParameters from LiveReconstruction
-            pc[i] = header.channels[i].perChannel;
+            if (header.channels[i].perChannel instanceof ReconstructionRunner.PerChannel) pc[i] = (ReconstructionRunner.PerChannel) header.channels[i].perChannel;
+            else throw new RuntimeException("need instance of ReconstructionRunner.PerChannel");
         }
-        Reconstructor recRunner = new Reconstructor(1, header.width, header.nrPhases, header.nrAngles, header.nrBands, pc);
-        return recRunner.reconstruct(imgsToShortList());
+        SimReconstructor recRunner = new SimReconstructor(1, header.width, header.nrPhases, header.nrAngles, header.nrBands, pc);
+        List<ImageWrapper[][]> shorts = imgsToShortList();
+        System.out.println("prep finished");
+        return recRunner.reconstruct(shorts);
     }
 
-    private class Reconstructor extends ReconstructionRunner {
-
+    private class SimReconstructor extends ReconstructionRunner {
         
-
         boolean running = false;
         boolean fitting = false;
 
-        Reconstructor(int nrThreads, int imageSizeInPixels, int nrPhases, int nrDirs, int nrBands, PerChannel[] perChannels) {
+        SimReconstructor(int nrThreads, int imageSizeInPixels, int nrPhases, int nrDirs, int nrBands, PerChannel[] perChannels) {
             super(getVectorFactory(), nrThreads, imageSizeInPixels, nrPhases, nrDirs, nrBands, perChannels);
         }
 
@@ -714,15 +716,15 @@ public class LiveStack {
             running = true;
             Thread putThread = new Thread(new Runnable() {          //define new thread that pushes images from list "recons" to reconstruction
                 public void run() {
+                    short[][][] raw = new short[header.channels.length][header.nrPhases * header.nrAngles][];
                     for (int i = 0; i < nrImgs; i++) {
                         ImageWrapper[][] iwArray = raws.get(i);          //extract next images for reconstruction
-                        short[][][] raw = new short[header.channels.length][header.nrPhases * header.nrAngles][];
+                        
                         for (int c = 0; c < header.channels.length; c++) {
                             for (int pa = 0; pa < header.nrPhases * header.nrAngles; pa++) {
                                 raw[c][pa] = iwArray[c][pa].getPixels();
                             }
                         }
-//                        System.out.println(raw==null);
                         checkDimension(raw);
                         try {
                             imgsToReconstruct.put(raw);         //push to reconstruction-queue
@@ -737,7 +739,9 @@ public class LiveStack {
                 public void run() {
                     for (int i = 0; i < nrImgs; i++) {
                         try {
+                            //finalRecon.take();
                             recons.add(finalRecon.take());
+                            finalWidefield.take();
                         } catch (InterruptedException ex) {
                             ex.printStackTrace();
                             Tool.error("LiveStack.Reconstructor: interrupted taking img, why?");
@@ -754,6 +758,7 @@ public class LiveStack {
                 ex.printStackTrace();
                 Tool.error("LiveStack.Reconstructor: interrupted joining img, why?");
             }
+            running = false;
             return recons;
         }
 
@@ -976,38 +981,37 @@ public class LiveStack {
      */
     public static void main(String[] args) throws Exception {
 
-        LiveStack ls = open("G:\\vigor-tmp\\U2OS_liveact_MTDR_20170210T102109.livesim");
+        LiveStack ls = open("G:\\vigor-tmp\\setupAcquired.livestack");
         System.out.println("opened");
-        ls.saveAsTiff("G:\\vigor-tmp\\U2OS_liveact_MTDR_20170210T102109.livesim.tif");
-        System.out.println("saved");
-
+        List<Vec2d.Real[]> r = ls.reconstructSim();
+        System.exit(0);
         /*
         if (args.length != 24) {
-            System.out.println("# Usage:\n\tFolder\n\tOmero-identifier\n\tsimFramesPerSync\n\tsyncFrameInterval\n\tminAvrIntensity\n\tsyncFrameDelay\n\tsyncFrameDelayJitter\n\tnrBands\n\tnrDirs\n\tnrPhases\n\temWavelen\n\totfNA\n\totfCorr\n\tpxSize\n\twienParam\n\tattStrength\n\tattFWHM\n\tbkg(to subtract)\n\tdoAttenuation\n\totfBeforeShift\n\tfindPeak\n\trefinePhase\n\tnrSlices\n\toverwriteFiles");
-            return;
+        System.out.println("# Usage:\n\tFolder\n\tOmero-identifier\n\tsimFramesPerSync\n\tsyncFrameInterval\n\tminAvrIntensity\n\tsyncFrameDelay\n\tsyncFrameDelayJitter\n\tnrBands\n\tnrDirs\n\tnrPhases\n\temWavelen\n\totfNA\n\totfCorr\n\tpxSize\n\twienParam\n\tattStrength\n\tattFWHM\n\tbkg(to subtract)\n\tdoAttenuation\n\totfBeforeShift\n\tfindPeak\n\trefinePhase\n\tnrSlices\n\toverwriteFiles");
+        return;
         }
         File dir = new File(args[0]);
         File[] foundFiles;
         try {
-            foundFiles = dir.listFiles(new FilenameFilter() {
-                public boolean accept(File dir, String name) {
-                    return name.startsWith(args[1]) && name.endsWith(".livestack");
-                }
-            });
-            System.out.println("found " + foundFiles.length + " files");
-            if (foundFiles.length < 1) {
-                System.out.println("No files found?");
-                return;
-            }
-            System.out.println(foundFiles[0]);
-            System.out.println("opening " + foundFiles[0].getAbsolutePath());
-            System.out.println("done");
-            LiveStack ls = open(foundFiles[0].getAbsolutePath());
-            new ij.io.FileSaver(new ImagePlus("test", new ij.process.FloatProcessor(1024, 1024, ls.reconstruct().get(0)[0].vectorData()))).saveAsTiff(foundFiles[0].getAbsolutePath() + ".tiff");
+        foundFiles = dir.listFiles(new FilenameFilter() {
+        public boolean accept(File dir, String name) {
+        return name.startsWith(args[1]) && name.endsWith(".livestack");
+        }
+        });
+        System.out.println("found " + foundFiles.length + " files");
+        if (foundFiles.length < 1) {
+        System.out.println("No files found?");
+        return;
+        }
+        System.out.println(foundFiles[0]);
+        System.out.println("opening " + foundFiles[0].getAbsolutePath());
+        System.out.println("done");
+        LiveStack ls = open(foundFiles[0].getAbsolutePath());
+        new ij.io.FileSaver(new ImagePlus("test", new ij.process.FloatProcessor(1024, 1024, ls.reconstruct().get(0)[0].vectorData()))).saveAsTiff(foundFiles[0].getAbsolutePath() + ".tiff");
         } catch (NullPointerException e) {
-            System.err.println("File not found_");
-            e.printStackTrace();
-            System.exit(1);
+        System.err.println("File not found_");
+        e.printStackTrace();
+        System.exit(1);
         }
         System.exit(0);
          */

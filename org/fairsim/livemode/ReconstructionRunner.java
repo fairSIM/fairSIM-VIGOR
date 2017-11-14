@@ -54,7 +54,7 @@ public class ReconstructionRunner {
     private int missedDueToQueueFull;
     final private PerChannel[] channels;
 
-    BlockingQueue<Vec2d.Real[]> finalWidefield;
+    protected BlockingQueue<Vec2d.Real[]> finalWidefield;
     protected BlockingQueue<Vec2d.Real[]> finalRecon;
 
     protected BlockingQueue<Integer> doFilterUpdate = new ArrayBlockingQueue<Integer>(16);
@@ -176,7 +176,7 @@ public class ReconstructionRunner {
         this.avf = avf;
         this.autostart = true;
 
-        this.nrThreads = nrThreads;
+        this.nrThreads = avf instanceof BasicVectors ? 1 : nrThreads; // because jTransforms only a single reconstruction thread
         imgsToReconstruct = new ArrayBlockingQueue<short[][][]>(maxInReconQueue());
         
         rawOutput = 0;
@@ -203,7 +203,7 @@ public class ReconstructionRunner {
         }
 
         // create and start reconstruction threads
-        reconThreads = new ReconstructionThread[nrThreads];
+        reconThreads = new ReconstructionThread[this.nrThreads];
         
         startThreads();
     }
@@ -239,7 +239,7 @@ public class ReconstructionRunner {
     /**
      * Stops all threads of this
      */
-    private void stopThreads() {
+    protected void stopThreads() {
         stopReconThreads = true;
         if (fut != null) {
             fut.interrupt();
