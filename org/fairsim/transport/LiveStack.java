@@ -664,18 +664,17 @@ public class LiveStack {
         if (vf == null) {
             Tool.error("LiveStack: No VectorFactory loaded", true);
         }
-        vf = Vec.getBasicVectorFactory();
         return vf;
     }
 
-    List<Vec2d.Real[]> reconstructSim() {
+    List<float[][]> reconstructSim() {
         ReconstructionRunner.PerChannel[] pc = new ReconstructionRunner.PerChannel[header.channels.length];
         for (int i = 0; i < header.channels.length; i++) {      //get reconstructionParameters from LiveReconstruction
             if (header.channels[i].perChannel instanceof ReconstructionRunner.PerChannel) pc[i] = (ReconstructionRunner.PerChannel) header.channels[i].perChannel;
             else throw new RuntimeException("need instance of ReconstructionRunner.PerChannel");
         }
         SimReconstructor recRunner = new SimReconstructor(1, header.width, header.nrPhases, header.nrAngles, header.nrBands, pc);
-        List<ImageWrapper[][]> shorts = imgsToShortList();
+        List<ImageWrapper[][]> shorts = extractSequences();
         System.out.println("prep finished");
         return recRunner.reconstruct(shorts);
     }
@@ -704,7 +703,7 @@ public class LiveStack {
             }
         }
 
-        List<Vec2d.Real[]> reconstruct(List<ImageWrapper[][]> raws) {
+        List<float[][]> reconstruct(List<ImageWrapper[][]> raws) {
             while (running || fitting) {
                 sleeping(50); //wait for fit to finish
             }
@@ -712,14 +711,13 @@ public class LiveStack {
                 Tool.error("LiveStack.Reconstructor: Queues should be empty");    //check if queues empty
             }
             int nrImgs = raws.size();
-            List<Vec2d.Real[]> recons = new ArrayList<>();
+            List<float[][]> recons = new ArrayList<>();
             running = true;
             Thread putThread = new Thread(new Runnable() {          //define new thread that pushes images from list "recons" to reconstruction
                 public void run() {
-                    short[][][] raw = new short[header.channels.length][header.nrPhases * header.nrAngles][];
                     for (int i = 0; i < nrImgs; i++) {
                         ImageWrapper[][] iwArray = raws.get(i);          //extract next images for reconstruction
-                        
+                        short[][][] raw = new short[header.channels.length][header.nrPhases * header.nrAngles][];
                         for (int c = 0; c < header.channels.length; c++) {
                             for (int pa = 0; pa < header.nrPhases * header.nrAngles; pa++) {
                                 raw[c][pa] = iwArray[c][pa].getPixels();
@@ -739,8 +737,12 @@ public class LiveStack {
                 public void run() {
                     for (int i = 0; i < nrImgs; i++) {
                         try {
-                            //finalRecon.take();
-                            recons.add(finalRecon.take());
+                            Vec2d.Real[] reals = finalRecon.take();
+                            int len = reals.length;
+                            float[][] floats = new float[len][];
+                            for (int c = 0; c < len; c++) {
+                                floats[c] = reals[c].vectorData();
+                            }
                             finalWidefield.take();
                         } catch (InterruptedException ex) {
                             ex.printStackTrace();
@@ -787,7 +789,7 @@ public class LiveStack {
     }
     
     //andis preperation code prepares reconstruction [channels][p*a][pixels]
-    private List<ImageWrapper[][]> imgsToShortList() {
+    private List<ImageWrapper[][]> extractSequences() {
         List<List<ImageWrapper>> iwListList = new ArrayList<List<ImageWrapper>>();
         int outNr = imgs.size();
         for (int c = 0; c < header.channels.length; c++) {
@@ -983,7 +985,7 @@ public class LiveStack {
 
         LiveStack ls = open("G:\\vigor-tmp\\setupAcquired.livestack");
         System.out.println("opened");
-        List<Vec2d.Real[]> r = ls.reconstructSim();
+        List<float[][]> r = ls.reconstructSim();
         System.exit(0);
         /*
         if (args.length != 24) {
