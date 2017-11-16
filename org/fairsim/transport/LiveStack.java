@@ -24,7 +24,9 @@ import ij.plugin.HyperStackConverter;
 import ij.process.ShortProcessor;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -803,6 +805,7 @@ public class LiveStack {
             iwList = removeSyncs(iwList);
             iwListList.add(iwList);
             outNr = Math.min(outNr, iwList.size());
+            System.out.println("outNr = "+outNr);
         }
 
         List<ImageWrapper[][]> raws = new ArrayList<>();
@@ -865,16 +868,16 @@ public class LiveStack {
         //remove syncframes and known broken sim-sequences
         System.out.println("    removing syncframes and known broken sim-sequences: ");
         reduce(outList, nonSimFrameList);
+        System.out.println("    outList.size = "+outList.size());
         nImgs = outList.size();
 
         //check sequence numbers
         System.out.println("    checking sequence-numbers of remaining images");
         List<Integer> brokenSeqNrList = checkSeqNr(outList, nrSimFrames);
         System.out.println("    removing newly found broken sim-sequences");
+        reduce(outList, brokenSeqNrList);
+        System.out.println("    outList.size = "+outList.size());
 
-        outList = reduce(outList, brokenSeqNrList);
-
-        System.out.println("prepraring done");
         return outList;
     }
 
@@ -934,7 +937,7 @@ public class LiveStack {
     }
 
     private List<Integer> checkSeqNr(List<ImageWrapper> iwList, int nrSimFrames) {
-        System.out.println("        checking seq Nrs. Mismatches: ");
+        System.out.print("        checking seq Nrs. Mismatches: ");
         int nImgs = iwList.size();
         List<Integer> brokenSeqNrList = new ArrayList<>();
         for (int i = 0; i < nImgs / nrSimFrames; i += nrSimFrames) {
@@ -951,27 +954,27 @@ public class LiveStack {
                 }
             }
         }
-        System.out.println("done");
+//        System.out.println("done");
         return brokenSeqNrList;
     }
 
-    private List<ImageWrapper> reduce(List<ImageWrapper> inList, List<Integer> brokenSeqNr) {
+    private /*List<ImageWrapper>*/void reduce(List<ImageWrapper> inList, List<Integer> brokenSeqNr) {
         if (brokenSeqNr.size() == 0) {
             System.out.println("        nothing to remove");
-            return inList;
+//            return inList;
         }
-        List<ImageWrapper> outList = new ArrayList<>();
-        for (int i = 0; i < inList.size(); i++) {
-            outList.add(inList.get(i));
-        }
+//        List<ImageWrapper> outList = new ArrayList<>();
+//        for (int i = 0; i < inList.size(); i++) {
+//            outList.add(inList.get(i));
+//        }
         Collections.sort(brokenSeqNr);
-        System.out.print("        removing " + brokenSeqNr.size() + " frames from list with length " + outList.size() + ": ");
+        System.out.print("        removing " + brokenSeqNr.size() + " frames from list with length " + inList.size() + ": ");
         for (int i = brokenSeqNr.size() - 1; i >= 0; i--) {
 //            System.out.print(red.get(i)+", ");
-            outList.remove((int) brokenSeqNr.get(i));
+            inList.remove((int) brokenSeqNr.get(i));
         }
-        System.out.println("done, new length: " + outList.size());
-        return outList;
+        System.out.println("done, new length: " + inList.size());
+//        return outList;
     }
     
 
@@ -983,39 +986,40 @@ public class LiveStack {
      */
     public static void main(String[] args) throws Exception {
 
-        LiveStack ls = open("G:\\vigor-tmp\\setupAcquired.livestack");
-        System.out.println("opened");
-        List<float[][]> r = ls.reconstructSim();
-        System.exit(0);
-        /*
-        if (args.length != 24) {
-        System.out.println("# Usage:\n\tFolder\n\tOmero-identifier\n\tsimFramesPerSync\n\tsyncFrameInterval\n\tminAvrIntensity\n\tsyncFrameDelay\n\tsyncFrameDelayJitter\n\tnrBands\n\tnrDirs\n\tnrPhases\n\temWavelen\n\totfNA\n\totfCorr\n\tpxSize\n\twienParam\n\tattStrength\n\tattFWHM\n\tbkg(to subtract)\n\tdoAttenuation\n\totfBeforeShift\n\tfindPeak\n\trefinePhase\n\tnrSlices\n\toverwriteFiles");
-        return;
+//        LiveStack ls = open("G:\\vigor-tmp\\setupAcquired.livestack");
+//        System.out.println("opened");
+//        List<float[][]> r = ls.reconstructSim();
+//        System.exit(0);
+        
+        if (args.length != 2) {
+            System.out.println("# Usage:\n\tFolder\n\tOmero-identifier");
+            return;
         }
         File dir = new File(args[0]);
         File[] foundFiles;
         try {
-        foundFiles = dir.listFiles(new FilenameFilter() {
-        public boolean accept(File dir, String name) {
-        return name.startsWith(args[1]) && name.endsWith(".livestack");
-        }
-        });
-        System.out.println("found " + foundFiles.length + " files");
-        if (foundFiles.length < 1) {
-        System.out.println("No files found?");
-        return;
-        }
-        System.out.println(foundFiles[0]);
-        System.out.println("opening " + foundFiles[0].getAbsolutePath());
-        System.out.println("done");
-        LiveStack ls = open(foundFiles[0].getAbsolutePath());
-        new ij.io.FileSaver(new ImagePlus("test", new ij.process.FloatProcessor(1024, 1024, ls.reconstruct().get(0)[0].vectorData()))).saveAsTiff(foundFiles[0].getAbsolutePath() + ".tiff");
+            foundFiles = dir.listFiles(new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return name.startsWith(args[1]) && name.endsWith(".livestack");
+                }
+            });
+            System.out.println("found " + foundFiles.length + " files");
+            if (foundFiles.length < 1) {
+                System.out.println("No files found?");
+                return;
+            }
+            System.out.println(foundFiles[0]);
+            System.out.println("opening " + foundFiles[0].getAbsolutePath());
+            System.out.println("done");
+            LiveStack ls = open(foundFiles[0].getAbsolutePath());
+            ls.reconstructSim();
+//            new ij.io.FileSaver(new ImagePlus("test", new ij.process.FloatProcessor(1024, 1024, ls.reconstruct().get(0)[0].vectorData()))).saveAsTiff(foundFiles[0].getAbsolutePath() + ".tiff");
         } catch (NullPointerException e) {
-        System.err.println("File not found_");
-        e.printStackTrace();
-        System.exit(1);
+            System.err.println("File not found_");
+            e.printStackTrace();
+            System.exit(1);
         }
         System.exit(0);
-         */
+         
     }
 }
