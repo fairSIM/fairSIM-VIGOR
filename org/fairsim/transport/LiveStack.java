@@ -24,9 +24,7 @@ import ij.plugin.HyperStackConverter;
 import ij.process.ShortProcessor;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -986,40 +984,10 @@ public class LiveStack {
      */
     public static void main(String[] args) throws Exception {
 
-//        LiveStack ls = open("G:\\vigor-tmp\\setupAcquired.livestack");
-//        System.out.println("opened");
-//        List<float[][]> r = ls.reconstructSim();
-//        System.exit(0);
-        
-        if (args.length != 2) {
-            System.out.println("# Usage:\n\tFolder\n\tOmero-identifier");
-            return;
-        }
-        File dir = new File(args[0]);
-        File[] foundFiles;
-        try {
-            foundFiles = dir.listFiles(new FilenameFilter() {
-                public boolean accept(File dir, String name) {
-                    return name.startsWith(args[1]) && name.endsWith(".livestack");
-                }
-            });
-            System.out.println("found " + foundFiles.length + " files");
-            if (foundFiles.length < 1) {
-                System.out.println("No files found?");
-                return;
-            }
-            System.out.println(foundFiles[0]);
-            System.out.println("opening " + foundFiles[0].getAbsolutePath());
-            System.out.println("done");
-            LiveStack ls = open(foundFiles[0].getAbsolutePath());
-            ls.reconstructSim();
-//            new ij.io.FileSaver(new ImagePlus("test", new ij.process.FloatProcessor(1024, 1024, ls.reconstruct().get(0)[0].vectorData()))).saveAsTiff(foundFiles[0].getAbsolutePath() + ".tiff");
-        } catch (NullPointerException e) {
-            System.err.println("File not found_");
-            e.printStackTrace();
-            System.exit(1);
-        }
+        LiveStack ls = open("G:\\vigor-tmp\\setupAcquired.livestack");
+        System.out.println("opened");
+        List<float[][]> r = ls.reconstructSim();
         System.exit(0);
-         
+
     }
 }
