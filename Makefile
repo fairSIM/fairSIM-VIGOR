@@ -27,7 +27,7 @@ all:
 accelarator:
 	$(JC) $(JFLAGS) org/fairsim/accel/*.java
 fiji:
-	$(JC) $(JFLAGS) org/fairsim/fiji/*.java
+	$(JC) $(JFLAGS) org/fairsim/fiji/*.java org/livesimextractor/fiji/*.java
 linalg:
 	$(JC) $(JFLAGS) org/fairsim/linalg/*.java
 livemode:
@@ -54,7 +54,7 @@ git-version :
 jar:	git-version jtransforms-fork
 	$(JAR) -cfm fairSIM_plugin_$(shell head -c 10 org/fairsim/git-version.txt).jar \
 	Manifest.txt \
-	org/fairsim/*/*.class  org/fairsim/extern/*/*.class \
+	org/fairsim/*/*.class org/livesimextractor/*/*.class org/fairsim/extern/*/*.class \
 	org/fairsim/git-version.txt \
 	org/fairsim/resources/* \
 	plugins.config 
