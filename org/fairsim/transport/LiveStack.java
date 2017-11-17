@@ -25,6 +25,7 @@ import ij.process.ShortProcessor;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -975,7 +976,49 @@ public class LiveStack {
 //        return outList;
     }
     
+    /**
+     * creates livesim-style metadata from a livestack/livesim-TIFF file
+     *
+     * @param inFile livestack/sim.tif input file
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public static void liveStackToMeta(String inFile) throws IOException, InterruptedException {
+        LiveStack ls = open(inFile);
 
+        for (int c = 0; c < ls.header.channels.length; c++) {
+            int count = 0;
+            int lambda = ls.header.channels[c].exWavelength;
+            String outFile = inFile.replaceAll(".livesim.tif$|.livestack.tif$", ".livesim_ch" + lambda + ".meta.txt");
+            FileWriter metaFile = new FileWriter(outFile);
+            metaFile.write("# idxAl idxCh timeCam timeCapture avr seqNr HeaderBASE64\n");
+            for (int allCount = 0; allCount < ls.imgs.size(); allCount++) {
+                ImageWrapper iw = ls.imgs.get(allCount);
+                if (iw.pos1() == ls.header.channels[c].exWavelength) {
+
+                    //compute average
+                    short[] pxls = iw.getPixels();
+                    double avr = 0;
+                    for (short p : pxls) {
+                        avr += p;
+                    }
+                    avr /= pxls.length;
+
+                    // BASE64 encode the header
+                    byte[] header = new byte[128];
+                    System.arraycopy(iw.refBuffer(), 0, header, 0, 128);
+                    String headerBase64 = Base64.encode(header);
+
+                    String metaLine = String.format(" %8d  %8d  %18d %18d %8.2f %16d %s \n", allCount+1, count+1, iw.timeCamera(), iw.timeCapture(), avr, iw.seqNr(), headerBase64);
+                    metaFile.write(metaLine);
+                    count++;
+                }
+            }
+            metaFile.close();
+        }
+    }
+    
+    
     /**
      * for testing
      *

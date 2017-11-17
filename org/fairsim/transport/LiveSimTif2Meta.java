@@ -26,7 +26,7 @@ import static org.fairsim.transport.LiveStack.open;
  *
  * @author m.lachetta
  */
-public class LiveStackConverter {
+public class LiveSimTif2Meta {
 
     /**
      * @param args the command line arguments
@@ -40,7 +40,7 @@ public class LiveStackConverter {
         File[] foundFiles;
         foundFiles = dir.listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {
-                return name.startsWith(args[1]) && (name.endsWith(".livestack") || name.endsWith(".livesim"));
+                return name.startsWith(args[1]) && (name.endsWith(".livestack.tif") || name.endsWith(".livesim.tif"));
             }
         });
         System.out.println("found " + foundFiles.length + " files");
@@ -52,14 +52,13 @@ public class LiveStackConverter {
             System.out.println("Filename ambiguous");
             System.exit(2);
         }
-        System.out.println(foundFiles[0]);
-        System.out.println("opening " + foundFiles[0].getAbsolutePath());
+        String filename = foundFiles[0].getAbsolutePath();
+        System.out.println("opening " + filename);
         System.out.println("done");
-        LiveStack ls = open(foundFiles[0].getAbsolutePath());
-        String outFile = foundFiles[0].getAbsolutePath() + ".tif";
-        LiveStack.FileSaverThread fst= ls.saveAsTiff(outFile);
-        fst.join();
-        System.out.println("saved as: " + outFile);
+        LiveStack ls;
+        ls = open(filename);
+        ls.liveStackToMeta(filename);
+        System.out.println("done");
     }
     
 }
