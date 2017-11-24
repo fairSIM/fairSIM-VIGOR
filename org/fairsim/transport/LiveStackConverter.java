@@ -20,7 +20,6 @@ package org.fairsim.transport;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import static org.fairsim.transport.LiveStack.open;
 
 /**
  *
@@ -31,9 +30,9 @@ public class LiveStackConverter {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws IOException {
         if (args.length != 2) {
-            System.out.println("# Usage:\n\tFolder\n\tname");
+            System.out.println("# Usage:\n\tFolder\n\tOmero-identifier");
             System.exit(1);
         }
         File dir = new File(args[0]);
@@ -48,17 +47,12 @@ public class LiveStackConverter {
             System.out.println("No files found?");
             System.exit(2);
         }
-        if (foundFiles.length < 1) {
-            System.out.println("Filename ambiguous");
-            System.exit(2);
-        }
         System.out.println(foundFiles[0]);
         System.out.println("opening " + foundFiles[0].getAbsolutePath());
         System.out.println("done");
-        LiveStack ls = open(foundFiles[0].getAbsolutePath());
+        LiveStack ls = new LiveStack(foundFiles[0].getAbsolutePath());
         String outFile = foundFiles[0].getAbsolutePath() + ".tif";
-        LiveStack.FileSaverThread fst= ls.saveAsTiff(outFile);
-        fst.join();
+        ls.saveAsTiff(outFile);
         System.out.println("saved as: " + outFile);
     }
     
