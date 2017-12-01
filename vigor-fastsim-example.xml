@@ -25,7 +25,7 @@
 <ParamFolder type="string">~/VIGOR-parameters/</ParamFolder>
 <RegistrationFolder type="string">~/VIGOR-parameters/registration/</RegistrationFolder>
 
-<SyncMode type="int">1</SyncMode>
+<SyncMode type="int">0</SyncMode>
 <SyncFrameFreq type="int">1</SyncFrameFreq>
 <SyncFrameAvr type="int">7000</SyncFrameAvr>
 <SyncFrameDelay type="int">5000</SyncFrameDelay>
@@ -130,7 +130,7 @@
 <offset type="decimal">140</offset>
 <ChannelNumber type="int">647</ChannelNumber>
 <CamType type="string">pco.edge 4.2</CamType>
-<CamAdress type="string">orca-pc</CamAdress>
+<CamAdress type="string">d3gpu01</CamAdress>
 
 <sim-param>
 <nr-angles type="int"> 3 </nr-angles>

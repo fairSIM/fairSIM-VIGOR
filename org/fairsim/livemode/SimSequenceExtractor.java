@@ -368,12 +368,11 @@ public class SimSequenceExtractor {
 
             final int nrRawPerSeq = reconRunner.nrDirs * reconRunner.nrPhases;
             setSeqNr();
+            long lastTimeStamp = 0;
+            long curTimeStamp = 0;
             while (true) {
 
                 try {
-
-                    long lastTimeStamp = 0;
-                    long curTimeStamp = 0;
                     int counter = 0;
                     // first, loop over incoming images until we find a sync frame
                     while (true) {
@@ -440,7 +439,7 @@ public class SimSequenceExtractor {
                             simPxls[i] = iw.getPixels();
                             if(syncMode == 0) {
                                 curTimeStamp = iw.timeCamera();
-                                if (k != 0 && isTimeDelaySync(curTimeStamp, lastTimeStamp))
+                                if (!(k == 0 && i == 0) && isTimeDelaySync(curTimeStamp, lastTimeStamp))
                                     Tool.trace("Mode 0 timeStamp sync frame found in sequence " + iw.seqNr());
                                 lastTimeStamp = curTimeStamp;
                             } else if (syncMode == 1) {

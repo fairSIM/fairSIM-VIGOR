@@ -17,54 +17,44 @@
  */
 package org.fairsim.transport;
 
+import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
 import ij.io.Opener;
 import ij.plugin.HyperStackConverter;
+import ij.plugin.PlugIn;
 import ij.process.ShortProcessor;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.io.Serializable;
-import static java.lang.Boolean.FALSE;
-import static java.lang.Boolean.TRUE;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
-import loci.common.services.DependencyException;
-import loci.common.services.ServiceException;
-import org.fairsim.utils.Base64;
-import org.fairsim.utils.Tool;
-/*
- * import loci.common.services.ServiceFactory;
- * import loci.formats.ImageReader;
- * import loci.formats.meta.IMetadata;
- * import loci.formats.services.OMEXMLService;
- * import loci.formats.out.OMETiffWriter;
- */
-
-import loci.common.services.ServiceFactory;
-import loci.formats.out.OMETiffWriter;
-import loci.formats.*;
-import loci.formats.meta.IMetadata;
-import loci.formats.services.OMEXMLService;
-import ome.xml.model.enums.*;
-
-import ome.units.UNITS;
-import ome.units.quantity.*;
+import java.util.Comparator;
+import java.util.Scanner;
+import javax.swing.JFileChooser;
 import org.fairsim.accel.AccelVectorFactory;
 import org.fairsim.linalg.Vec;
 import org.fairsim.linalg.Vec2d;
 import org.fairsim.linalg.VectorFactory;
 import org.fairsim.livemode.ReconstructionRunner;
 import org.fairsim.sim_algorithm.SimParam;
+import org.fairsim.utils.Base64;
+import org.fairsim.utils.Tool;
+import org.fairsim.utils.VirtualSubStack;
+import loci.common.services.DependencyException;
+import loci.common.services.ServiceException;
+import loci.common.services.ServiceFactory;
+import loci.formats.out.OMETiffWriter;
+import loci.formats.*;
+import loci.formats.meta.IMetadata;
+import loci.formats.services.OMEXMLService;
+import ome.xml.model.enums.*;
+import ome.units.UNITS;
+import ome.units.quantity.*;
+
 
 /**
  * Class for converting .livestack data to other formats like tiff
@@ -75,13 +65,13 @@ public class LiveStack {
 
     private final Header header;
     private final List<ImageWrapper> imgs;
-    
+
     /*
     private LiveStack(Header header, List<ImageWrapper> imgs) {
         this.header = header;
         this.imgs = imgs;
     }
-    */
+     */
     /**
      * private constructor for livestack InputStreams use the open method for
      * creating a livestack instance
@@ -97,7 +87,7 @@ public class LiveStack {
             imgs.add(readImageWrapper(is));
         }
     }
-    */
+     */
     /**
      * private constructor for ImagePlus instance of ImageJ
      *
@@ -119,7 +109,7 @@ public class LiveStack {
             imgs.add(iw);
         }
     }
-    
+
     public LiveStack(String file) throws IOException {
         if (file.endsWith(".livestack")) {
             FileInputStream fis = new FileInputStream(file);
@@ -153,12 +143,16 @@ public class LiveStack {
                     "fastSIM objective", width, height, 1, 3, 3, 2, -1, -1,
                     -1, -1, 79, 79, 79, channels);
             //ls = new LiveStack(h, iws);
+        } else if (file.endsWith(".livestack.tif")) {
+            ImagePlus ip = new Opener().openImage(file);
+            LiveStack temp = new LiveStack(ip);
+            header = temp.header;
+            imgs = temp.imgs;
         } else {
             throw new IOException("unknown file extension, expect .livestack or .livesim");
         }
     }
-    
-    
+
     /**
      * creates a livestack instance from a *.livestack or a *.livestack.* file
      *
@@ -220,7 +214,7 @@ public class LiveStack {
         }
         return ls;
     }
-    */
+     */
     /**
      * class for the livestack metadata
      */
@@ -415,14 +409,13 @@ public class LiveStack {
 //    public FileSaverThread saveAsTiff(String outFile, int... channels) {
 //        return saveAsTiff(outFile, false, channels);
 //    }
-    
     public ImagePlus saveAsTiff(String outFile, boolean dump) {
         ImagePlus ip = convertToImagePlus(dump);
         ij.io.FileSaver fs = new ij.io.FileSaver(ip);
         fs.saveAsTiffStack(outFile);
         return ip;
     }
-    
+
     public ImagePlus saveAsTiff(String outFile) {
         return saveAsTiff(outFile, false);
     }
@@ -441,11 +434,10 @@ public class LiveStack {
 //        FileSaverThread fst = ls.saveAsTiff(outFile, channels);
 //        fst.join();
 //    }
-    
     private int orderImagesAsStack() {
         int nrCh = header.channels.length;
         int[] chCounter = new int[nrCh];
-        
+
         // fill missing frames with blackscreens
         for (ImageWrapper iw : imgs) {
             for (int c = 0; c < nrCh; c++) {
@@ -455,7 +447,11 @@ public class LiveStack {
             }
         }
         int imgsPerChannel = 0;
-        for (int c : chCounter) if (c > imgsPerChannel) imgsPerChannel = c;
+        for (int c : chCounter) {
+            if (c > imgsPerChannel) {
+                imgsPerChannel = c;
+            }
+        }
         for (int c = 0; c < nrCh; c++) {
             if (chCounter[c] < imgsPerChannel) {
                 int diff = imgsPerChannel - chCounter[c];
@@ -468,11 +464,11 @@ public class LiveStack {
                 }
             }
         }
-        
+
         imgs.sort(null);
         return imgsPerChannel;
     }
-    
+
     public ImagePlus convertToImagePlus(boolean dump) {
         orderImagesAsStack();
         ImageStack is = new ImageStack(header.width, header.height);
@@ -498,7 +494,7 @@ public class LiveStack {
                 }
             }
         }
-        
+
         ImagePlus ip = new ImagePlus("", is);
         ip = HyperStackConverter.toHyperStack(ip, nrCh, header.zSlices, is.getSize() / nrCh / header.zSlices, "xyztc", "color");
         String info = "";
@@ -530,7 +526,7 @@ public class LiveStack {
         ip.setProperty("Info", info);
         return ip;
     }
-    
+
     @Deprecated
     public int saveOmeTiff(String outFile, boolean dump) throws DependencyException, ServiceException, FormatException, IOException {
         int imgsPerChannel = orderImagesAsStack();
@@ -828,7 +824,6 @@ public class LiveStack {
 //            }
 //        }
 //    }
-
     private VectorFactory getVectorFactory() {
         VectorFactory vf = null;
         String hd = System.getProperty("user.home") + "/documents/";
@@ -864,8 +859,11 @@ public class LiveStack {
     public List<float[][]> reconstructSim() {
         ReconstructionRunner.PerChannel[] pc = new ReconstructionRunner.PerChannel[header.channels.length];
         for (int i = 0; i < header.channels.length; i++) {      //get reconstructionParameters from LiveReconstruction
-            if (header.channels[i].perChannel instanceof ReconstructionRunner.PerChannel) pc[i] = (ReconstructionRunner.PerChannel) header.channels[i].perChannel;
-            else throw new RuntimeException("need instance of ReconstructionRunner.PerChannel");
+            if (header.channels[i].perChannel instanceof ReconstructionRunner.PerChannel) {
+                pc[i] = (ReconstructionRunner.PerChannel) header.channels[i].perChannel;
+            } else {
+                throw new RuntimeException("need instance of ReconstructionRunner.PerChannel");
+            }
         }
         SimReconstructor recRunner = new SimReconstructor(1, header.width, header.nrPhases, header.nrAngles, header.nrBands, pc);
         List<ImageWrapper[][]> shorts = extractSequences();
@@ -873,7 +871,7 @@ public class LiveStack {
     }
 
     private class SimReconstructor extends ReconstructionRunner {
-        
+
         boolean running = false;
         boolean fitting = false;
 
@@ -980,7 +978,7 @@ public class LiveStack {
             }
         }
     }
-    
+
     //andis preperation code prepares reconstruction [channels][p*a][pixels]
     private List<ImageWrapper[][]> extractSequences() {
         List<List<ImageWrapper>> iwListList = new ArrayList<List<ImageWrapper>>();
@@ -996,7 +994,7 @@ public class LiveStack {
             iwList = removeSyncs(iwList);
             iwListList.add(iwList);
             outNr = Math.min(outNr, iwList.size());
-            System.out.println("outNr = "+outNr);
+            System.out.println("outNr = " + outNr);
         }
 
         List<ImageWrapper[][]> raws = new ArrayList<>();
@@ -1059,7 +1057,7 @@ public class LiveStack {
         //remove syncframes and known broken sim-sequences
         System.out.println("    removing syncframes and known broken sim-sequences: ");
         reduce(outList, nonSimFrameList);
-        System.out.println("    outList.size = "+outList.size());
+        System.out.println("    outList.size = " + outList.size());
         nImgs = outList.size();
 
         //check sequence numbers
@@ -1067,7 +1065,7 @@ public class LiveStack {
         List<Integer> brokenSeqNrList = checkSeqNr(outList, nrSimFrames);
         System.out.println("    removing newly found broken sim-sequences");
         reduce(outList, brokenSeqNrList);
-        System.out.println("    outList.size = "+outList.size());
+        System.out.println("    outList.size = " + outList.size());
 
         return outList;
     }
@@ -1132,10 +1130,10 @@ public class LiveStack {
         int nImgs = iwList.size();
         List<Integer> brokenSeqNrList = new ArrayList<>();
         for (int i = 0; i < nImgs / nrSimFrames; i += nrSimFrames) {
-            boolean broken = FALSE;
+            boolean broken = false;
             for (int j = 0; j < nrSimFrames - 1; j++) {
                 if ((iwList.get(i + j).seqNr() - iwList.get(i + j + 1).seqNr()) != -1) {
-                    broken = TRUE;
+                    broken = true;
                     System.out.println((i + j) + "=" + iwList.get(i + j).seqNr() + "x" + iwList.get(i + j + 1).seqNr() + "=" + (i + j + 1) + ", ");
                 }
             }
@@ -1149,7 +1147,7 @@ public class LiveStack {
         return brokenSeqNrList;
     }
 
-    private /*List<ImageWrapper>*/void reduce(List<ImageWrapper> inList, List<Integer> brokenSeqNr) {
+    private /*List<ImageWrapper>*/ void reduce(List<ImageWrapper> inList, List<Integer> brokenSeqNr) {
         if (brokenSeqNr.size() == 0) {
             System.out.println("        nothing to remove");
 //            return inList;
@@ -1167,7 +1165,399 @@ public class LiveStack {
         System.out.println("done, new length: " + inList.size());
 //        return outList;
     }
-    
+
+    /**
+     * creates livesim-style metadata from a livestack/livesim-TIFF file
+     *
+     * @param inFile livestack/sim.tif input file
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void toMeta(String outFile_woExtension) throws IOException {
+
+        for (int c = 0; c < header.channels.length; c++) {
+            int count = 0;
+            int lambda = header.channels[c].exWavelength;
+            String outFile = outFile_woExtension + lambda + ".meta.txt";
+            System.out.print("writing to " + outFile + " ...");
+            FileWriter metaFile = new FileWriter(outFile);
+            metaFile.write("# idxAl idxCh timeCam timeCapture avr seqNr HeaderBASE64\n");
+            for (int allCount = 0; allCount < imgs.size(); allCount++) {
+                ImageWrapper iw = imgs.get(allCount);
+                if (iw.pos1() == header.channels[c].exWavelength) {
+
+                    //compute average
+                    short[] pxls = iw.getPixels();
+                    double avr = 0;
+                    for (short p : pxls) {
+                        avr += p;
+                    }
+                    avr /= pxls.length;
+
+                    // BASE64 encode the header
+                    byte[] header = new byte[128];
+                    System.arraycopy(iw.refBuffer(), 0, header, 0, 128);
+                    String headerBase64 = Base64.encode(header);
+
+                    String metaLine = String.format(" %8d  %8d  %18d %18d %8.2f %16d %s \n", allCount + 1, count + 1, iw.timeCamera(), iw.timeCapture(), avr, iw.seqNr(), headerBase64);
+                    metaFile.write(metaLine);
+                    count++;
+                }
+            }
+            metaFile.close();
+            System.out.print("...done");
+        }
+    }
+
+    /**
+     * ImageJ plugin to extract SIM sequences from stacks and their meta-data
+     * file. Generate the meta-data file (and tiff stack, if required) first
+     * with LiveSimConverter.
+     */
+    public static class LiveSimExtractor_ImageJplugin implements PlugIn {
+        // parameters for sequence extraction
+
+        static int minAvrIntensity;
+        static long/*[] */ syncFrameDelay/* = {5000, 12995}*/;
+        static long syncFrameDelayJitter;
+        static int syncFrameInterval;
+        static int simFramesPerSync;
+
+        static int nrBands, nrDirs, nrPhases, nrSlices;
+        static double emWavelen, otfNA, otfCorr, pxSize, wienParam, attStrength, attFWHM, bkg;
+        static boolean doAttenuation, otfBeforeShift, findPeak, refinePhase, override;
+
+        // List of meta-data
+        List<MetaData> allFrameList = new ArrayList<MetaData>();
+        List<MetaData> syncFrameList = new ArrayList<MetaData>();
+        List<MetaData> cleanSyncFrameList = new ArrayList<MetaData>();
+
+        // Meta data of each frame
+        class MetaData {
+
+            int frameNr;
+            int sortNr;
+            long timeCam;
+            long timeCap;
+            double average;
+            boolean isTimeSyncFrame = false;
+            boolean isAvrSyncFrame = false;
+
+            @Override
+            public String toString() {
+                return String.format(" i: %d tCam: %d tCap %d avr: %f",
+                        frameNr, timeCam, timeCap, average);
+            }
+        }
+
+        class metadataComparator implements Comparator<MetaData> {
+
+            @Override
+            public int compare(MetaData md1, MetaData md2) {
+                if (md1.timeCam > md2.timeCam) {
+                    return 1;
+                } else if (md1.timeCam < md2.timeCam) {
+                    return -1;
+                }
+                return 0;
+            }
+        }
+
+        // read in the meta-data file
+        void readFile(File f) {
+
+            Tool.trace("Reading file: " + f);
+
+            try {
+                String line;
+                BufferedReader br = new BufferedReader(new FileReader(f));
+                int lcount = 0;
+
+                while ((line = br.readLine()) != null) {
+
+                    lcount++;
+
+                    // skip comments
+                    if (line.charAt(0) == '#') {
+                        continue;
+                    }
+
+                    // parse line
+                    MetaData md = new MetaData();
+
+                    try {
+                        Scanner sc = new Scanner(line);
+                        sc.useLocale(java.util.Locale.US);
+                        sc.nextInt();                   // idxAll
+                        md.frameNr = sc.nextInt();  // idxChannel
+                        md.timeCam = sc.nextLong();
+                        md.timeCap = sc.nextLong();
+                        md.average = sc.nextDouble();
+
+                        allFrameList.add(md);
+                    } catch (java.util.InputMismatchException e) {
+                        IJ.log("Input mismatch at line " + lcount);
+                        IJ.log("line is: " + line);
+                        throw (e);
+                    }
+
+                }
+            } catch (FileNotFoundException e) {
+                System.out.println("File not found: " + e);
+                e.printStackTrace();
+                return;
+            } catch (IOException e) {
+                System.out.println("IO error: " + e);
+                return;
+            }
+
+            IJ.log("# read meta-data: " + allFrameList.size());
+        }
+
+        // extract the SIM sequence
+        void findSyncFrames() {
+            Collections.sort(allFrameList, new metadataComparator());
+            for (int i = 0; i < allFrameList.size(); i++) {
+                allFrameList.get(i).sortNr = i;
+            }
+
+            syncFrameList.clear();
+            long lastTimeStamp = 0;
+            int countTimeFrame = 0, countAvrFrame = 0;
+
+            // find sync frames
+            for (int i = 0; i < allFrameList.size() - 10; i++) {
+
+                MetaData md = allFrameList.get(i);
+
+                long curTimeStamp = md.timeCam;
+
+                // version 1 (for camera with precise time-stamp, like PCO)
+                if (Math.abs(curTimeStamp - lastTimeStamp - syncFrameDelay) < syncFrameDelayJitter) {
+                    md.isTimeSyncFrame = true;
+                    syncFrameList.add(md);
+                    IJ.log("found Syncframe " + i + " " + (curTimeStamp - lastTimeStamp - syncFrameDelay));
+                    countTimeFrame++;
+                }
+
+                lastTimeStamp = curTimeStamp;
+
+                // version 2 (for camera w/o timestamp, bright LED):
+                if (md.average > minAvrIntensity) {
+                    i++;
+                    md = allFrameList.get(i);
+                    md.isAvrSyncFrame = true;
+                    syncFrameList.add(md);
+                    countAvrFrame++;
+                }
+            }
+
+            IJ.log("# sync frames (time): " + countTimeFrame);
+            IJ.log("# sync frames (avr) : " + countAvrFrame);
+        }
+
+        // clean up sync frames
+        void cleanSyncFrameList() {
+
+            if (syncFrameList.size() < 1) {
+                System.err.println("Sync frame list empty");
+                System.exit(-1);
+            }
+
+            if (syncFrameList.size() == 1) {
+                MetaData syncFrame = syncFrameList.get(0);
+                cleanSyncFrameList.add(syncFrame);
+                for (int i = simFramesPerSync; i < allFrameList.size() - simFramesPerSync; i += simFramesPerSync) {
+                    MetaData fakeFrame = allFrameList.get(syncFrame.sortNr + i);
+                    cleanSyncFrameList.add(fakeFrame);
+                }
+            } else {
+                int discardedFrameCount = 0;
+
+                MetaData lastEntry = syncFrameList.get(0);
+                for (int i = 1; i < syncFrameList.size(); i++) {
+                    MetaData curEntry = syncFrameList.get(i);
+                    int distance = curEntry.sortNr - lastEntry.sortNr;
+
+                    if (distance % syncFrameInterval == 0) {
+                        cleanSyncFrameList.add(lastEntry);
+                    } else {
+                        discardedFrameCount++;
+                    }
+
+                    lastEntry = curEntry;
+                    IJ.log("# Found " + cleanSyncFrameList.size() + " frames, discarded " + discardedFrameCount + " frames");
+                }
+            }
+
+            if (cleanSyncFrameList.size() < 1) {
+                System.err.println("No SIM sequences found");
+                System.exit(-1);
+            }
+        }
+
+        void printReorderStats() {
+            int reorderedSeqs = 0;
+            MetaData Entry = cleanSyncFrameList.get(0);
+            for (int i = 1; i < cleanSyncFrameList.size(); i++) {
+                MetaData nextEntry = cleanSyncFrameList.get(i);
+                int startFrame = allFrameList.get(Entry.sortNr).frameNr;
+                IJ.log("startFrame " + startFrame);
+                boolean reordered = false;
+                for (int j = 0; j < syncFrameInterval; j++) {
+                    if (allFrameList.get(Entry.sortNr + j).frameNr != startFrame + j) {
+                        IJ.log("resorted image " + j + " in sequence from " + allFrameList.get(Entry.sortNr + j).frameNr + " to " + (startFrame + j));
+                        reordered = true;
+                    }
+                }
+                if (reordered) {
+                    reorderedSeqs += 1;
+                }
+                Entry = nextEntry;
+            }
+            IJ.log("reordered " + reorderedSeqs + "/" + cleanSyncFrameList.size());
+        }
+
+        // check the sync frame distance
+        void printSyncFrameHistogramm() {
+
+            int[] histogramm = new int[40];
+            int lastPos = -1;
+
+            for (MetaData i : syncFrameList) {
+                int dist = i.frameNr - lastPos;
+                if (lastPos != -1) {
+                    histogramm[Math.min(dist, histogramm.length - 1)]++;
+                }
+                lastPos = i.frameNr;
+            }
+
+            String log = "";
+
+            for (int i = 0; i < histogramm.length; i++) {
+                if (histogramm[i] > 0) {
+                    log += (String.format(" %2d : ", i));
+                    for (int j = 0; j < Math.min(histogramm[i], 50); j++) {
+                        log += ((j < 48) ? ("*") : ("++"));
+                    }
+                    log += "\n";
+                }
+            }
+
+            IJ.log(log);
+        }
+
+        public void gui() {
+            GenericDialog gd = new GenericDialog("Syncframe detection");
+
+            String[] syncmethods = {"delay (PCO)", "brightness (hamamatsu)"};
+            gd.addRadioButtonGroup("sync method", syncmethods, 2, 1, "delay (PCO)");
+
+            String[] illuminationtime = {"1", "2", "5", "10"};
+            gd.addRadioButtonGroup("illumination time", illuminationtime, 3, 1, "1");
+
+            String[] brightness = {"5600", "10000", "18000", "32000", "56000"};
+            gd.addRadioButtonGroup("syncframe brightness", brightness, 5, 1, "10000");
+
+            gd.showDialog();
+            if (gd.wasCanceled()) {
+                System.out.println("gd canceled");
+                return;
+            }
+
+            // ---- get parameters ----
+            final String syncmethod = gd.getNextRadioButton();
+            if (syncmethod.equals("delay (PCO)")) {
+
+                final String tmp = gd.getNextRadioButton();
+                switch (tmp) {
+                    case "1": {
+                        syncFrameDelay = 5000;
+                        syncFrameDelayJitter = 16;
+                        syncFrameInterval = 20;
+                        simFramesPerSync = 18;
+                        break;
+                    }
+                    case "2": {
+                        syncFrameDelay = 5000;
+                        syncFrameDelayJitter = 16;
+                        syncFrameInterval = 20;
+                        simFramesPerSync = 18;
+                        break;
+                    }
+                    case "5": {
+                        syncFrameDelay = 8000;
+                        syncFrameDelayJitter = 16;
+                        syncFrameInterval = 11;
+                        simFramesPerSync = 9;
+                        break;
+                    }
+                    case "10": {
+                        syncFrameDelay = 12995;
+                        syncFrameDelayJitter = 16;
+                        syncFrameInterval = 11;
+                        simFramesPerSync = 9;
+                        break;
+                    }
+                }
+                gd.getNextNumber();
+                minAvrIntensity = 70000;
+                System.out.println("test");
+            } else if (syncmethod.equals("brightness (hamamatsu)")) {
+                syncFrameDelay = 99999999;
+                gd.getNextNumber();
+                minAvrIntensity = (int) gd.getNextNumber();;
+            } else {
+                System.out.println("OOPS");
+            }
+        }
+
+        @Override
+        public void run(String arg) {
+
+            if (WindowManager.getCurrentImage() == null) {
+                IJ.error("No image selected");
+                return;
+            }
+
+            ImageStack is = WindowManager.getCurrentImage().getStack();
+
+            JFileChooser metaFs = new JFileChooser();
+            int metaFsRet = metaFs.showOpenDialog(null);
+
+            if (metaFsRet != JFileChooser.APPROVE_OPTION) {
+                return;
+            }
+            IJ.log("Opening meta file: " + metaFs.getSelectedFile());
+            // parse the meta-data file
+            readFile(metaFs.getSelectedFile());
+
+            // gui
+            gui();
+            // find the sync frames
+            findSyncFrames();
+            // print the histogram
+            printSyncFrameHistogramm();
+            // clean up frame list
+            cleanSyncFrameList();
+            printReorderStats();
+            // convert list
+            List<Integer> simPositions = new ArrayList<Integer>();
+            for (MetaData md : cleanSyncFrameList) {
+                for (int i = 1; i <= simFramesPerSync; i++) {
+                    simPositions.add(allFrameList.get(md.sortNr + i).frameNr);
+                }
+            }
+
+            // create VirtualSubStack
+            ImageStack vss = new VirtualSubStack(is, simPositions);
+
+            // Display stack
+            ImagePlus displ = new ImagePlus("SIM substack", vss);
+            displ.show();
+
+        }
+    }
 
     /**
      * for testing
@@ -1176,11 +1566,60 @@ public class LiveStack {
      * @throws Exception
      */
     public static void main(String[] args) throws Exception {
+        boolean tif = false;
+        boolean meta = false;
+        String outFile;
+        
+        if(args.length>1)
+        {
+            if(args[0].compareToIgnoreCase("livesim2tif") == 0) tif = true;
+            if(args[0].compareToIgnoreCase("livesim2meta") == 0) meta = true;
+            if(args[0].compareToIgnoreCase("livesim2both") == 0) {
+                tif = true;
+                meta= true;
+            }
+        }
+        if (args.length != 3 || (tif == false && meta == false)) {
+            System.out.println("# Usage: Operation  Input-file  Output-folder");
+            System.out.println("# where \"Operation\" is \"livesim2tif\", \"livesim2meta\" or \"livesim2both");
+            System.exit(2);
+        }
+        
+        File file = new File(args[1]);
+        File outdir = new File(args[2]);
 
-        LiveStack ls = new LiveStack("G:\\vigor-tmp\\setupAcquired.livestack");
-        System.out.println("opened");
-        List<float[][]> r = ls.reconstructSim();
-        System.exit(0);
+        if (!file.exists()) {
+            System.out.println("File doesn't exist: " + file);
+            System.exit(3);
+        }
+        if (!file.canRead()) {
+            System.out.println("Cant' read file: " + file);
+            System.exit(4);
+        }
+        if (!outdir.exists()) {
+            System.out.println("Directory doesn't exist: " + outdir);
+            System.exit(5);
+        }
+        if (!outdir.canWrite()) {
+            System.out.println("can't write to directory " + outdir);
+            System.exit(6);
+        }
 
+        System.out.print("\topening " + file.getAbsolutePath() + " ...");
+        LiveStack ls = new LiveStack(file.getAbsolutePath());
+        System.out.println("...done");
+        if(tif) {
+            outFile = outdir.getAbsolutePath() + file.getName() + ".tif";
+            System.out.print("\tsaving tif as: " + outFile + " ...");
+            ls.saveAsTiff(outFile);
+            System.out.println("...done");
+        }
+        if(meta) {
+            outFile = outdir.getAbsolutePath() + file.getName().replaceAll(".livesim$ || .livestack$","");
+            System.out.print("\tsaving meta-file as: " + outFile + " ...");
+            ls.toMeta(outFile);
+            System.out.println("...done");
+        }
+        System.out.println("done");
     }
 }
