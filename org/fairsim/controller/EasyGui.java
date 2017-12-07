@@ -791,8 +791,11 @@ public class EasyGui extends javax.swing.JPanel {
 
     private void itListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_itListMouseClicked
         try {
-            setRo();
-            enableControlPanel();
+            int roIdx = itList.getSelectedIndex();
+                if (roIdx >= 0) {
+                setRo(roIdx);
+                enableControlPanel();
+            }
         } catch (EasyGuiException ex) {
             setStatus(ex.getMessage(), true);
         }
@@ -1189,26 +1192,28 @@ public class EasyGui extends javax.swing.JPanel {
      * @throws org.fairsim.controller.EasyGui.EasyGuiException if anything went
      * wrong
      */
-    private void setRo() throws EasyGuiException {
+    private void setRo(int roIdx) throws EasyGuiException {
         for (Cam c : camGuis) {
             c.stopMovie();
         }
-        RunningOrder ro = possibleRos.get(itList.getSelectedIndex());
-        controller.setRo(ro);
-        for (Cam c : camGuis) {
-            c.setRo(ro);
+        if (roIdx >= 0) {
+            RunningOrder ro = possibleRos.get(roIdx);
+            controller.setRo(ro);
+            for (Cam c : camGuis) {
+                c.setRo(ro);
+            }
+            advanced.setRo(ro);
+            sync.setRo(ro);
+            for (Cam c : camGuis) {
+                c.startMovie();
+            }
+            String illuminationUnit = ro.illuminationTime.substring(ro.illuminationTime.length()-2, ro.illuminationTime.length());
+            illuminationTime = Integer.parseInt(ro.illuminationTime.substring(0, ro.illuminationTime.length()-2));
+            if (illuminationUnit.equalsIgnoreCase("ms")) illuminationTime *= 1000;
+            syncDelayTime = ro.syncDelay;
+            syncFreq = ro.syncFreq;
+            setStatus("Running order: " + ro.device + "_" + ro.name);
         }
-        advanced.setRo(ro);
-        sync.setRo(ro);
-        for (Cam c : camGuis) {
-            c.startMovie();
-        }
-        String illuminationUnit = ro.illuminationTime.substring(ro.illuminationTime.length()-2, ro.illuminationTime.length());
-        illuminationTime = Integer.parseInt(ro.illuminationTime.substring(0, ro.illuminationTime.length()-2));
-        if (illuminationUnit.equalsIgnoreCase("ms")) illuminationTime *= 1000;
-        syncDelayTime = ro.syncDelay;
-        syncFreq = ro.syncFreq;
-        setStatus("Running order: " + ro.device + "_" + ro.name);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -42,7 +42,7 @@ public abstract class AbstractClient extends Thread {
     protected Socket serverSocket;
     protected Scanner in;
     protected PrintWriter out;
-    protected static final int TIMEOUT = 1000;
+    protected static final int TIMEOUT = 2500;
     private String output;
     protected final BlockingQueue<Instruction> instructions;
 

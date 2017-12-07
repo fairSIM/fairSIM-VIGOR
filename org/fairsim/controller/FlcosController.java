@@ -101,7 +101,14 @@ public class FlcosController implements SlmController {
     public String deactivateRo() {
         //out.println("Try to deactivate current running order");
         try {
-            R4CommLib.rpcRoDeactivate();
+            while (R4CommLib.rpcRoGetActivationState() != 82) {
+                R4CommLib.rpcRoDeactivate();
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException ex) {
+                    Tool.error("Error: buildDownConnection interrupted, why?");
+                }
+            }
             gui.showText("Deactivated current running order");
             return "Current running order got deactivated";
         } catch (AbstractException ex) {
