@@ -1609,14 +1609,14 @@ public class LiveStack {
         LiveStack ls = new LiveStack(file.getAbsolutePath());
         System.out.println("...done");
         if(tif) {
-            outFile = outdir.getAbsolutePath() + file.getName() + ".tif";
-            System.out.print("\tsaving tif as: " + outFile + " ...");
+            outFile = outdir.getAbsolutePath() + file.separator + file.getName() + ".tif";
+            System.out.println("\tsaving tif as: " + outFile + " ...");
             ls.saveAsTiff(outFile);
             System.out.println("...done");
         }
         if(meta) {
-            outFile = outdir.getAbsolutePath() + file.getName().replaceAll(".livesim$ || .livestack$","");
-            System.out.print("\tsaving meta-file as: " + outFile + " ...");
+            outFile = outdir.getAbsolutePath() + file.separator + file.getName().replaceAll(".livesim$ || .livestack$","");
+            System.out.println("\tsaving meta-file as: " + outFile + " ...");
             ls.toMeta(outFile);
             System.out.println("...done");
         }
