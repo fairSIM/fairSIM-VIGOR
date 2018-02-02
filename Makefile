@@ -1,9 +1,9 @@
 #
 # fairSIM make file
 #
-# To work, either 'javac8' has to point to a java 
+# To work, either 'javac' has to point to a java 
 # compiler (vers. 1.8), or change the line below to
-# 'javac' instead of 'javac8'
+# 'javac' instead of 'javac'
 
 JC = javac
 JAR = jar
@@ -22,7 +22,7 @@ RM = rm -vf
 .PHONY:	all org/fairsim/git-version.txt
 
 all:	
-	$(JC) $(JFLAGS) org/fairsim/*/*.java 
+	$(JC) $(JFLAGS) org/fairsim/*/*.java org/livesimextractor/fiji/*.java
 
 accelarator:
 	$(JC) $(JFLAGS) org/fairsim/accel/*.java
@@ -58,7 +58,8 @@ jar:	git-version jtransforms-fork
 	org/fairsim/extern/*/*.class \
 	org/fairsim/git-version.txt \
 	org/fairsim/resources/* \
-	plugins.config 
+	plugins.config \
+	org/livesimextractor/*/*.class 
 
 jar-wo-extern: git-version
 	$(JAR) -cfm fairSIM_woJTransforms_plugin_$(shell head -c 10 org/fairsim/git-version.txt).jar \
@@ -90,6 +91,7 @@ clean : clean-jtransforms
 	$(RM) fairSIM_*.jar fairSIM_*.tar.bz2
 	$(RM) org/fairsim/*/*.class org/fairsim/git-version.txt
 	$(RM) org/fairsim/extern/*/*.class
+	$(RM) org/livesimextractor/*/*.class
 	$(RM) -r doc/*
 	$(RM) -r target
 
