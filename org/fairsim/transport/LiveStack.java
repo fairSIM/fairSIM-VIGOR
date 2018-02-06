@@ -854,7 +854,7 @@ public class LiveStack {
         return vf;
     }
 
-    @Deprecated
+//    @Deprecated
     public List<float[][]> reconstructSim() {
         ReconstructionRunner.PerChannel[] pc = new ReconstructionRunner.PerChannel[header.channels.length];
         for (int i = 0; i < header.channels.length; i++) {      //get reconstructionParameters from LiveReconstruction
@@ -980,20 +980,32 @@ public class LiveStack {
 
     //andis preperation code prepares reconstruction [channels][p*a][pixels]
     private List<ImageWrapper[][]> extractSequences() {
+        System.out.println("SYNCDELAY TIME IS " + header.syncDelayTime);
         List<List<ImageWrapper>> iwListList = new ArrayList<>();
         int outNr = imgs.size();
+        System.out.println("header.channels.length == " + header.channels.length);
+        if(header.channels.length == 0 ) {
+            System.exit(10);
+        }
+        System.out.print("channels:");
         for (Header.Channel channel : header.channels) {
+            System.out.print(" " + channel.exWavelength);
+        }
+        System.out.println("");
+        for (Header.Channel channel : header.channels) {
+            System.out.print("Channel " + channel.exWavelength);
             List<ImageWrapper> iwList = new ArrayList<>();
             for (ImageWrapper iw : imgs) {
                 if (iw.pos1() == channel.exWavelength) {
                     iwList.add(iw);
                 }
             }
+            System.out.println(" Length " + iwList.size());
             iwList.sort(null);
             iwList = removeSyncs(iwList);
             iwListList.add(iwList);
             outNr = Math.min(outNr, iwList.size());
-            System.out.println("outNr = " + outNr);
+            System.out.println("\toutNr = " + outNr);
         }
 
         List<ImageWrapper[][]> raws = new ArrayList<>();
@@ -1109,9 +1121,13 @@ public class LiveStack {
     private List<Integer> findSyncFrames(List<ImageWrapper> iwList, long[] timestamps, int syncFrameDelay, int syncFrameDelayJitter) {
         int nImgs = iwList.size();
         List<Integer> syncFrameList = new ArrayList<>();
-        System.out.print("\t\tfound Syncframes: ");
         for (int i = 1; i < nImgs; i++) {
-            if (Math.abs(timestamps[i] - timestamps[i - 1] - syncFrameDelay) < syncFrameDelayJitter) {
+            System.out.println("delay "+ (Math.abs(timestamps[i] - timestamps[i - 1])));
+        }
+        System.out.print("\t\tfound Syncframes: ");
+        syncFrameList.add(0);
+        for (int i = 1; i < nImgs; i++) {
+            if (timestamps[i] - timestamps[i - 1] > syncFrameDelay) {
                 syncFrameList.add(i);
                 System.out.print(i + ", ");
             }
@@ -1238,9 +1254,9 @@ public class LiveStack {
             } else if ((tif || meta) && args.length != 3) {
                 System.out.println("# where \"Operation\" is \"livesim2tif\", \"livesim2meta\" or \"livesim2both");
             }
-            System.out.println("# Reconstruction usage: reconstruct Input-file  Output-folder Option1 Option1 Option3");
-            System.out.println("# more text");
-            System.exit(2);
+//            System.out.println("# Reconstruction usage: reconstruct Input-file  Output-folder Option1 Option1 Option3");
+//            System.out.println("# more text");
+//            System.exit(2);
         }
 
         File file = new File(args[1]);
@@ -1267,7 +1283,10 @@ public class LiveStack {
         LiveStack ls = new LiveStack(file.getAbsolutePath());
         System.out.println(" done");
         if (rec) {
-            //REC
+            outFile = outdir.getAbsolutePath() + File.separator + file.getName() + ".rec.tif";
+            System.out.println("\treconstructing ...");
+            ls.reconstructSim();
+            System.out.println("\tdone\n");
         } else {
             System.out.print("Extracting ");
             if (tif) {
@@ -1294,5 +1313,6 @@ public class LiveStack {
             }
         }
         System.out.println("done\n");
+        System.exit(0);
     }
 }
