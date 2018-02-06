@@ -132,15 +132,15 @@ public class FairSimGUI {
 
 	final Tiles.LComboBox<Integer> nrBands = 
 	    new Tiles.LComboBox<Integer>("beams", new Integer [] {2,3});
-	nrBands.box.setSelectedItem(3);
+	nrBands.box.setSelectedItem(2);
 	
 	final Tiles.LComboBox<Integer> nrDir = 
 	    new Tiles.LComboBox<Integer>("angles", new Integer [] {1,2,3,4,5,6,7});
 	nrDir.box.setSelectedItem(3);
 	
 	final Tiles.LComboBox<Integer> nrPha = 
-	    new Tiles.LComboBox<Integer>("phases", pha3Band );
-	nrPha.box.setSelectedItem(5);
+	    new Tiles.LComboBox<Integer>("phases", pha2Band );
+	nrPha.box.setSelectedItem(3);
 
 
 	p3.setLayout(new BoxLayout(p3, BoxLayout.PAGE_AXIS));

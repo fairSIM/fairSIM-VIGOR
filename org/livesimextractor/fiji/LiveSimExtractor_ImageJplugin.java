@@ -45,9 +45,7 @@ import org.fairsim.utils.VirtualSubStack;
 public class LiveSimExtractor_ImageJplugin implements PlugIn {
     // parameters for sequence extraction
 
-    static int minAvrIntensity;
-    static long/*[] */ syncFrameDelay/* = {5000, 12995}*/;
-    static int simFrames;
+    static int simFrames = 9;
 
     static int nrBands, nrDirs, nrPhases, nrSlices;
     static double emWavelen, otfNA, otfCorr, pxSize, wienParam, attStrength, attFWHM, bkg;
@@ -157,13 +155,15 @@ public class LiveSimExtractor_ImageJplugin implements PlugIn {
             long curTimeStamp = md.timeCam;
 
             // version 1 (for camera with precise time-stamp, like PCO)
-            if (curTimeStamp - lastTimeStamp - syncFrameDelay > 0) {
+            if (    (Math.abs(curTimeStamp - lastTimeStamp - 5000) < 16) ||
+                    (Math.abs(curTimeStamp - lastTimeStamp - 12995) < 16) ||
+                    (curTimeStamp - lastTimeStamp > 50000)  ) {
                 md.isTimeSyncFrame = true;
                 syncFrameList.add(md);
                 IJ.log("found Syncframe " + i + " " + (curTimeStamp - lastTimeStamp));
                 countTimeFrame++;
             }
-
+            else IJ.log("Not a Syncframe: " + i + " " + (curTimeStamp - lastTimeStamp));
             lastTimeStamp = curTimeStamp;
         }
 
@@ -175,7 +175,7 @@ public class LiveSimExtractor_ImageJplugin implements PlugIn {
 
         if (syncFrameList.size() < 1) {
             System.err.println("Sync frame list empty");
-            System.exit(-1);
+//            System.exit(-1);
         }
 
         if (syncFrameList.size() == 1) {
@@ -195,6 +195,10 @@ public class LiveSimExtractor_ImageJplugin implements PlugIn {
 
                 if (distance % simFrames == 0) {
                     cleanSyncFrameList.add(lastEntry);
+                    while((distance-=simFrames) >0) {
+                        MetaData mdnext = allFrameList.get(curEntry.sortNr+simFrames);
+                        cleanSyncFrameList.add(mdnext);
+                    }
                 } else {
                     discardedFrameCount++;
                 }
@@ -206,7 +210,7 @@ public class LiveSimExtractor_ImageJplugin implements PlugIn {
 
         if (cleanSyncFrameList.size() < 1) {
             System.err.println("No SIM sequences found");
-            System.exit(-1);
+//            System.exit(-1);
         }
     }
 
@@ -261,39 +265,6 @@ public class LiveSimExtractor_ImageJplugin implements PlugIn {
         IJ.log(log);
     }
 
-    public void gui() {
-        GenericDialog gd = new GenericDialog("Syncframe detection");
-
-        String[] illuminationtime = {"1", "2", "10"};
-        gd.addRadioButtonGroup("illumination time", illuminationtime, 3, 1, "1");
-
-        gd.showDialog();
-        if (gd.wasCanceled()) {
-            System.out.println("gd canceled");
-            return;
-        }
-
-        // ---- get parameters ----
-        final String tmp = gd.getNextRadioButton();
-        switch (tmp) {
-            case "1": {
-                syncFrameDelay = 5000;
-                simFrames = 18;
-                break;
-            }
-            case "2": {
-                syncFrameDelay = 5000;
-                simFrames = 18;
-                break;
-            }
-            case "10": {
-                syncFrameDelay = 12995;
-                simFrames = 9;
-                break;
-            }
-        }
-    }
-
     @Override
     public void run(String arg) {
 
@@ -314,19 +285,26 @@ public class LiveSimExtractor_ImageJplugin implements PlugIn {
         IJ.log("Opening meta file: " + metaFs.getSelectedFile());
         // parse the meta-data file
         readFile(metaFs.getSelectedFile());
-
+        
+//        MetaData md0 = allFrameList.get(0);
+//        for(int i = 1; i<200; i++) {
+//            MetaData md1 = allFrameList.get(i);
+//            IJ.log("frame " + i + " " +  (md1.timeCam - md0.timeCam) );
+//            md0 = allFrameList.get(i);
+//        }
+//        
         // gui
-        gui();
+//        gui();
         // find the sync frames
         findSyncFrames();
         // print the histogram
-        //printSyncFrameHistogramm();
+        printSyncFrameHistogramm();
         // clean up frame list
         cleanSyncFrameList();
         printReorderStats();
 
         // convert list
-        List<Integer> simPositions = new ArrayList<Integer>();
+        List<Integer> simPositions = new ArrayList<>();
         for (MetaData md : cleanSyncFrameList) {
             for (int i = 0; i < simFrames; i++) {
                 //IJ.log("adding "+md.frameNr+" "+(i+1)+": "+(md.frameNr+i+1));

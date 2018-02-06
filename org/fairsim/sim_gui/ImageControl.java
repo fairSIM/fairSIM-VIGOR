@@ -575,7 +575,7 @@ public class ImageControl {
 	totalTimePoints = img.depth / zSlices / simParam.getImgPerZ();
 
 	pxlSet  = ( img.micronsPerPxl > 0);
-	pxlSize = ( pxlSet )?(img.micronsPerPxl*1000):(80);
+	pxlSize = ( pxlSet )?(img.micronsPerPxl*1000):(78);
 	
 	if (( pxlSize < 20 ) ||( pxlSize > 500 )) {
 	    JOptionPane.showMessageDialog(baseframe,
@@ -585,7 +585,7 @@ public class ImageControl {
 		JOptionPane.WARNING_MESSAGE		
 		);
 	    pxlSet  = false;
-	    pxlSize = 80;
+	    pxlSize = 78;
 	}
 	
 	// slice selector - only shown if the image has enough slices
@@ -655,7 +655,7 @@ public class ImageControl {
 	p2.add( pxlSizeSpinner );
 
 	// background subtraction
-	bgrSpinner = new Tiles.LNSpinner( "val" , 50, 0, 5000, 5 ); 
+	bgrSpinner = new Tiles.LNSpinner( "val" , 98, 0, 5000, 5 ); 
 	bgrBox = new Tiles.LComboBox<String>("Use?", "no", "yes");
 	bgrBox.box.setToolTipText("Subtract a constant background value?");
 
