@@ -504,7 +504,8 @@ public class ImageWrapper implements Comparable<ImageWrapper> {
         if (resChannel != 0) return resChannel;
         else return (int) (seqNr - iw.seqNr);
     }
-
+    
+    /*
     static final class Sorter {
 
         private long refSeqNr;
@@ -598,7 +599,7 @@ public class ImageWrapper implements Comparable<ImageWrapper> {
         
 
     }
-
+    */
 
 }
 

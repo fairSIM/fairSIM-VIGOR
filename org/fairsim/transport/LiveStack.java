@@ -32,6 +32,7 @@ import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Scanner;
@@ -108,6 +109,7 @@ public class LiveStack {
             iw.copy(pixels, iw.width(), iw.height());
             imgs.add(iw);
         }
+        sortAndFillupStack();
     }
 
     public LiveStack(String file) throws IOException {
@@ -151,6 +153,7 @@ public class LiveStack {
         } else {
             throw new IOException("unknown file extension, expect .livestack or .livesim");
         }
+        sortAndFillupStack();
     }
 
     /**
@@ -434,7 +437,7 @@ public class LiveStack {
 //        FileSaverThread fst = ls.saveAsTiff(outFile, channels);
 //        fst.join();
 //    }
-    private int orderImagesAsStack() {
+    private int sortAndFillupStack() {
         int nrCh = header.channels.length;
         int[] chCounter = new int[nrCh];
 
@@ -446,15 +449,15 @@ public class LiveStack {
                 }
             }
         }
-        int imgsPerChannel = 0;
+        int iwPerChannel = 0;
         for (int c : chCounter) {
-            if (c > imgsPerChannel) {
-                imgsPerChannel = c;
+            if (c > iwPerChannel) {
+                iwPerChannel = c;
             }
         }
         for (int c = 0; c < nrCh; c++) {
-            if (chCounter[c] < imgsPerChannel) {
-                int diff = imgsPerChannel - chCounter[c];
+            if (chCounter[c] < iwPerChannel) {
+                int diff = iwPerChannel - chCounter[c];
                 for (int i = 0; i < diff; i++) {
                     ImageWrapper iw = new ImageWrapper(header.width, header.height);
                     iw.copy(new short[header.width * header.height], header.width, header.height);
@@ -466,15 +469,29 @@ public class LiveStack {
         }
 
         imgs.sort(null);
-        return imgsPerChannel;
+        return iwPerChannel;
     }
-
-    public ImagePlus convertToImagePlus(boolean dump) {
+    /*
+    private class LabeledImage {
+        ImageWrapper iw;
+        String label;
+        
+        LabeledImage(ImageWrapper pixels, String label) {
+            this.iw = pixels;
+            this.label = label;
+        }
+    }
+    */
+    /**
+     * 
+     */
+    /*
+    private List<LabeledImage> getLabeledImages() {
         orderImagesAsStack();
-        ImageStack is = new ImageStack(header.width, header.height);
         int nrCh = header.channels.length;
+        List<LabeledImage> labeledImgs = new ArrayList<>();
         for (int imgCounter = 0; imgCounter < imgs.size(); imgCounter++) {
-            ImageWrapper iw = dump ? imgs.remove(0) : imgs.get(imgCounter);
+            ImageWrapper iw = imgs.get(imgCounter);
             for (int c = 0; c < nrCh; c++) {
                 if (iw.pos1() == header.channels[c].exWavelength) {
                     short[] pixels = iw.getPixels();
@@ -489,12 +506,67 @@ public class LiveStack {
                             + " avr: " + avr
                             + " seqNr " + iw.seqNr()
                             + " header: " + iw.encodeHeader();
-                    ShortProcessor sp = new ShortProcessor(iw.width(), iw.height(), pixels, null);
+                    LabeledImage li = new LabeledImage(iw, sliceLabel);
+                    labeledImgs.add(li);
+                }
+            }
+        }
+        return labeledImgs;
+    }
+    */
+    
+    static String getSliceLabel(ImageWrapper iw) {
+        short[] pixels = iw.getPixels();
+        double avr = 0;
+        for (short p : pixels) {
+            avr += p;
+        }
+        avr /= pixels.length;
+        // channel timeCapture avr seqNr HeaderBASE64
+        String sliceLabel = "ch: " + iw.pos1()
+                + " timestamp: " + iw.timeCamera()
+                + " avr: " + avr
+                + " seqNr " + iw.seqNr()
+                + " header: " + iw.encodeHeader();
+        return sliceLabel;
+    }
+    
+    public ImagePlus convertToImagePlus(boolean dump) {
+        sortAndFillupStack();
+        ImageStack is = new ImageStack(header.width, header.height);
+        int nrCh = header.channels.length;
+        for (int imgCounter = 0; imgCounter < imgs.size(); imgCounter++) {
+            ImageWrapper iw = dump ? imgs.remove(0) : imgs.get(imgCounter);
+            for (int c = 0; c < nrCh; c++) {
+                if (iw.pos1() == header.channels[c].exWavelength) {
+                    /*
+                    short[] pixels = iw.getPixels();
+                    double avr = 0;
+                    for (short p : pixels) {
+                        avr += p;
+                    }
+                    avr /= pixels.length;
+                    // channel timeCapture avr seqNr HeaderBASE64
+                    String sliceLabel = "ch: " + header.channels[c].exWavelength
+                            + " timestamp: " + iw.timeCamera()
+                            + " avr: " + avr
+                            + " seqNr " + iw.seqNr()
+                            + " header: " + iw.encodeHeader();
+                    */
+                    ShortProcessor sp = new ShortProcessor(iw.width(), iw.height(), iw.getPixels(), null);
+                    String sliceLabel = getSliceLabel(iw);
                     is.addSlice(sliceLabel, sp);
                 }
             }
         }
-
+        /*
+        int nrCh = header.channels.length;
+        List<LabeledImage> labeledImages = getLabeledImages();
+        ImageStack is = new ImageStack(header.width, header.height);
+        for (LabeledImage li : labeledImages) {
+            is.addSlice(li.label, li.iw.getPixels());
+        }
+        */
         ImagePlus ip = new ImagePlus("", is);
         ip = HyperStackConverter.toHyperStack(ip, nrCh, header.zSlices, is.getSize() / nrCh / header.zSlices, "xyztc", "color");
         String info = "";
@@ -529,7 +601,7 @@ public class LiveStack {
 
     @Deprecated
     public int saveOmeTiff(String outFile, boolean dump) throws DependencyException, ServiceException, FormatException, IOException {
-        int imgsPerChannel = orderImagesAsStack();
+        int imgsPerChannel = sortAndFillupStack();
         int nrCh = header.channels.length;
         OMETiffWriter writer = new OMETiffWriter();
         String id = outFile;
@@ -824,7 +896,7 @@ public class LiveStack {
 //            }
 //        }
 //    }
-    private VectorFactory getVectorFactory() {
+    private static VectorFactory getVectorFactory() {
         VectorFactory vf = null;
         String hd = System.getProperty("user.home") + "/documents/";
         String library = "libcudaimpl";
@@ -855,8 +927,7 @@ public class LiveStack {
         return vf;
     }
 
-//    @Deprecated
-    public List<float[][]> reconstructSim() {
+    public ReconStack reconstructSim() {
         ReconstructionRunner.PerChannel[] pc = new ReconstructionRunner.PerChannel[header.channels.length];
         for (int i = 0; i < header.channels.length; i++) {      //get reconstructionParameters from LiveReconstruction
             if (header.channels[i].perChannel instanceof ReconstructionRunner.PerChannel) {
@@ -865,18 +936,35 @@ public class LiveStack {
                 throw new RuntimeException("need instance of ReconstructionRunner.PerChannel");
             }
         }
-        SimReconstructor recRunner = new SimReconstructor(1, header.width, header.nrPhases, header.nrAngles, header.nrBands, pc);
-        List<ImageWrapper[][]> shorts = extractSequences();
+        SimReconstructor recRunner = new SimReconstructor(1, header.width, header.nrPhases, header.nrAngles, header.nrBands, pc, header);
+        ImageWrapper[][][] shorts = getSimSequences();
         return recRunner.reconstruct(shorts);
     }
+    
+    public static class ReconStack {
+        
+        Header wfHeader;
+        String[][][] sliceLabel; // [t][c][pa]
+        float[][][] widefield; //[t][c][xy]
+        float[][][] recon; //[t][c][xy]
+        
+        ReconStack(Header wfHeader, String[][][] sliceLabel, float[][][] widefield, float[][][] recon) {
+            this.wfHeader = wfHeader;
+            this.sliceLabel = sliceLabel;
+            this.widefield = widefield;
+            this.recon = recon;
+        }
+    }
 
-    private class SimReconstructor extends ReconstructionRunner {
+    private static class SimReconstructor extends ReconstructionRunner {
 
         boolean running = false;
         boolean fitting = false;
+        Header lsHeader;
 
-        SimReconstructor(int nrThreads, int imageSizeInPixels, int nrPhases, int nrDirs, int nrBands, PerChannel[] perChannels) {
+        SimReconstructor(int nrThreads, int imageSizeInPixels, int nrPhases, int nrDirs, int nrBands, PerChannel[] perChannels, Header reconHeader) {
             super(getVectorFactory(), nrThreads, imageSizeInPixels, nrPhases, nrDirs, nrBands, perChannels);
+            this.lsHeader = reconHeader;
         }
 
         void sleeping(long time) {
@@ -894,25 +982,33 @@ public class LiveStack {
             }
         }
 
-        //Returns list of floats[channel][pixels]
-        List<float[][]> reconstruct(List<ImageWrapper[][]> raws) {
+        ReconStack reconstruct(ImageWrapper[][][] raws) {
             while (running || fitting) {
                 sleeping(50); //wait for fit to finish
             }
             if (nrInReconQueue() > 0 || nrInFinalQueue() > 0) {
                 Tool.error("LiveStack.Reconstructor: Queues should be empty");    //check if queues empty
             }
-            int nrImgs = raws.size();
-            List<float[][]> recons = new ArrayList<>();
+            int nrSimSeq = raws.length;
+            int nrCh = raws[0].length;
+            int nrPa = raws[0][0].length;
+            int nrPixels = raws[0][0][0].width() * raws[0][0][0].height();
+            String[][][] iwHeader = new String[nrSimSeq][nrCh][nrPa];
+            float[][][] recon = new float[nrSimSeq][nrCh][nrPixels * 4];
+            float[][][] widefield = new float[nrSimSeq][nrCh][nrPixels];
             running = true;
             Thread putThread = new Thread(new Runnable() {          //define new thread that pushes images from list "recons" to reconstruction
                 public void run() {
-                    for (int i = 0; i < nrImgs; i++) {
-                        ImageWrapper[][] iwArray = raws.get(i);  //extract next images for reconstruction
-                        short[][][] raw = new short[header.channels.length][header.nrPhases * header.nrAngles][];
-                        for (int c = 0; c < header.channels.length; c++) {
-                            for (int pa = 0; pa < header.nrPhases * header.nrAngles; pa++) {
-                                raw[c][pa] = iwArray[c][pa].getPixels();
+                    for (int t = 0; t < nrSimSeq; t++) {
+                        //ImageWrapper[][] iwArray = raws[t];  //extract next images for reconstruction
+                        short[][][] raw = new short[nrCh][nrPa][];
+                        //String[][] iwHeader = new String[lsHeader.channels.length][lsHeader.nrPhases * lsHeader.nrAngles];
+                        for (int c = 0; c < nrCh; c++) {
+                            for (int pa = 0; pa < nrPa; pa++) {
+                                ImageWrapper iw = raws[t][c][pa];
+                                //System.out.println(" " + nrSimSeq + " " + nrCh + " " + nrPa + " " + t + " " + c + " " + pa);
+                                raw[c][pa] = iw.getPixels();
+                                iwHeader[t][c][pa] = getSliceLabel(iw);
                             }
                         }
                         checkDimension(raw);
@@ -927,16 +1023,18 @@ public class LiveStack {
             });
             Thread takeThread = new Thread(new Runnable() { // define new thread: get reconstructed image from reconstruction
                 public void run() {
-                    for (int i = 0; i < nrImgs; i++) {
+                    for (int t = 0; t < nrSimSeq; t++) {
                         try {
-                            Vec2d.Real[] reals = finalRecon.take();
-                            int len = reals.length;
-                            float[][] floats = new float[len][];
+                            Vec2d.Real[] hr = finalRecon.take();
+                            Vec2d.Real[] wf = finalWidefield.take();
+                            int len = hr.length;
+                            if (len != wf.length) throw new RuntimeException("Error in recon & wf channels");
+                            //float[][] hrFloats = new float[len][];
+                            //float[][] wfFloats = new float[len][];
                             for (int c = 0; c < len; c++) {
-                                floats[c] = reals[c].vectorData();
-                                recons.add(floats);
+                                recon[t][c] = hr[c].vectorData();
+                                widefield[t][c] = wf[c].vectorData();
                             }
-                            finalWidefield.take();
                         } catch (InterruptedException ex) {
                             ex.printStackTrace();
                             Tool.error("LiveStack.Reconstructor: interrupted taking img, why?");
@@ -954,7 +1052,9 @@ public class LiveStack {
                 Tool.error("LiveStack.Reconstructor: interrupted joining img, why?");
             }
             running = false;
-            return recons;
+            
+            ReconStack result = new ReconStack(lsHeader, iwHeader, widefield, recon);
+            return result;
         }
 
         void reFit(short[][][] fitImg, int chIdx) {
@@ -980,7 +1080,43 @@ public class LiveStack {
             }
         }
     }
-
+    
+    ImageWrapper[][][] getSimSequences() {
+        int iwPerChannel = sortAndFillupStack();
+        int nrCh = header.channels.length;
+        int nrPa = header.nrPhases * header.nrAngles;
+        List<ImageWrapper> cleanedImgs = new ArrayList<>();
+        for (int c = 0; c < nrCh; c++) {
+            List<ImageWrapper> channelList = new ArrayList<>();
+            for (int i = 0; i < imgs.size(); i++) {
+                ImageWrapper iw = imgs.get(i);
+                if (iw.pos1() == header.channels[c].exWavelength) channelList.add(iw);
+            }
+            System.out.println("channelList size: " + channelList.size());
+            channelList.sort(null);
+            List<ImageWrapper> cleanList = removeSyncs(channelList);
+            iwPerChannel = cleanList.size();
+            System.out.println("iwPerChannel: " + iwPerChannel);
+            if (iwPerChannel % nrPa != 0) {
+                throw new RuntimeException("cleanArray length wrong " + iwPerChannel);
+            }
+            cleanedImgs.addAll(cleanList);
+        }
+        int nrTime = iwPerChannel / nrPa;
+        
+        System.out.println(nrTime + " " + nrCh + " " + nrPa + " " + iwPerChannel + " " + imgs.size()+ " " + cleanedImgs.size());
+        ImageWrapper[][][] simSequences = new ImageWrapper[nrTime][nrCh][nrPa];
+        for (int i = 0; i < cleanedImgs.size(); i++) {
+            int pa = i % nrPa;
+            int c = i / iwPerChannel;
+            int t = (i % iwPerChannel) / nrPa;
+            //System.out.println("t c pa " + t + " " + c + " " + " " + pa);
+            simSequences[t][c][pa] = cleanedImgs.get(i);
+        }
+        return simSequences;
+    }
+    
+    
     //andis preperation code prepares reconstruction [channels][p*a][pixels]
     private List<ImageWrapper[][]> extractSequences() {
         System.out.println("SYNCDELAY TIME IS " + header.syncDelayTime);
@@ -1027,7 +1163,7 @@ public class LiveStack {
         return raws;
 
     }
-
+    
     private List<ImageWrapper> removeSyncs(List<ImageWrapper> inList) {
         System.out.println("This shall create a list for each channel, without the syncframes and broken SIM-sequences");
 
@@ -1292,15 +1428,15 @@ public class LiveStack {
             outFile = outdir.getAbsolutePath() + File.separator + file.getName() + ".rec.tif";
             System.out.println("\treconstructing ...");
 
-            List<float[][]> fl;
-            fl = ls.reconstructSim();
+            float[][][] fl;
+            fl = ls.reconstructSim().recon;
 
             ImageStack is = new ImageStack(2 * ls.header.width, 2 * ls.header.height);
             //int nrCh = ls.header.channels.length;
             //float[] pixels = new float[2 * ls.header.width * 2 * ls.header.height];
-            for (int imgCounter = 0; imgCounter < fl.size(); imgCounter++) {
+            for (int imgCounter = 0; imgCounter < fl.length; imgCounter++) {
                 //System.out.println("fl.size() " + fl.size() + "\tfl.get().length " + fl.get(imgCounter).length + "\tfl.get()[].length " + fl.get(imgCounter)[0].length);
-                float[][] channelImages = fl.get(imgCounter);
+                float[][] channelImages = fl[imgCounter];
                 for (int ch = 0; ch < channelImages.length; ch++) {
                     System.out.println("ch = " + ch);
                     FloatProcessor fpp = new FloatProcessor(2 * ls.header.width, 2 * ls.header.width, channelImages[ch]);
