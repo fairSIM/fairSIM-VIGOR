@@ -17,14 +17,10 @@
  */
 package org.fairsim.transport;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.WindowManager;
-import ij.gui.GenericDialog;
 import ij.io.Opener;
 import ij.plugin.HyperStackConverter;
-import ij.plugin.PlugIn;
 import ij.process.FloatProcessor;
 import ij.process.ShortProcessor;
 import java.io.*;
@@ -32,11 +28,7 @@ import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.Scanner;
-import javax.swing.JFileChooser;
 import org.fairsim.accel.AccelVectorFactory;
 import org.fairsim.linalg.Vec;
 import org.fairsim.linalg.Vec2d;
@@ -45,7 +37,6 @@ import org.fairsim.livemode.ReconstructionRunner;
 import org.fairsim.sim_algorithm.SimParam;
 import org.fairsim.utils.Base64;
 import org.fairsim.utils.Tool;
-import org.fairsim.utils.VirtualSubStack;
 import loci.common.services.DependencyException;
 import loci.common.services.ServiceException;
 import loci.common.services.ServiceFactory;
@@ -462,6 +453,7 @@ public class LiveStack {
                     ImageWrapper iw = new ImageWrapper(header.width, header.height);
                     iw.copy(new short[header.width * header.height], header.width, header.height);
                     iw.setPos012(iw.pos0(), header.channels[c].exWavelength, iw.pos2());
+                    iw.setSeqNr(Long.MAX_VALUE);
                     iw.writeHeader();
                     imgs.add(iw);
                 }
@@ -569,6 +561,11 @@ public class LiveStack {
         */
         ImagePlus ip = new ImagePlus("", is);
         ip = HyperStackConverter.toHyperStack(ip, nrCh, header.zSlices, is.getSize() / nrCh / header.zSlices, "xyztc", "color");
+        ip.setProperty("Info", getHeaderString());
+        return ip;
+    }
+    
+    String getHeaderString() {
         String info = "";
         info += "microscope: " + header.microscope + "\n";
         info += "yyyyMMdd'T'HHmmss timestamp: " + header.timestamp + "\n";
@@ -584,7 +581,7 @@ public class LiveStack {
         info += "samplePixelSizeX: " + header.samplePixelSizeX + " nm \n";
         info += "samplePixelSizeY: " + header.samplePixelSizeY + " nm \n";
         info += "samplePixelSizeZ: " + header.samplePixelSizeZ + " nm \n";
-        for (int c = 0; c < nrCh; c++) {
+        for (int c = 0; c < header.channels.length; c++) {
             info += "channel " + c + ": detector: " + header.channels[c].detector + "\n";
             info += "channel " + c + ": dye: " + header.channels[c].dye + "\n";
             info += "channel " + c + ": illuminationPower: " + header.channels[c].illuminationPower + " mW \n";
@@ -595,8 +592,7 @@ public class LiveStack {
         } catch (IOException ex) {
             throw new RuntimeException("this should never happen");
         }
-        ip.setProperty("Info", info);
-        return ip;
+        return info;
     }
 
     @Deprecated
@@ -936,35 +932,79 @@ public class LiveStack {
                 throw new RuntimeException("need instance of ReconstructionRunner.PerChannel");
             }
         }
-        SimReconstructor recRunner = new SimReconstructor(1, header.width, header.nrPhases, header.nrAngles, header.nrBands, pc, header);
+        SimReconstructor recRunner = new SimReconstructor(1, header.width, header.nrPhases, header.nrAngles, header.nrBands, pc);
         ImageWrapper[][][] shorts = getSimSequences();
         return recRunner.reconstruct(shorts);
     }
     
-    public static class ReconStack {
+    public class ReconStack {
         
-        Header wfHeader;
         String[][][] sliceLabel; // [t][c][pa]
         float[][][] widefield; //[t][c][xy]
         float[][][] recon; //[t][c][xy]
         
-        ReconStack(Header wfHeader, String[][][] sliceLabel, float[][][] widefield, float[][][] recon) {
-            this.wfHeader = wfHeader;
+        ReconStack(String[][][] sliceLabel, float[][][] widefield, float[][][] recon) {
             this.sliceLabel = sliceLabel;
             this.widefield = widefield;
             this.recon = recon;
         }
+        
+        ImagePlus saveReconAsTiff(String outFile) {
+            int nrTime = recon.length;
+            int nrCh = header.channels.length;
+            int nrPa = header.nrPhases * header.nrAngles;
+            int nrZ = header.zSlices;
+            int width = header.width * 2;
+            int height = header.height * 2;
+            ImageStack is = new ImageStack(width, height);
+            for (int t = 0; t < nrTime; t++) {
+                for (int c = 0; c < nrCh; c++) {
+                    FloatProcessor sp = new FloatProcessor(width, height, recon[t][c]);
+                    String label = "";
+                    for (int pa = 0; pa < nrPa; pa++) label += sliceLabel[t][c][pa];
+                    is.addSlice(label, sp);
+                }
+            }
+            ImagePlus ip = new ImagePlus("", is);
+            ip = HyperStackConverter.toHyperStack(ip, nrCh, nrZ, is.getSize() / nrCh / nrZ, "xyzct", "color");
+            ip.setProperty("Info", getHeaderString());
+            ij.io.FileSaver fs = new ij.io.FileSaver(ip);
+            fs.saveAsTiffStack(outFile);
+            return ip;
+        }
+        
+        ImagePlus saveWfAsTiff(String outFile) {
+            int nrTime = widefield.length;
+            int nrCh = header.channels.length;
+            int nrPa = header.nrPhases * header.nrAngles;
+            int nrZ = header.zSlices;
+            int width = header.width;
+            int height = header.height;
+            ImageStack is = new ImageStack(width, height);
+            for (int t = 0; t < nrTime; t++) {
+                for (int c = 0; c < nrCh; c++) {
+                    FloatProcessor sp = new FloatProcessor(width, height, widefield[t][c]);
+                    String label = "";
+                    for (int pa = 0; pa < nrPa; pa++) label += sliceLabel[t][c][pa];
+                    is.addSlice(label, sp);
+                }
+            }
+            ImagePlus ip = new ImagePlus("", is);
+            ip = HyperStackConverter.toHyperStack(ip, nrCh, nrZ, is.getSize() / nrCh / nrZ, "xyzct", "color");
+            ip.setProperty("Info", getHeaderString());
+            ij.io.FileSaver fs = new ij.io.FileSaver(ip);
+            fs.saveAsTiffStack(outFile);
+            return ip;
+        }
     }
 
-    private static class SimReconstructor extends ReconstructionRunner {
+    private class SimReconstructor extends ReconstructionRunner {
 
         boolean running = false;
         boolean fitting = false;
-        Header lsHeader;
 
-        SimReconstructor(int nrThreads, int imageSizeInPixels, int nrPhases, int nrDirs, int nrBands, PerChannel[] perChannels, Header reconHeader) {
+        SimReconstructor(int nrThreads, int imageSizeInPixels, int nrPhases, int nrDirs, int nrBands, PerChannel[] perChannels) {
             super(getVectorFactory(), nrThreads, imageSizeInPixels, nrPhases, nrDirs, nrBands, perChannels);
-            this.lsHeader = reconHeader;
         }
 
         void sleeping(long time) {
@@ -1053,7 +1093,7 @@ public class LiveStack {
             }
             running = false;
             
-            ReconStack result = new ReconStack(lsHeader, iwHeader, widefield, recon);
+            ReconStack result = new ReconStack(iwHeader, widefield, recon);
             return result;
         }
 
@@ -1082,41 +1122,84 @@ public class LiveStack {
     }
     
     ImageWrapper[][][] getSimSequences() {
+        // get global stack information
         int iwPerChannel = sortAndFillupStack();
         int nrCh = header.channels.length;
         int nrPa = header.nrPhases * header.nrAngles;
-        List<ImageWrapper> cleanedImgs = new ArrayList<>();
+        if (imgs.size() % nrCh != 0) throw new RuntimeException("Missmatch in iwPerChannel or nrCh " + imgs.size() + " " + nrCh);
+        
+        // split into channels
+        List<List<ImageWrapper>> channelImgs = new ArrayList<>(nrCh);
         for (int c = 0; c < nrCh; c++) {
             List<ImageWrapper> channelList = new ArrayList<>();
             for (int i = 0; i < imgs.size(); i++) {
                 ImageWrapper iw = imgs.get(i);
                 if (iw.pos1() == header.channels[c].exWavelength) channelList.add(iw);
             }
-            System.out.println("channelList size: " + channelList.size());
+            //System.out.println("channelList size: " + channelList.size());
             channelList.sort(null);
             List<ImageWrapper> cleanList = removeSyncs(channelList);
-            iwPerChannel = cleanList.size();
-            System.out.println("iwPerChannel: " + iwPerChannel);
-            if (iwPerChannel % nrPa != 0) {
-                throw new RuntimeException("cleanArray length wrong " + iwPerChannel);
-            }
-            cleanedImgs.addAll(cleanList);
+            channelImgs.add(cleanList);
+        }
+        iwPerChannel = channelImgs.get(0).size();
+        for (List l : channelImgs) {
+            if (l.size() != iwPerChannel) throw new RuntimeException("Missmatch in List cleanedImgs size" + l.size() + " " + iwPerChannel);
         }
         int nrTime = iwPerChannel / nrPa;
         
-        System.out.println(nrTime + " " + nrCh + " " + nrPa + " " + iwPerChannel + " " + imgs.size()+ " " + cleanedImgs.size());
+        /*
+        // handle missing frames
+        long[] firstSeqNr = new long[nrCh];
+        for (int c = 0; c < nrCh; c++) firstSeqNr[c] = channelImgs.get(c).get(0).seqNr();
+        for (int i = 0; i < iwPerChannel; i++) {
+            for (int c = 0; c < nrCh; c++) {
+                ImageWrapper iw1 = channelImgs.get(c).get(i);
+                long count = iw1.seqNr() - firstSeqNr[c];
+                if (count != i && iw1.seqNr() != Long.MAX_VALUE) 
+                    throw new RuntimeException("missing frames in stack");
+            }
+        }
+        
+        //handle sync
+        long[] last = new long[nrCh];
+        List<List<Boolean>> sync = new ArrayList<>();
+        for (int c = 0; c < nrCh; c++) {
+            sync.add(new ArrayList<>());
+            for (int i = 0; i < iwPerChannel; i++) {
+                ImageWrapper iw = channelImgs.get(c).get(i);
+                long current = iw.timeCamera();
+                long diff = current - last[c];
+                last[c] = current;
+                if (diff > header.syncDelayTime) sync.get(c).add(true);
+                else sync.get(c).add(false);
+            }
+        }
+        */
+        
+        
+        //System.out.println(nrTime + " " + nrCh + " " + nrPa + " " + iwPerChannel + " " + imgs.size()+ " " + channelImgs.size());
         ImageWrapper[][][] simSequences = new ImageWrapper[nrTime][nrCh][nrPa];
-        for (int i = 0; i < cleanedImgs.size(); i++) {
+        for (int c = 0; c < nrCh; c++) {
+            for (int i = 0; i < iwPerChannel; i++) {
+                int pa = i % nrPa;
+                int t = i  / nrPa;
+                simSequences[t][c][pa] = channelImgs.get(c).get(i);
+            }
+        }
+        /*
+        for (int i = 0; i < channelImgs.size(); i++) {
             int pa = i % nrPa;
             int c = i / iwPerChannel;
             int t = (i % iwPerChannel) / nrPa;
+            System.out.println("");
             //System.out.println("t c pa " + t + " " + c + " " + " " + pa);
-            simSequences[t][c][pa] = cleanedImgs.get(i);
+            simSequences[t][c][pa] = channelImgs.get(c).get(i);
         }
+        */
         return simSequences;
     }
     
-    
+    /*
     //andis preperation code prepares reconstruction [channels][p*a][pixels]
     private List<ImageWrapper[][]> extractSequences() {
         System.out.println("SYNCDELAY TIME IS " + header.syncDelayTime);
@@ -1163,7 +1246,7 @@ public class LiveStack {
         return raws;
 
     }
-    
+    */
     private List<ImageWrapper> removeSyncs(List<ImageWrapper> inList) {
         System.out.println("This shall create a list for each channel, without the syncframes and broken SIM-sequences");
 
@@ -1425,42 +1508,47 @@ public class LiveStack {
         LiveStack ls = new LiveStack(file.getAbsolutePath());
         System.out.println(" done");
         if (rec) {
-            outFile = outdir.getAbsolutePath() + File.separator + file.getName() + ".rec.tif";
+            String reconFile = outdir.getAbsolutePath() + File.separator + file.getName() + ".rec.tif";
+            String wfFile = outdir.getAbsolutePath() + File.separator + file.getName() + ".wf.tif";
             System.out.println("\treconstructing ...");
-
-            float[][][] fl;
-            fl = ls.reconstructSim().recon;
-
-            ImageStack is = new ImageStack(2 * ls.header.width, 2 * ls.header.height);
-            //int nrCh = ls.header.channels.length;
-            //float[] pixels = new float[2 * ls.header.width * 2 * ls.header.height];
-            for (int imgCounter = 0; imgCounter < fl.length; imgCounter++) {
-                //System.out.println("fl.size() " + fl.size() + "\tfl.get().length " + fl.get(imgCounter).length + "\tfl.get()[].length " + fl.get(imgCounter)[0].length);
-                float[][] channelImages = fl[imgCounter];
-                for (int ch = 0; ch < channelImages.length; ch++) {
-                    System.out.println("ch = " + ch);
-                    FloatProcessor fpp = new FloatProcessor(2 * ls.header.width, 2 * ls.header.width, channelImages[ch]);
-                    is.addSlice("test channel " + ch, fpp);
-                }
-                /*
-                for (int j = 0; j < (2 * ls.header.width * 2 * ls.header.height); j++) {
-                    System.out.println("\tpixels["+j+"] = fl.get("+imgCounter+")["+j / (2 * ls.header.width)+"]["+j % (2 * ls.header.height)+"];");
-                    pixels[j] = fl.get(imgCounter)[j % 2 * ls.header.width][j / 2 * ls.header.height];
-                }
-                FloatProcessor fp;
-                fp = new FloatProcessor(2 * ls.header.width, 2 * ls.header.width, pixels, null);
-                is.addSlice("test channel " + nrCh, fp);
-                */
-            }
-
-            System.out.println("\tdone\n");
-
-            //this saves the original file... OOPS
-            System.out.print("\tsaving tif as: " + outFile + " ...");
-            ImagePlus ip = new ImagePlus("Test Title" ,is);
-            ij.io.FileSaver fs = new ij.io.FileSaver(ip);
-            fs.saveAsTiffStack(outFile);
-
+            
+            ReconStack reconStack = ls.reconstructSim();
+            reconStack.saveReconAsTiff(reconFile);
+            reconStack.saveWfAsTiff(wfFile);
+            
+//            float[][][] fl;
+//            fl = ls.reconstructSim().recon;
+//
+//            ImageStack is = new ImageStack(2 * ls.header.width, 2 * ls.header.height);
+//            //int nrCh = ls.header.channels.length;
+//            //float[] pixels = new float[2 * ls.header.width * 2 * ls.header.height];
+//            for (int imgCounter = 0; imgCounter < fl.length; imgCounter++) {
+//                //System.out.println("fl.size() " + fl.size() + "\tfl.get().length " + fl.get(imgCounter).length + "\tfl.get()[].length " + fl.get(imgCounter)[0].length);
+//                float[][] channelImages = fl[imgCounter];
+//                for (int ch = 0; ch < channelImages.length; ch++) {
+//                    //System.out.println("ch = " + ch);
+//                    FloatProcessor fpp = new FloatProcessor(2 * ls.header.width, 2 * ls.header.width, channelImages[ch]);
+//                    is.addSlice("test channel " + ch, fpp);
+//                }
+//                /*
+//                for (int j = 0; j < (2 * ls.header.width * 2 * ls.header.height); j++) {
+//                    System.out.println("\tpixels["+j+"] = fl.get("+imgCounter+")["+j / (2 * ls.header.width)+"]["+j % (2 * ls.header.height)+"];");
+//                    pixels[j] = fl.get(imgCounter)[j % 2 * ls.header.width][j / 2 * ls.header.height];
+//                }
+//                FloatProcessor fp;
+//                fp = new FloatProcessor(2 * ls.header.width, 2 * ls.header.width, pixels, null);
+//                is.addSlice("test channel " + nrCh, fp);
+//                */
+//            }
+//
+//            System.out.println("\tdone\n");
+//
+//            //this saves the original file... OOPS
+//            System.out.print("\tsaving tif as: " + outFile + " ...");
+//            ImagePlus ip = new ImagePlus("Test Title" ,is);
+//            ij.io.FileSaver fs = new ij.io.FileSaver(ip);
+//            fs.saveAsTiffStack(outFile);
+            
             System.out.println(" saving done");
 
         } else {

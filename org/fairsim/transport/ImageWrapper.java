@@ -502,7 +502,12 @@ public class ImageWrapper implements Comparable<ImageWrapper> {
     public int compareTo(ImageWrapper iw) {
         int resChannel = pos1 - iw.pos1;
         if (resChannel != 0) return resChannel;
-        else return (int) (seqNr - iw.seqNr);
+        else{
+            long value = seqNr - iw.seqNr;
+            if (value > Integer.MAX_VALUE) return Integer.MAX_VALUE;
+            else if (value < Integer.MIN_VALUE) return Integer.MIN_VALUE;
+            else return (int) (seqNr - iw.seqNr);
+        }
     }
     
     /*
