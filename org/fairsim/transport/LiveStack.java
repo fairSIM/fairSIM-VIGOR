@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import org.fairsim.accel.AccelVectorFactory;
 import org.fairsim.linalg.Vec;
@@ -922,8 +923,8 @@ public class LiveStack {
         }
         return vf;
     }
-
-    public ReconStack reconstructSim() {
+    
+    private SimReconstructor loadSimReconstructor() {
         ReconstructionRunner.PerChannel[] pc = new ReconstructionRunner.PerChannel[header.channels.length];
         for (int i = 0; i < header.channels.length; i++) {      //get reconstructionParameters from LiveReconstruction
             if (header.channels[i].perChannel instanceof ReconstructionRunner.PerChannel) {
@@ -932,9 +933,58 @@ public class LiveStack {
                 throw new RuntimeException("need instance of ReconstructionRunner.PerChannel");
             }
         }
-        SimReconstructor recRunner = new SimReconstructor(1, header.width, header.nrPhases, header.nrAngles, header.nrBands, pc);
+        return new SimReconstructor(1, header.width, header.nrPhases, header.nrAngles, header.nrBands, pc);
+    }
+
+    ReconStack reconstructByHeader() {
+        SimReconstructor recRunner = loadSimReconstructor();
         ImageWrapper[][][] shorts = getSimSequences();
         return recRunner.reconstruct(shorts);
+    }
+    
+    ReconStack reconstructByIndividalFit() {
+        SimReconstructor recRunner = loadSimReconstructor();
+        ImageWrapper[][][] iws = getSimSequences();
+        ReconStack reconStack = null;
+        int nrTime = iws.length;
+        int nrCh = iws[0].length;
+        int nrPa = iws[0][0].length;
+        for (int t = 0; t < nrTime; t++) {
+            short[][][] pixels = new short[nrCh][nrPa][];
+            ImageWrapper[][][] recIw = new ImageWrapper[1][nrCh][nrPa];
+            for (int c = 0; c < nrCh; c++) {
+                for (int pa = 0; pa < nrPa; pa++) {
+                    pixels[c][pa] = iws[t][c][pa].getPixels();
+                    recIw[0][c][pa] = iws[t][c][pa];
+                }
+            }
+            for (int c = 0; c < nrCh; c++) {
+                recRunner.reFit(pixels, c);
+            }
+            ReconStack nextReconStack = recRunner.reconstruct(recIw);
+            if (t == 0) reconStack = nextReconStack;
+            else reconStack.add(nextReconStack);
+        }
+        return reconStack;
+    }
+    
+    ReconStack reconstructByFit(int time) {
+        SimReconstructor recRunner = loadSimReconstructor();
+        ImageWrapper[][][] iws = getSimSequences();
+        int nrCh = iws[0].length;
+        int nrPa = iws[0][0].length;
+        
+        short[][][] pixels = new short[nrCh][nrPa][];
+        for (int c = 0; c < nrCh; c++) {
+            for (int pa = 0; pa < nrPa; pa++) {
+                pixels[c][pa] = iws[time][c][pa].getPixels();
+            }
+        }
+        for (int c = 0; c < nrCh; c++) {
+            recRunner.reFit(pixels, c);
+        }
+        
+        return recRunner.reconstruct(iws);
     }
     
     public class ReconStack {
@@ -944,9 +994,47 @@ public class LiveStack {
         float[][][] recon; //[t][c][xy]
         
         ReconStack(String[][][] sliceLabel, float[][][] widefield, float[][][] recon) {
+            if (sliceLabel.length != widefield.length || sliceLabel.length != recon.length)
+                throw new RuntimeException("Missmatch in dimensinsion t");
+            if (sliceLabel[0].length != widefield[0].length || sliceLabel[0].length != recon[0].length)
+                throw new RuntimeException("Missmatch in dimension c");
+            if (sliceLabel[0][0].length != header.nrPhases * header.nrAngles)
+                throw new RuntimeException("Missmatch in dimension pa");
+            if (widefield[0][0].length != header.width * header.height || widefield[0][0].length * 4 != recon[0][0].length)
+                throw new RuntimeException("Missmatch in dimension xy");
+            
             this.sliceLabel = sliceLabel;
             this.widefield = widefield;
             this.recon = recon;
+            
+            
+        }
+        
+        void add(ReconStack rs) {
+            if (rs.sliceLabel[0].length != sliceLabel[0].length)
+                throw new RuntimeException("Missmatch in dimension c");
+            if (rs.sliceLabel[0][0].length != sliceLabel[0][0].length)
+                throw new RuntimeException("Missmatch in dimension pa");
+            if (rs.widefield[0][0].length != widefield[0][0].length)
+                throw new RuntimeException("Missmatch in wf dimension xy " + rs.widefield[0][0].length + " " + widefield[0][0].length);
+            if (rs.recon[0][0].length != recon[0][0].length)
+                throw new RuntimeException("Missmatch in recon dimension xy ");
+            
+            List<String[][]> newSliceLabel = new ArrayList<>();
+            List<float[][]> newWidefields = new ArrayList<>();
+            List<float[][]> newRecons = new ArrayList<>();
+            
+            newSliceLabel.addAll(Arrays.asList(sliceLabel));
+            newSliceLabel.addAll(Arrays.asList(rs.sliceLabel));
+            sliceLabel = newSliceLabel.toArray(sliceLabel);
+            
+            newWidefields.addAll(Arrays.asList(widefield));
+            newWidefields.addAll(Arrays.asList(rs.widefield));
+            widefield = newWidefields.toArray(widefield);
+            
+            newRecons.addAll(Arrays.asList(recon));
+            newRecons.addAll(Arrays.asList(rs.recon));
+            recon = newRecons.toArray(recon);
         }
         
         ImagePlus saveReconAsTiff(String outFile) {
@@ -1026,9 +1114,11 @@ public class LiveStack {
             while (running || fitting) {
                 sleeping(50); //wait for fit to finish
             }
+            
             if (nrInReconQueue() > 0 || nrInFinalQueue() > 0) {
-                Tool.error("LiveStack.Reconstructor: Queues should be empty");    //check if queues empty
+                throw new RuntimeException("LiveStack.Reconstructor: Queues should be empty");    //check if queues empty
             }
+            running = true;
             int nrSimSeq = raws.length;
             int nrCh = raws[0].length;
             int nrPa = raws[0][0].length;
@@ -1036,7 +1126,6 @@ public class LiveStack {
             String[][][] iwHeader = new String[nrSimSeq][nrCh][nrPa];
             float[][][] recon = new float[nrSimSeq][nrCh][nrPixels * 4];
             float[][][] widefield = new float[nrSimSeq][nrCh][nrPixels];
-            running = true;
             Thread putThread = new Thread(new Runnable() {          //define new thread that pushes images from list "recons" to reconstruction
                 public void run() {
                     for (int t = 0; t < nrSimSeq; t++) {
@@ -1108,7 +1197,8 @@ public class LiveStack {
                     = new Tool.Tuple<Integer, Tool.Callback<SimParam>>(
                             chIdx, new Tool.Callback<SimParam>() {
                         @Override
-                        public void callback(SimParam a) {
+                        public void callback(SimParam sp) {
+                            channels[chIdx].setParam(sp);
                             fitting = false;
                         }
                     });
@@ -1512,7 +1602,7 @@ public class LiveStack {
             String wfFile = outdir.getAbsolutePath() + File.separator + file.getName() + ".wf.tif";
             System.out.println("\treconstructing ...");
             
-            ReconStack reconStack = ls.reconstructSim();
+            ReconStack reconStack = ls.reconstructByFit(8);
             reconStack.saveReconAsTiff(reconFile);
             reconStack.saveWfAsTiff(wfFile);
             

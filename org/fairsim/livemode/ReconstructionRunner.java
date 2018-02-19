@@ -52,7 +52,7 @@ public class ReconstructionRunner {
 
     protected BlockingQueue<short[][][]> imgsToReconstruct;
     private int missedDueToQueueFull;
-    final private PerChannel[] channels;
+    final protected PerChannel[] channels;
 
     protected BlockingQueue<Vec2d.Real[]> finalWidefield;
     protected BlockingQueue<Vec2d.Real[]> finalRecon;
@@ -98,6 +98,10 @@ public class ReconstructionRunner {
                 startingPx[i] = param.dir(i).getPxPy(1)[0];
                 startingPy[i] = param.dir(i).getPxPy(1)[1];
             }
+        }
+        
+        public void setParam(SimParam sp) {
+            param = sp;
         }
     }
 
@@ -388,7 +392,7 @@ public class ReconstructionRunner {
             // vectors for intermediate results
             Tool.Timer tAll = Tool.getTimer();
             int reconCount = 0;
-
+            
             // run the reconstruction loop
             while (!stopReconThreads) {
 
