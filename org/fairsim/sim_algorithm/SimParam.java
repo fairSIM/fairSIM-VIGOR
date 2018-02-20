@@ -605,6 +605,12 @@ public class SimParam implements Vec2d.Size, Vec3d.Size, java.io.Serializable {
 	    }
 	    return ret;
 	}
+        
+        public double[] getRawModulations() {
+            double [] ret = new double [nrBands];
+	    System.arraycopy( modul, 0, ret, 0, nrBands );
+            return ret;
+        }
     
     }
 

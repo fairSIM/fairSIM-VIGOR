@@ -708,7 +708,7 @@ public class ReconstructionRunner {
                                 + " x %7.3f y %7.3f p %7.3f (m %7.3f)",
                                 getChannel(chIdx).chNumber,
                                 angIdx, peak[0], peak[1], p1.phase(), p1.hypot()));
-
+                
                 par.setPxPy(-peak[0], -peak[1]);
                 par.setPhaOff(p1.phase());
                 par.setModulation(1, p1.hypot());

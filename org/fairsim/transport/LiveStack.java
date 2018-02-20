@@ -938,11 +938,11 @@ public class LiveStack {
 
     ReconStack reconstructByHeader() {
         SimReconstructor recRunner = loadSimReconstructor();
-        ImageWrapper[][][] shorts = getSimSequences();
-        return recRunner.reconstruct(shorts);
+        ImageWrapper[][][] iws = getSimSequences();
+        return recRunner.reconstruct(iws);
     }
     
-    ReconStack reconstructByIndividalFit() {
+    ReconStack reconstructByIndividualFit() {
         SimReconstructor recRunner = loadSimReconstructor();
         ImageWrapper[][][] iws = getSimSequences();
         ReconStack reconStack = null;
@@ -987,6 +987,58 @@ public class LiveStack {
         return recRunner.reconstruct(iws);
     }
     
+    ReconStack reconstructByBestFit() {
+        SimReconstructor recRunner = loadSimReconstructor();
+        ImageWrapper[][][] iws = getSimSequences();
+        int nrTime = iws.length;
+        int nrCh = iws[0].length;
+        int nrPa = iws[0][0].length;        
+        double[] maxOfMinModulation = new double[nrCh];
+        int[] bestParam = new int[nrCh];
+        short[][][] fitPixels = new short[nrCh][nrPa][];
+        
+        for (int t = 0; t < nrTime; t++) {
+            
+            double[] minModulation = new double[nrCh];
+            for (int c = 0; c < nrCh; c++) {
+                for (int pa = 0; pa < nrPa; pa++) {
+                    fitPixels[c][pa] = iws[t][c][pa].getPixels();
+                }
+                minModulation[c] = 2;
+                
+            }
+            
+            for (int c = 0; c < nrCh; c++) {
+                SimParam sp = recRunner.reFit(fitPixels, c);
+                for (int a = 0; a < sp.nrDir(); a++) {
+                    SimParam.Dir angle = sp.dir(a);
+                    double modulation = angle.getRawModulations()[1];
+                    if (modulation < minModulation[c]) {
+                        minModulation[c] = modulation;
+                    }
+                    if (minModulation[c] < 0 || minModulation[c] > 1) throw new RuntimeException("Impossible modulation");
+                }
+            }
+            for (int c = 0; c < nrCh; c++) {
+                //System.out.println(minModulation[c]);
+                if (minModulation[c] > maxOfMinModulation[c]) {
+                    //System.err.println("set ch t: " + c + " " + t + " " + minModulation[c]);
+                    maxOfMinModulation[c] = minModulation[c];
+                    bestParam[c] = t;
+                }
+            }
+        }
+        
+        for (int c = 0; c < nrCh; c++) {
+            for (int pa = 0; pa < nrPa; pa++) {
+                    fitPixels[c][pa] = iws[bestParam[c]][c][pa].getPixels();
+                }
+            recRunner.reFit(fitPixels, c);
+        }
+        
+        return recRunner.reconstruct(iws);
+    }
+    
     public class ReconStack {
         
         String[][][] sliceLabel; // [t][c][pa]
@@ -1006,8 +1058,6 @@ public class LiveStack {
             this.sliceLabel = sliceLabel;
             this.widefield = widefield;
             this.recon = recon;
-            
-            
         }
         
         void add(ReconStack rs) {
@@ -1090,6 +1140,7 @@ public class LiveStack {
 
         boolean running = false;
         boolean fitting = false;
+        SimParam tempSp;
 
         SimReconstructor(int nrThreads, int imageSizeInPixels, int nrPhases, int nrDirs, int nrBands, PerChannel[] perChannels) {
             super(getVectorFactory(), nrThreads, imageSizeInPixels, nrPhases, nrDirs, nrBands, perChannels);
@@ -1186,7 +1237,7 @@ public class LiveStack {
             return result;
         }
 
-        void reFit(short[][][] fitImg, int chIdx) {
+        SimParam reFit(short[][][] fitImg, int chIdx) {
             checkDimension(fitImg);
             while (running) {
                 sleeping(50);
@@ -1198,6 +1249,7 @@ public class LiveStack {
                             chIdx, new Tool.Callback<SimParam>() {
                         @Override
                         public void callback(SimParam sp) {
+                            tempSp = sp.duplicate();
                             channels[chIdx].setParam(sp);
                             fitting = false;
                         }
@@ -1208,6 +1260,11 @@ public class LiveStack {
             while (fitting) {
                 sleeping(50);
             }
+            return tempSp;
+        }
+        
+        private PerChannel[] getChannels() {
+            return channels;
         }
     }
     
@@ -1598,46 +1655,14 @@ public class LiveStack {
         LiveStack ls = new LiveStack(file.getAbsolutePath());
         System.out.println(" done");
         if (rec) {
+            
             String reconFile = outdir.getAbsolutePath() + File.separator + file.getName() + ".rec.tif";
             String wfFile = outdir.getAbsolutePath() + File.separator + file.getName() + ".wf.tif";
             System.out.println("\treconstructing ...");
             
-            ReconStack reconStack = ls.reconstructByFit(8);
+            ReconStack reconStack = ls.reconstructByBestFit();
             reconStack.saveReconAsTiff(reconFile);
             reconStack.saveWfAsTiff(wfFile);
-            
-//            float[][][] fl;
-//            fl = ls.reconstructSim().recon;
-//
-//            ImageStack is = new ImageStack(2 * ls.header.width, 2 * ls.header.height);
-//            //int nrCh = ls.header.channels.length;
-//            //float[] pixels = new float[2 * ls.header.width * 2 * ls.header.height];
-//            for (int imgCounter = 0; imgCounter < fl.length; imgCounter++) {
-//                //System.out.println("fl.size() " + fl.size() + "\tfl.get().length " + fl.get(imgCounter).length + "\tfl.get()[].length " + fl.get(imgCounter)[0].length);
-//                float[][] channelImages = fl[imgCounter];
-//                for (int ch = 0; ch < channelImages.length; ch++) {
-//                    //System.out.println("ch = " + ch);
-//                    FloatProcessor fpp = new FloatProcessor(2 * ls.header.width, 2 * ls.header.width, channelImages[ch]);
-//                    is.addSlice("test channel " + ch, fpp);
-//                }
-//                /*
-//                for (int j = 0; j < (2 * ls.header.width * 2 * ls.header.height); j++) {
-//                    System.out.println("\tpixels["+j+"] = fl.get("+imgCounter+")["+j / (2 * ls.header.width)+"]["+j % (2 * ls.header.height)+"];");
-//                    pixels[j] = fl.get(imgCounter)[j % 2 * ls.header.width][j / 2 * ls.header.height];
-//                }
-//                FloatProcessor fp;
-//                fp = new FloatProcessor(2 * ls.header.width, 2 * ls.header.width, pixels, null);
-//                is.addSlice("test channel " + nrCh, fp);
-//                */
-//            }
-//
-//            System.out.println("\tdone\n");
-//
-//            //this saves the original file... OOPS
-//            System.out.print("\tsaving tif as: " + outFile + " ...");
-//            ImagePlus ip = new ImagePlus("Test Title" ,is);
-//            ij.io.FileSaver fs = new ij.io.FileSaver(ip);
-//            fs.saveAsTiffStack(outFile);
             
             System.out.println(" saving done");
 
