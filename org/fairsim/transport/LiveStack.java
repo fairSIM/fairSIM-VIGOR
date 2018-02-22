@@ -19,6 +19,7 @@ package org.fairsim.transport;
 
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.io.FileSaver;
 import ij.io.Opener;
 import ij.plugin.HyperStackConverter;
 import ij.process.FloatProcessor;
@@ -29,7 +30,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import org.fairsim.accel.AccelVectorFactory;
 import org.fairsim.linalg.Vec;
 import org.fairsim.linalg.Vec2d;
@@ -406,7 +406,7 @@ public class LiveStack {
 //    }
     public ImagePlus saveAsTiff(String outFile, boolean dump) {
         ImagePlus ip = convertToImagePlus(dump);
-        ij.io.FileSaver fs = new ij.io.FileSaver(ip);
+        FileSaver fs = new FileSaver(ip);
         fs.saveAsTiffStack(outFile);
         return ip;
     }
@@ -1098,15 +1098,15 @@ public class LiveStack {
             for (int t = 0; t < nrTime; t++) {
                 for (int c = 0; c < nrCh; c++) {
                     FloatProcessor sp = new FloatProcessor(width, height, recon[t][c]);
-                    String label = "";
-                    for (int pa = 0; pa < nrPa; pa++) label += sliceLabel[t][c][pa];
+                    String label = sliceLabel[t][c][0];
+                    for (int pa = 1; pa < nrPa; pa++) label += "\n" + sliceLabel[t][c][pa];
                     is.addSlice(label, sp);
                 }
             }
             ImagePlus ip = new ImagePlus("", is);
             ip = HyperStackConverter.toHyperStack(ip, nrCh, nrZ, is.getSize() / nrCh / nrZ, "xyzct", "color");
             ip.setProperty("Info", getHeaderString());
-            ij.io.FileSaver fs = new ij.io.FileSaver(ip);
+            FileSaver fs = new FileSaver(ip);
             fs.saveAsTiffStack(outFile);
             return ip;
         }
@@ -1122,15 +1122,15 @@ public class LiveStack {
             for (int t = 0; t < nrTime; t++) {
                 for (int c = 0; c < nrCh; c++) {
                     FloatProcessor sp = new FloatProcessor(width, height, widefield[t][c]);
-                    String label = "";
-                    for (int pa = 0; pa < nrPa; pa++) label += sliceLabel[t][c][pa];
+                    String label = sliceLabel[t][c][0];
+                    for (int pa = 1; pa < nrPa; pa++) label += "\n" + sliceLabel[t][c][pa];
                     is.addSlice(label, sp);
                 }
             }
             ImagePlus ip = new ImagePlus("", is);
             ip = HyperStackConverter.toHyperStack(ip, nrCh, nrZ, is.getSize() / nrCh / nrZ, "xyzct", "color");
             ip.setProperty("Info", getHeaderString());
-            ij.io.FileSaver fs = new ij.io.FileSaver(ip);
+            FileSaver fs = new FileSaver(ip);
             fs.saveAsTiffStack(outFile);
             return ip;
         }
@@ -1179,6 +1179,7 @@ public class LiveStack {
             float[][][] widefield = new float[nrSimSeq][nrCh][nrPixels];
             Thread putThread = new Thread(new Runnable() {          //define new thread that pushes images from list "recons" to reconstruction
                 public void run() {
+                    //ImageStack is = new ImageStack(512, 512);
                     for (int t = 0; t < nrSimSeq; t++) {
                         //ImageWrapper[][] iwArray = raws[t];  //extract next images for reconstruction
                         short[][][] raw = new short[nrCh][nrPa][];
@@ -1186,9 +1187,11 @@ public class LiveStack {
                         for (int c = 0; c < nrCh; c++) {
                             for (int pa = 0; pa < nrPa; pa++) {
                                 ImageWrapper iw = raws[t][c][pa];
-                                //System.out.println(" " + nrSimSeq + " " + nrCh + " " + nrPa + " " + t + " " + c + " " + pa);
                                 raw[c][pa] = iw.getPixels();
                                 iwHeader[t][c][pa] = getSliceLabel(iw);
+//                                if(t == 0 && c == 0) {
+//                                    is.addSlice(iwHeader[t][c][pa], new ShortProcessor(512, 512, raw[c][pa], null));
+//                                }
                             }
                         }
                         checkDimension(raw);
@@ -1199,6 +1202,9 @@ public class LiveStack {
                             Tool.error("LiveStack.Reconstructor: interrupted putting img, why?");
                         }
                     }
+//                    ImagePlus ip = new ImagePlus("test title", is);
+//                    FileSaver fs = new ij.io.FileSaver(ip);
+//                    fs.saveAsTiff("G:\\downloads\\rec-test.tif");
                 }
             });
             Thread takeThread = new Thread(new Runnable() { // define new thread: get reconstructed image from reconstruction
@@ -1285,8 +1291,38 @@ public class LiveStack {
             }
             //System.out.println("channelList size: " + channelList.size());
             channelList.sort(null);
-            List<ImageWrapper> cleanList = removeSyncs(channelList);
-            channelImgs.add(cleanList);
+            iwPerChannel = channelList.size();
+            int simFramesBetweenSync = header.nrPhases * header.nrAngles * header.syncFreq;
+            long currentTime = 0;
+            long lastTime = 0;
+            int lastSync = - simFramesBetweenSync;
+            for (int i = 0; i < iwPerChannel; i++) {
+                if (i == 0) {
+                    currentTime = 0;
+                    lastTime = 0;
+                    lastSync = - simFramesBetweenSync;
+                }
+                ImageWrapper iw = channelList.get(i);
+                currentTime = iw.timeCamera();
+                if (currentTime - lastTime > header.syncDelayTime) {
+                    int diffSync = i - lastSync;
+                    if (diffSync != simFramesBetweenSync) {
+                        System.out.println(i + " " + lastSync + " " + simFramesBetweenSync);
+                        for (int k = 0; k < diffSync; k++) {
+                            int remove = i - k;
+                            if (remove >= 0) channelList.remove(remove);
+                        }
+                        i = 0;
+                    }
+                    lastSync = i;
+                }
+                lastTime = currentTime;
+            }
+            iwPerChannel = channelList.size();
+            int delete = iwPerChannel % simFramesBetweenSync;
+            for (int i = 0; i < delete; i++) channelList.remove(iwPerChannel - 1 - i);
+            iwPerChannel = channelList.size();
+            channelImgs.add(channelList);
         }
         iwPerChannel = channelImgs.get(0).size();
         for (List l : channelImgs) {
@@ -1394,6 +1430,7 @@ public class LiveStack {
 
     }
     */
+    /*
     private List<ImageWrapper> removeSyncs(List<ImageWrapper> inList) {
         System.out.println("This shall create a list for each channel, without the syncframes and broken SIM-sequences");
 
@@ -1405,7 +1442,6 @@ public class LiveStack {
         int nImgs = outList.size();
         System.out.println("    nImgs = " + nImgs);
         int syncFrameDelay = header.syncDelayTime;
-        int syncFrameDelayJitter = 14;
         int nrSimFrames = header.nrAngles * header.nrPhases * header.syncFreq;
         int nrSyncFrames = 0;
 
@@ -1417,7 +1453,7 @@ public class LiveStack {
 
         //find syncframes
         System.out.println("\tfinding syncframes");
-        List<Integer> syncFrameList = findSyncFrames(outList, timestamps, syncFrameDelay, syncFrameDelayJitter);
+        List<Integer> syncFrameList = findSyncFrames(outList, timestamps, syncFrameDelay);
 
         //search for sim-sequencs between syncframes, add broken sets to remove-list
         List<Integer> nonSimFrameList = findNonSimFrames(outList, syncFrameList, nrSimFrames, nrSyncFrames);
@@ -1450,7 +1486,7 @@ public class LiveStack {
         return outList;
     }
 
-    private List<Integer> findSyncFrames(List<ImageWrapper> iwList, long[] timestamps, int syncFrameDelay, int syncFrameDelayJitter) {
+    private List<Integer> findSyncFrames(List<ImageWrapper> iwList, long[] timestamps, int syncFrameDelay) {
         int nImgs = iwList.size();
         List<Integer> syncFrameList = new ArrayList<>();
 //        for (int i = 1; i < nImgs; i++) {
@@ -1533,7 +1569,7 @@ public class LiveStack {
         return brokenSeqNrList;
     }
 
-    private /*List<ImageWrapper>*/ void reduce(List<ImageWrapper> inList, List<Integer> brokenSeqNr) {
+    private void reduce(List<ImageWrapper> inList, List<Integer> brokenSeqNr) {
         if (brokenSeqNr.isEmpty()) {
             System.out.println("\t\t\tnothing to remove");
 //            return inList;
@@ -1552,6 +1588,7 @@ public class LiveStack {
         System.out.println("\tdone, new length: " + inList.size());
 //        return outList;
     }
+    */
 
     /**
      * creates livesim-style metadata from a livestack/livesim-TIFF file
@@ -1660,7 +1697,7 @@ public class LiveStack {
             String wfFile = outdir.getAbsolutePath() + File.separator + file.getName() + ".wf.tif";
             System.out.println("\treconstructing ...");
             
-            ReconStack reconStack = ls.reconstructByBestFit();
+            ReconStack reconStack = ls.reconstructByHeader();
             reconStack.saveReconAsTiff(reconFile);
             reconStack.saveWfAsTiff(wfFile);
             

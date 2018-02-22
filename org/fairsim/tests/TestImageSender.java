@@ -34,14 +34,14 @@ public class TestImageSender {
     public static void main( String [] arg ) throws java.net.UnknownHostException {
 
 	if (arg.length<5) {
-	    System.out.println("TIFF-file white-interval channel_nr delay_us host1 [host2]");
+	    System.out.println("TIFF-file sync-interval channel_nr delay_us syncDelay_us host1 [host2]");
 	    return;
 	}
 	
 
 	// setup connections	
 	ImageSender isend = new ImageSender();
-	for (int i=4; i<arg.length; i++) {
+	for (int i=5; i<arg.length; i++) {
 	    isend.connect( arg[i], null );
 	    Tool.trace("Using connection to: "+arg[i]);
 	}
@@ -54,14 +54,15 @@ public class TestImageSender {
 	int stackPos = 0;
 
 	// parameters
-	final int whiteFrame = Integer.parseInt( arg[1] );
-	final boolean doWhiteFrame = (whiteFrame>0);
+	final int syncFrame = Integer.parseInt( arg[1] );
+	final boolean doWhiteFrame = (syncFrame>0);
 	final int channelNr = Integer.parseInt( arg[2] );
 	final int delayus = Integer.parseInt( arg[3] );
+        final int syncDelayUs = Integer.parseInt( arg[4] );
 
 	Tool.trace("Image file: "+arg[0]);
 	if (doWhiteFrame)
-	    Tool.trace("Sync frame all "+whiteFrame+" frames");
+	    Tool.trace("Sync frame all "+syncFrame+" frames");
 	else
 	    Tool.trace("no sync frames");
 
@@ -71,10 +72,12 @@ public class TestImageSender {
 	final int height = iSt.getHeight();
 	
 	int count=0;
+        long seqNr = 0;
 
 	Tool.Timer t1 = Tool.getTimer();
 	t1.start();
-
+        double time = 0;
+        
 	// loop sending images
 	while ( true ) {
 	    
@@ -82,8 +85,9 @@ public class TestImageSender {
 	   
 	    long starttime = System.nanoTime();
 
-	    if ( doWhiteFrame && (count%(whiteFrame+1))==0 ) {
+	    if ( doWhiteFrame && (count%(syncFrame+1))==0 ) {
 		// insert white frame if required
+                /*
 		short [] white = new short[width*height];
 		short [] black = new short[width*height];
 		for (int i=0; i<width*height;i++) {
@@ -98,6 +102,15 @@ public class TestImageSender {
 		iwrap = ImageWrapper.copyImage(black,width,height,0,1,0,0,count);
 		iwrap.setPos012( 0, channelNr, 0);
 		isend.queueImage( iwrap );
+                */
+                try {
+		    Thread.sleep((syncDelayUs - delayus)/1000);
+		}
+		catch ( InterruptedException e) {
+		    System.err.println("ERR: "+e);
+		    return;
+		}
+                
 	    } else {
 		// add image from stack
 		ShortProcessor sp = 
@@ -107,8 +120,11 @@ public class TestImageSender {
 		    (short[])sp.getPixels(), width, height, 0,0,0,0, count);
 
 		iwrap.setPos012( 0, channelNr, 0);
+                iwrap.setSeqNr(seqNr++);
+                time = System.currentTimeMillis();
+                iwrap.setTimeCamera((long) (time*1000));
 
-		stackPos = (stackPos+1)%((stackLen/whiteFrame)*whiteFrame);
+		stackPos = (stackPos+1)%(stackLen);
 	    
 		isend.queueImage( iwrap );
 	    }

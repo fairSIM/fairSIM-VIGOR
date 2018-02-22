@@ -380,7 +380,7 @@ public class SimSequenceExtractor {
                         // take a frame, get it's timestamp
                         ImageWrapper iwSync = getSorted();
                         curTimeStamp = iwSync.timeCamera();
-                        if(syncMode == 0) {
+                        if (syncMode == 0) {
                             // version 0 (for camera with time-stamp, like IDS µEye)
                             if (isTimeDelaySync(curTimeStamp, lastTimeStamp)) {
                                 sortBuffer.add(iwSync);
@@ -402,9 +402,7 @@ public class SimSequenceExtractor {
                                 break;
                             }
 
-
-
-                            lastTimeStamp = curTimeStamp;
+                            
 
                             // version 2 (for camera w/o timestamp, bright LED):
                             short pxl[] = iwSync.getPixels();
@@ -422,7 +420,10 @@ public class SimSequenceExtractor {
                             Tool.error(error);
                             throw new RuntimeException(error);
                         }
+                        
+                        lastTimeStamp = curTimeStamp;
                         counter++;
+                        
                         if (counter >= nrRawPerSeq * seqCount) {
                             Tool.trace("No sync frame found " + iwSync.seqNr() + "/" + nrRawPerSeq + "/" + seqCount);
                             counter = 0;
@@ -490,7 +491,11 @@ public class SimSequenceExtractor {
             void add(ImageWrapper image) throws BufferOverflowException{
                 if (!isFull()) {
                     ImageWrapper nullCheck = buffer.put(image.seqNr(), image);
-                    if (nullCheck != null) throw new RuntimeException("Same seqNr " + nullCheck.seqNr() + " " + image.seqNr());
+                    if (nullCheck != null) {
+                        String message = "Same seqNr " + nullCheck.seqNr() + " " + image.seqNr();
+                        Tool.error(message, true);
+                        throw new RuntimeException(message);
+                    }
                 }
                 else throw new BufferOverflowException();
             }
