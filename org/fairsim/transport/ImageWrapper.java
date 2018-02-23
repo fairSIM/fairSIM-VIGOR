@@ -25,7 +25,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.concurrent.PriorityBlockingQueue;
 
 import org.fairsim.linalg.Vec2d;
 import org.fairsim.utils.Base64;
@@ -59,6 +58,29 @@ public class ImageWrapper implements Comparable<ImageWrapper> {
         if (header.capacity() != HEADERSIZE) throw new BrokenHeaderException("Headersize missmatch: " + header.capacity() + " " + HEADERSIZE);
         this.header.put(header.array());
         parseHeader();
+    }
+    
+    /**
+     * Converts the meta data of this ImageWrapper into a human readable part which
+     * contains channel, timestamp, average brightness & sequence number and a
+     * BASE64 encoded header of the ImageWrapper
+     * @param iw input ImageWrapper
+     * @return converted header of this ImageWrapper as String
+     */
+    public String getHeaderAsString() {
+        short[] pixels = getPixels();
+        double avr = 0;
+        for (short p : pixels) {
+            avr += p;
+        }
+        avr /= pixels.length;
+        // channel timeCapture avr seqNr HeaderBASE64
+        String sliceLabel = "ch: " + pos1()
+                + " timestamp: " + timeCamera()
+                + " avr: " + avr
+                + " seqNr " + seqNr()
+                + " header: " + encodeHeader();
+        return sliceLabel;
     }
     
     static ByteBuffer readImageWrapperHeader(InputStream is) throws IOException {
