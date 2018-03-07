@@ -21,6 +21,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.io.FileSaver;
 import ij.io.Opener;
+import ij.measure.Calibration;
 import ij.plugin.HyperStackConverter;
 import ij.process.FloatProcessor;
 import ij.process.ShortProcessor;
@@ -97,14 +98,21 @@ public class LiveStack {
                 imgs.add(readImageWrapper(fis));
             }
             fis.close();
+            if (imgs.isEmpty()) throw new IOException("File is empty");
             //ls = new LiveStack(h, i);
         } else if (file.endsWith(".livesim")) {
+            int nrBands = 2;
+            int nrDirs = 3;
+            int nrPhases = 3;
+            int nrZ = 1;
+            int nanometerPerPixel = 78;
             FileInputStream fis = new FileInputStream(file);
             imgs = new LinkedList<>();
             while (fis.available() > 0) {
                 imgs.add(readImageWrapper(fis));
             }
             fis.close();
+            if (imgs.isEmpty()) throw new IOException("File is empty");
             int width = imgs.get(0).width();
             int height = imgs.get(0).height();
             List<Integer> c = new ArrayList<>();
@@ -117,14 +125,15 @@ public class LiveStack {
             for (int i = 0; i < c.size(); i++) {
                 channels[i] = new Header.Channel("Camera", "unknown", 0, c.get(i), null);
             }
-            header = new Header("fastSIM", "unknown", "fastSIM objective",
-                    "fastSIM objective", width, height, 1, 3, 3, 2, -1, -1,
-                    -1, -1, 79, 79, 79, channels);
+            header = new Header("fastSIM", "unknown", "OLYMPUS PlanApo 60x/1.45 Oil TIRF inf/0.17",
+                    "fastSIM objective", width, height, nrZ, nrPhases, nrDirs, nrBands, -1, -1,
+                    -1, 2, 1, nanometerPerPixel, nanometerPerPixel, nanometerPerPixel, channels);
         } else if (file.endsWith(".livestack.tif") || file.endsWith(".livesim.tif")) {
             ImagePlus ip = new Opener().openImage(file);
             LiveStack temp = new LiveStack(ip);
             header = temp.header;
             imgs = temp.imgs;
+            if (imgs.isEmpty()) throw new IOException("File is empty");
         } else {
             throw new IOException("unknown file extension, expect .livestack or .livesim");
         }
@@ -137,6 +146,10 @@ public class LiveStack {
     public static class Header implements Serializable {
 
         static final long serialVersionUID = 1;
+        static final String ILLUMINATIONTIMEUNIT = "us";
+        static final String DELAYTIMEUNIT = "ms";
+        static final String SYNCDELAYTIMEUNIT = "us";
+        static final String PIXELSIZEUNIT = "nm";
         final String microscope, timestamp, sample, objective;
         final int width, height; // in pixels
         final int zSlices;
@@ -145,6 +158,7 @@ public class LiveStack {
         final int delayTime; // in ms
         final int syncDelayTime; // in µs
         final int syncFreq; // ammount of sim sequences between syncs
+        final int syncMode;
         final float samplePixelSizeX, samplePixelSizeY, samplePixelSizeZ; // int nm
         final Channel[] channels;
 
@@ -171,7 +185,7 @@ public class LiveStack {
          */
         public Header(String microscope, String timestamp, String sample,
                 String objective, int width, int height, int zSlices,
-                int nrPhases, int nrAngles, int nrBands, int illuminationTime, int delayTime, int syncDelayTime, int syncFreq,
+                int nrPhases, int nrAngles, int nrBands, int illuminationTime, int delayTime, int syncDelayTime, int syncFreq, int syncMode,
                 float samplePixelSizeX, float samplePixelSizeY, float samplePixelSizeZ, Channel[] channels) {
 
             this.microscope = microscope;
@@ -188,6 +202,7 @@ public class LiveStack {
             this.delayTime = delayTime;
             this.syncDelayTime = syncDelayTime;
             this.syncFreq = syncFreq;
+            this.syncMode = syncMode;
             this.samplePixelSizeX = samplePixelSizeX;
             this.samplePixelSizeY = samplePixelSizeY;
             this.samplePixelSizeZ = samplePixelSizeZ;
@@ -367,6 +382,8 @@ public class LiveStack {
         sortAndFillupStack();
         ImageStack is = new ImageStack(header.width, header.height);
         int nrCh = header.channels.length;
+        long firstTime = imgs.get(0).timeCamera();
+        long secondTime = imgs.get(header.nrPhases * header.nrAngles).timeCamera();
         for (int imgCounter = 0; imgCounter < imgs.size(); imgCounter++) {
             ImageWrapper iw = dump ? imgs.remove(0) : imgs.get(imgCounter);
             for (int c = 0; c < nrCh; c++) {
@@ -380,6 +397,14 @@ public class LiveStack {
         ImagePlus ip = new ImagePlus("", is);
         ip = HyperStackConverter.toHyperStack(ip, nrCh, header.zSlices, is.getSize() / nrCh / header.zSlices, "xyztc", "color");
         ip.setProperty("Info", getHeaderString());
+        Calibration calibration = ip.getCalibration();
+        calibration.setUnit("µm");
+        calibration.pixelWidth = header.samplePixelSizeX / 1000.0;
+        calibration.pixelHeight = header.samplePixelSizeY / 1000.0;
+        calibration.pixelDepth = header.samplePixelSizeZ / 1000.0;
+        calibration.setTimeUnit("ms");
+        calibration.frameInterval = (secondTime - firstTime) / (header.nrPhases * header.nrAngles) / 1000.0;
+        calibration.fps = 1 / calibration.frameInterval * 1000.0;
         return ip;
     }
     
@@ -401,6 +426,9 @@ public class LiveStack {
         info += "nrAngles: " + header.nrAngles + "\n";
         info += "illuminationTime: " + header.illuminationTime + " µs \n";
         info += "delayTime: " + header.delayTime + " ms \n";
+        info += "syncDelayTime: " + header.syncDelayTime + "µs \n";
+        info += "syncFreq: " + header.syncFreq + "\n";
+        info += "syncMode: " + header.syncMode + "\n";
         info += "samplePixelSizeX: " + header.samplePixelSizeX + " nm \n";
         info += "samplePixelSizeY: " + header.samplePixelSizeY + " nm \n";
         info += "samplePixelSizeZ: " + header.samplePixelSizeZ + " nm \n";
@@ -535,8 +563,8 @@ public class LiveStack {
      * @return the reconstructed stack
      */
     public ReconStack reconstructByHeader() {
-        SimReconstructor recRunner = loadSimReconstructor();
         ImageWrapper[][][] iws = getSimSequences();
+        SimReconstructor recRunner = loadSimReconstructor();
         return recRunner.reconstruct(iws);
     }
     
@@ -654,7 +682,7 @@ public class LiveStack {
     /**
      * class for reconstructed livestacks
      */
-    private class ReconStack {
+    public class ReconStack {
         
         String[][][] iwHeaderStrings; // [t][c][pa]
         float[][][] widefield; //[t][c][xy]
@@ -929,19 +957,22 @@ public class LiveStack {
     
     /**
      * converts this livestack instance into sim sequences
+     * @param syncMode sync mode 0 or 1
      * @return sim sequences of this livestack instance
      */
     public ImageWrapper[][][] getSimSequences() {
-        // get global stack information
+        //get global stack information
         int iwPerChannel = sortAndFillupStack();
         int nrCh = header.channels.length;
         int nrPa = header.nrPhases * header.nrAngles;
+        int syncMode = header.syncMode;
+        if (syncMode != 0 && syncMode != 1) throw new UnsupportedOperationException("Unsupported syncMode " + syncMode);
         if (imgs.size() % nrCh != 0) throw new RuntimeException("Missmatch in iwPerChannel or nrCh " + imgs.size() + " " + nrCh);
         
         List<List<ImageWrapper>> channelImgs = new ArrayList<>(nrCh);
         for (int c = 0; c < nrCh; c++) {
             List<ImageWrapper> channelList = new ArrayList<>();
-            for (int i = 0; i < imgs.size(); i++) { // split into channels
+            for (int i = 0; i < imgs.size(); i++) { //split into channels
                 ImageWrapper iw = imgs.get(i);
                 if (iw.pos1() == header.channels[c].exWavelength) channelList.add(iw);
             }
@@ -951,41 +982,75 @@ public class LiveStack {
             long currentTime = 0;
             long lastTime = 0;
             int lastSync = - simFramesBetweenSync;
-            for (int i = 0; i < iwPerChannel; i++) { //find syny frames
+            List<ImageWrapper> syncFrames = new ArrayList<>();
+            for (int i = 0; i < iwPerChannel; i++) { //find syny frames depending on syncMode
                 if (i == 0) {
                     currentTime = 0;
                     lastTime = 0;
                     lastSync = - simFramesBetweenSync;
+                    syncFrames.clear();
                 }
                 ImageWrapper iw = channelList.get(i);
                 currentTime = iw.timeCamera();
-                if (currentTime - lastTime > header.syncDelayTime) {
-                    int diffSync = i - lastSync;
-                    if (diffSync != simFramesBetweenSync) {
-                        System.out.println(i + " " + lastSync + " " + simFramesBetweenSync);
-                        for (int k = 0; k < diffSync; k++) { //remove broken sequences
-                            int remove = i - k;
-                            if (remove >= 0) channelList.remove(remove);
+                
+                if (syncMode == 0) {
+                    if (currentTime - lastTime > header.syncDelayTime) {
+                        int diffSync = i - lastSync;
+                        if (diffSync != simFramesBetweenSync) {
+                            System.out.println(i + " " + lastSync + " " + simFramesBetweenSync);
+                            for (int k = 0; k < diffSync; k++) { //remove broken sequences
+                                int remove = i - k;
+                                if (remove >= 0) channelList.remove(remove);
+                            }
+                            i = 0;
                         }
-                        i = 0;
+                        lastSync = i;
+                        iwPerChannel = channelList.size();
                     }
-                    lastSync = i;
-                }
+                } else throw new UnsupportedOperationException("Only syncMode = 0 supported");
+                
+//                if ((syncMode == 0 && currentTime - lastTime > header.syncDelayTime)
+//                        || (syncMode == 1 && ((Math.abs(currentTime - lastTime - 5000) < 16) || (Math.abs(currentTime - lastTime - 12995) < 16)))) {
+//                    int diffSync = i - lastSync;
+//                    if (diffSync != simFramesBetweenSync + 2 * syncMode) {
+//                        System.out.println(i + " " + lastSync + " " + simFramesBetweenSync);
+//                        for (int k = 0; k < diffSync; k++) { //remove broken sequences
+//                            int remove = i - k;
+//                            if (remove >= 0) channelList.remove(remove);
+//                        }
+//                        i = 0;
+//                    }
+//                    lastSync = i;
+//                    for(int k = 0; k < 2 * syncMode; k++) syncFrames.add(channelList.get(i - k));
+//                    iwPerChannel = channelList.size();
+//                }
                 lastTime = currentTime;
             }
+            channelList.removeAll(syncFrames); //delete syncFrames if syncMode == 1
             iwPerChannel = channelList.size();
             int delete = iwPerChannel % simFramesBetweenSync;
             for (int i = 0; i < delete; i++) channelList.remove(iwPerChannel - 1 - i); //remove last broken sequence
             channelImgs.add(channelList);
         }
-        iwPerChannel = channelImgs.get(0).size();
+        
+        iwPerChannel = Integer.MAX_VALUE; //adapt list size of channels
         for (List l : channelImgs) {
-            if (l.size() != iwPerChannel) throw new RuntimeException("Missmatch in List cleanedImgs size" + l.size() + " " + iwPerChannel);
+            if (l.size() < iwPerChannel) iwPerChannel = l.size();
         }
+        for (List l : channelImgs) {
+            int diff = l.size() - iwPerChannel;
+            if (diff > 0) {
+                for(int k = 0; k < diff; k++) l.remove(l.size() - 1);
+            }
+        }
+
+//        for (List l : channelImgs) {
+//            if (l.size() != iwPerChannel) throw new RuntimeException("Missmatch in List cleanedImgs size" + l.size() + " " + iwPerChannel);
+//        }
         int nrTime = iwPerChannel / nrPa;
         
         ImageWrapper[][][] simSequences = new ImageWrapper[nrTime][nrCh][nrPa];
-        for (int c = 0; c < nrCh; c++) { // put sequences into the correct order for the reconstruction
+        for (int c = 0; c < nrCh; c++) { //put sequences into the correct order for the reconstruction
             for (int i = 0; i < iwPerChannel; i++) {
                 int pa = i % nrPa;
                 int t = i  / nrPa;

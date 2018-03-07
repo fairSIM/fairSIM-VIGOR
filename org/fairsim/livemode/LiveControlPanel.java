@@ -320,7 +320,7 @@ public class LiveControlPanel {
                 }
 
                 LiveStack.Header header = new LiveStack.Header(cfg.getStr("Microscope").val(), nowAsISO, easyGui.sampleTextField.getText(), cfg.getStr("Objective").val(),
-                        wfPixelSize, wfPixelSize, 1, reconRunner.nrPhases, reconRunner.nrDirs, reconRunner.nrBands, easyGui.getIlluminationTime(), easyGui.getDelayTime(), easyGui.getSyncDelayTime(), easyGui.getSyncFreq(), cfg.getInt("SamplePxlSizeX").val(), cfg.getInt("SamplePxlSizeY").val(), cfg.getInt("SamplePxlSizeZ").val(), lshc);
+                        wfPixelSize, wfPixelSize, 1, reconRunner.nrPhases, reconRunner.nrDirs, reconRunner.nrBands, easyGui.getIlluminationTime(), easyGui.getDelayTime(), easyGui.getSyncDelayTime(), easyGui.getSyncFreq(), cfg.getInt("SyncMode").val(), (float) cfg.getDbl("RawPxlSize").val() * 1000, (float) cfg.getDbl("RawPxlSize").val() * 1000, (float) cfg.getDbl("RawPxlSizeZ").val() * 1000, lshc);
 
                 liveStreamWriter.startRecording(filePrefix.getText(), header);
             } catch (IOException | EntryNotFoundException ex) {

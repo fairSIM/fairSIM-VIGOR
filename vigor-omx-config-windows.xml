@@ -5,12 +5,10 @@
 
 <RawPxlCount type="int">512</RawPxlCount>
 <RawPxlSize type="decimal">0.08</RawPxlSize>
+<RawPxlSizeZ type="decimal">0.078</RawPxlSizeZ>
 
 <Microscope type="string">fastSIM</Microscope>
 <Objective type="string">fastSIM objective</Objective>
-<SamplePxlSizeX type="int">79</SamplePxlSizeX>
-<SamplePxlSizeY type="int">79</SamplePxlSizeY>
-<SamplePxlSizeZ type="int">79</SamplePxlSizeZ>
 
 <NrPhases type="int">5</NrPhases>
 <NrAngles type="int">3</NrAngles>

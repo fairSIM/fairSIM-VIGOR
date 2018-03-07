@@ -5,13 +5,11 @@
 <TCPPort type="int">32322</TCPPort>
 
 <RawPxlCount type="int">512</RawPxlCount>
-<RawPxlSize type="decimal">0.08</RawPxlSize>
+<RawPxlSize type="decimal">0.078</RawPxlSize>
+<RawPxlSizeZ type="decimal">0.078</RawPxlSizeZ>
 
 <Microscope type="string">fastSIM</Microscope>
-<Objective type="string">fastSIM objective</Objective>
-<SamplePxlSizeX type="int">79</SamplePxlSizeX>
-<SamplePxlSizeY type="int">79</SamplePxlSizeY>
-<SamplePxlSizeZ type="int">79</SamplePxlSizeZ>
+<Objective type="string">OLYMPUS PlanApo 60x/1.45 Oil TIRF inf/0.17</Objective>
 
 <NrPhases type="int">3</NrPhases>
 <NrAngles type="int">3</NrAngles>
