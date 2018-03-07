@@ -384,7 +384,8 @@ public class LiveStack {
         int nrCh = header.channels.length;
         long firstTime = imgs.get(0).timeCamera();
         long secondTime = imgs.get(header.nrPhases * header.nrAngles).timeCamera();
-        for (int imgCounter = 0; imgCounter < imgs.size(); imgCounter++) {
+        int listSize = imgs.size();
+        for (int imgCounter = 0; imgCounter < listSize; imgCounter++) {
             ImageWrapper iw = dump ? imgs.remove(0) : imgs.get(imgCounter);
             for (int c = 0; c < nrCh; c++) {
                 if (iw.pos1() == header.channels[c].exWavelength) {
@@ -394,6 +395,7 @@ public class LiveStack {
                 }
             }
         }
+        System.out.println(is.getSize());
         ImagePlus ip = new ImagePlus("", is);
         ip = HyperStackConverter.toHyperStack(ip, nrCh, header.zSlices, is.getSize() / nrCh / header.zSlices, "xyztc", "color");
         ip.setProperty("Info", getHeaderString());
@@ -1188,7 +1190,7 @@ public class LiveStack {
             if (tif) {
                 outFile = outdir.getAbsolutePath() + File.separator + file.getName() + ".tif";
                 System.out.print("\tsaving tif as: " + outFile + " ...");
-                ls.saveAsTiff(outFile);
+                ls.saveAsTiff(outFile, true);
                 System.out.println(" saving done");
             }
             if (meta) {
