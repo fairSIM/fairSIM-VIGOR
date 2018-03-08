@@ -88,6 +88,38 @@ public class LiveStack {
         this.imgs = imgs;
         sortAndFillupStack();
     }
+    
+    public LiveStack(String file, int channel) throws IOException {
+        if (file.endsWith(".livesim")) {
+            int nrBands = 2;
+            int nrDirs = 3;
+            int nrPhases = 3;
+            int nrZ = 1;
+            int nanometerPerPixel = 78;
+            FileInputStream fis = new FileInputStream(file);
+            imgs = new LinkedList<>();
+            while (fis.available() > 0) {
+                ImageWrapper iw = readImageWrapper(fis);
+                if (iw.pos1() == channel) imgs.add(iw);
+            }
+            fis.close();
+            if (imgs.isEmpty()) throw new IOException("File is empty");
+            int width = imgs.get(0).width();
+            int height = imgs.get(0).height();
+            List<Integer> c = new ArrayList<>();
+            for (ImageWrapper iw : imgs) {
+                if (!c.contains(iw.pos1())) {
+                    c.add(iw.pos1());
+                }
+            }
+            Header.Channel[] channels = new Header.Channel[1];
+            channels[0] = new Header.Channel("Camera", "unknown", 0, channel, null);
+            header = new Header("fastSIM", "unknown", "OLYMPUS PlanApo 60x/1.45 Oil TIRF inf/0.17",
+                    "fastSIM objective", width, height, nrZ, nrPhases, nrDirs, nrBands, -1, -1,
+                    -1, 2, 1, nanometerPerPixel, nanometerPerPixel, nanometerPerPixel, channels);
+        } else throw new IOException("unknown file extension, expect .livestack or .livesim");
+        imgs.sort(null);
+    }
 
     /**
      * Constructs a livestack instance from an .livestack, .livesim,
@@ -145,6 +177,8 @@ public class LiveStack {
         }
         sortAndFillupStack();
     }
+    
+    
     
     /**
      * splits this livestack into two livestacks in time. This livestacks

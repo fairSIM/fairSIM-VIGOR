@@ -28,6 +28,7 @@ import java.util.Arrays;
 
 import org.fairsim.linalg.Vec2d;
 import org.fairsim.utils.Base64;
+import org.fairsim.utils.Tool;
 
 /** Class to encapsulate image data for network send */
 public class ImageWrapper implements Comparable<ImageWrapper> {
@@ -42,6 +43,8 @@ public class ImageWrapper implements Comparable<ImageWrapper> {
 
     private byte []	buffer;
     private ByteBuffer	header;
+    
+    public static int sortFailureCounter;
     
     /** Create a new ImageWrapper, for images sized maxBytes */
     public ImageWrapper( int maxWidth, int maxHeight ) {
@@ -525,10 +528,22 @@ public class ImageWrapper implements Comparable<ImageWrapper> {
         int resChannel = pos1 - iw.pos1;
         if (resChannel != 0) return resChannel;
         else{
-            long value = seqNr - iw.seqNr;
-            if (value > Integer.MAX_VALUE) return Integer.MAX_VALUE;
-            else if (value < Integer.MIN_VALUE) return Integer.MIN_VALUE;
-            else return (int) (seqNr - iw.seqNr);
+            long seqNrDiff = seqNr - iw.seqNr;
+            if (seqNrDiff != 0) {
+                if (seqNrDiff > Integer.MAX_VALUE) return Integer.MAX_VALUE;
+                else if (seqNrDiff < Integer.MIN_VALUE) return Integer.MIN_VALUE;
+                else return (int) (seqNr - iw.seqNr);
+            } else {
+                long timeCameraDiff = timeCamera - iw.timeCamera;
+                    if (timeCameraDiff != 0) { 
+                    if (timeCameraDiff > Integer.MAX_VALUE) return Integer.MAX_VALUE;
+                    else if (timeCameraDiff < Integer.MIN_VALUE) return Integer.MIN_VALUE;
+                    else return (int) (seqNr - iw.seqNr);
+                } else {
+                        Tool.trace("WARNING: sorting failed " + ++sortFailureCounter);
+                        return 0;
+                    }
+            }
         }
     }
     
