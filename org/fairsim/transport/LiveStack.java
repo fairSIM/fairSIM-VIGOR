@@ -82,6 +82,12 @@ public class LiveStack {
         }
         sortAndFillupStack();
     }
+    
+    private LiveStack(Header header, List<ImageWrapper> imgs) {
+        this.header = header;
+        this.imgs = imgs;
+        sortAndFillupStack();
+    }
 
     /**
      * Constructs a livestack instance from an .livestack, .livesim,
@@ -138,6 +144,37 @@ public class LiveStack {
             throw new IOException("unknown file extension, expect .livestack or .livesim");
         }
         sortAndFillupStack();
+    }
+    
+    /**
+     * splits this livestack into two livestacks in time. This livestacks
+     * contains the first half, the returned livestack contains the second half.
+     * @return the second half of the splitted livestack
+     */
+    public LiveStack split() {
+        List<ImageWrapper> secondHalf = new LinkedList<>();
+        
+        int iwPerChannel = sortAndFillupStack();
+        int nrCh = header.channels.length;
+        if (imgs.size() % nrCh != 0) throw new RuntimeException("Missmatch in iwPerChannel or nrCh " + imgs.size() + " " + nrCh);
+        
+        for (int c = 0; c < nrCh; c++) {
+            List<ImageWrapper> channelList = new ArrayList<>();
+            for (int i = 0; i < imgs.size(); i++) { //split into channels
+                ImageWrapper iw = imgs.get(i);
+                if (iw.pos1() == header.channels[c].exWavelength) channelList.add(iw);
+            }
+            channelList.sort(null);
+            if (iwPerChannel != channelList.size()) throw new RuntimeException("Wrong channelList.size()");
+            
+            for (int i = 0; i < iwPerChannel / 2 + iwPerChannel % 2; i++) {
+                ImageWrapper iw = channelList.get(i + iwPerChannel / 2);
+                secondHalf.add(iw);
+                imgs.remove(iw);
+            }
+        }
+        
+        return new LiveStack(header, secondHalf);
     }
 
     /**
