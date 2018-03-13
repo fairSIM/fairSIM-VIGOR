@@ -535,12 +535,13 @@ public class ImageWrapper implements Comparable<ImageWrapper> {
                 else return (int) (seqNr - iw.seqNr);
             } else {
                 long timeCameraDiff = timeCamera - iw.timeCamera;
-                    if (timeCameraDiff != 0) { 
+                if (timeCameraDiff != 0) { 
                     if (timeCameraDiff > Integer.MAX_VALUE) return Integer.MAX_VALUE;
                     else if (timeCameraDiff < Integer.MIN_VALUE) return Integer.MIN_VALUE;
                     else return (int) (seqNr - iw.seqNr);
                 } else {
-                        Tool.trace("WARNING: sorting failed " + ++sortFailureCounter);
+                        Tool.trace("WARNING: sorting failed: counter; iw1: pos1, seqNr, timeCamera; iw2: pos1, seqNr, timeCamera "
+                                + ++sortFailureCounter + "; " + pos1 + " " + seqNr + " " + timeCamera + "; " + iw.pos1 + " " + iw.seqNr + " " + iw.timeCamera);
                         return 0;
                     }
             }
