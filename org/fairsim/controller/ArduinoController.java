@@ -243,6 +243,7 @@ public class ArduinoController implements SerialPortEventListener {
      * @return information about connecting status
      */
     public String disconnect() {
+        sendChar('x');
         try {
             if (sendingThread != null) sendingThread.interrupt();
             arduinoCommands.clear();
@@ -260,7 +261,7 @@ public class ArduinoController implements SerialPortEventListener {
      * @param c char to be send
      * @return answer of the arduino
      */
-    public String sendChar(char c) {
+    String sendChar(char c) {
         arduinoCommands.add(String.valueOf(c));
         return getArduinoAnswer();
     }

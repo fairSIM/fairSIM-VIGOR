@@ -166,7 +166,7 @@ public class DmdController implements SlmController {
                 activateBoard();
             }
                        
-            setMode(3);         
+            setMode(1);         
 
             list = ros;
 

@@ -685,7 +685,7 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
             arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(arduinoPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(arduinoPanelLayout.createSequentialGroup()
                         .addComponent(arduinoStartButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -693,11 +693,7 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(arduinoPhotoButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(arduinoComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(arduinoBreakTimeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(arduinoDelayLabel))
+                        .addComponent(arduinoComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(arduinoPanelLayout.createSequentialGroup()
                         .addComponent(arduinoConnectButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -709,8 +705,11 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(arduinoGreenButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(arduinoBlueButton)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addComponent(arduinoBlueButton)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(arduinoBreakTimeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(arduinoDelayLabel)
                 .addContainerGap())
         );
         arduinoPanelLayout.setVerticalGroup(
@@ -850,8 +849,8 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JToggleButton arduinoBlueButton;
-    private javax.swing.JTextField arduinoBreakTimeTextField;
-    private javax.swing.JComboBox<String> arduinoComboBox;
+    javax.swing.JTextField arduinoBreakTimeTextField;
+    javax.swing.JComboBox<String> arduinoComboBox;
     private javax.swing.JButton arduinoConnectButton;
     private javax.swing.JLabel arduinoDelayLabel;
     private javax.swing.JButton arduinoDisconnectButton;

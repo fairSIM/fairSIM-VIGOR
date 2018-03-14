@@ -532,18 +532,27 @@ public class ImageWrapper implements Comparable<ImageWrapper> {
             if (seqNrDiff != 0) {
                 if (seqNrDiff > Integer.MAX_VALUE) return Integer.MAX_VALUE;
                 else if (seqNrDiff < Integer.MIN_VALUE) return Integer.MIN_VALUE;
-                else return (int) (seqNr - iw.seqNr);
+                else return (int) (seqNrDiff);
             } else {
                 long timeCameraDiff = timeCamera - iw.timeCamera;
                 if (timeCameraDiff != 0) { 
                     if (timeCameraDiff > Integer.MAX_VALUE) return Integer.MAX_VALUE;
                     else if (timeCameraDiff < Integer.MIN_VALUE) return Integer.MIN_VALUE;
-                    else return (int) (seqNr - iw.seqNr);
+                    else return (int) (timeCameraDiff);
                 } else {
-                        Tool.trace("WARNING: sorting failed: counter; iw1: pos1, seqNr, timeCamera; iw2: pos1, seqNr, timeCamera "
-                                + ++sortFailureCounter + "; " + pos1 + " " + seqNr + " " + timeCamera + "; " + iw.pos1 + " " + iw.seqNr + " " + iw.timeCamera);
+                    long timeCaptureDiff = timeCapture - iw.timeCapture;
+                    if (timeCaptureDiff != 0) { 
+                        if (timeCaptureDiff > Integer.MAX_VALUE) return Integer.MAX_VALUE;
+                        else if (timeCaptureDiff < Integer.MIN_VALUE) return Integer.MIN_VALUE;
+                        else return (int) (timeCaptureDiff);
+                    } else {
+                        if (seqNr != Long.MAX_VALUE || iw.seqNr != Long.MAX_VALUE) {
+                            Tool.trace("WARNING: sorting failed: counter; iw1&iw2: pos1, seqNr, timeCamera, timeCapture: "
+                                    + ++sortFailureCounter + "; " + pos1 + " " + seqNr + " " + timeCamera + " " + timeCapture + "; " + iw.pos1 + " " + iw.seqNr + " " + iw.timeCamera + " " + iw.timeCapture);
+                        }
                         return 0;
                     }
+                }
             }
         }
     }
