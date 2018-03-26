@@ -117,7 +117,7 @@ public class LiveStack {
             header = new Header("fastSIM", "unknown", "OLYMPUS PlanApo 60x/1.45 Oil TIRF inf/0.17",
                     "fastSIM objective", width, height, nrZ, nrPhases, nrDirs, nrBands, -1, -1,
                     -1, 2, 1, nanometerPerPixel, nanometerPerPixel, nanometerPerPixel, channels);
-        } else throw new IOException("unknown file extension, expect .livestack or .livesim");
+        } else throw new IOException("unknown file extension, expect .livesim");
         imgs.sort(null);
     }
 
@@ -178,7 +178,22 @@ public class LiveStack {
         sortAndFillupStack();
     }
     
-    
+    /**
+     * Reads the header of a .livestack file
+     * @param file .livestack file
+     * @return header instance of the .livestack file
+     * @throws IOException 
+     */
+    public static Header readHeaderFromFile(String file) throws IOException {
+        if (file.endsWith(".livestack")) {
+            FileInputStream fis = new FileInputStream(file);
+            Header h = Header.read(fis);
+            fis.close();
+            return h;
+        } else {
+            throw new IOException("unknown file extension, expect .livestack");
+        }
+    }
     
     /**
      * splits this livestack into two livestacks in time. This livestacks
@@ -307,6 +322,44 @@ public class LiveStack {
                 this.perChannel = perChannel;
             }
 
+        }
+        
+        /**
+        * Converts this header instance into a human readable and
+        * a BASE64 encoded part
+        * @return String representation of this header instance
+        */
+        public String getStringRepresentation() {
+            String info = "";
+            info += "microscope: " + microscope + "\n";
+            info += "yyyyMMdd'T'HHmmss timestamp: " + timestamp + "\n";
+            info += "sample: " + sample + "\n";
+            info += "objective: " + objective + "\n";
+            info += "width: " + width + " pixels \n";
+            info += "height: " + height + " pixels \n";
+            info += "zSlices: " + zSlices + "\n";
+            info += "nrPhases: " + nrPhases + "\n";
+            info += "nrAngles: " + nrAngles + "\n";
+            info += "illuminationTime: " + illuminationTime + " µs \n";
+            info += "delayTime: " + delayTime + " ms \n";
+            info += "syncDelayTime: " + syncDelayTime + "µs \n";
+            info += "syncFreq: " + syncFreq + "\n";
+            info += "syncMode: " + syncMode + "\n";
+            info += "samplePixelSizeX: " + samplePixelSizeX + " nm \n";
+            info += "samplePixelSizeY: " + samplePixelSizeY + " nm \n";
+            info += "samplePixelSizeZ: " + samplePixelSizeZ + " nm \n";
+            for (int c = 0; c < channels.length; c++) {
+                info += "channel " + c + ": detector: " + channels[c].detector + "\n";
+                info += "channel " + c + ": dye: " + channels[c].dye + "\n";
+                info += "channel " + c + ": illuminationPower: " + channels[c].illuminationPower + " mW \n";
+                info += "channel " + c + ": exWavelength: " + channels[c].exWavelength + " nm \n";
+            }
+            try {
+                info += "encoded header: " + encode();
+            } catch (IOException ex) {
+                throw new RuntimeException("this should never happen " + ex);
+            }
+            return info;
         }
 
         /**
@@ -466,10 +519,10 @@ public class LiveStack {
                 }
             }
         }
-        System.out.println(is.getSize());
+        //System.out.println(is.getSize());
         ImagePlus ip = new ImagePlus("", is);
         ip = HyperStackConverter.toHyperStack(ip, nrCh, header.zSlices, is.getSize() / nrCh / header.zSlices, "xyztc", "color");
-        ip.setProperty("Info", getHeaderString());
+        ip.setProperty("Info", header.getStringRepresentation());
         Calibration calibration = ip.getCalibration();
         calibration.setUnit("µm");
         calibration.pixelWidth = header.samplePixelSizeX / 1000.0;
@@ -481,44 +534,6 @@ public class LiveStack {
         return ip;
     }
     
-    /**
-     * Converts the header of this livestack instance into a human readable and
-     * a BASE64 encoded part
-     * @return String representation of the header of this livestack instance
-     */
-    public String getHeaderString() {
-        String info = "";
-        info += "microscope: " + header.microscope + "\n";
-        info += "yyyyMMdd'T'HHmmss timestamp: " + header.timestamp + "\n";
-        info += "sample: " + header.sample + "\n";
-        info += "objective: " + header.objective + "\n";
-        info += "width: " + header.width + " pixels \n";
-        info += "height: " + header.height + " pixels \n";
-        info += "zSlices: " + header.zSlices + "\n";
-        info += "nrPhases: " + header.nrPhases + "\n";
-        info += "nrAngles: " + header.nrAngles + "\n";
-        info += "illuminationTime: " + header.illuminationTime + " µs \n";
-        info += "delayTime: " + header.delayTime + " ms \n";
-        info += "syncDelayTime: " + header.syncDelayTime + "µs \n";
-        info += "syncFreq: " + header.syncFreq + "\n";
-        info += "syncMode: " + header.syncMode + "\n";
-        info += "samplePixelSizeX: " + header.samplePixelSizeX + " nm \n";
-        info += "samplePixelSizeY: " + header.samplePixelSizeY + " nm \n";
-        info += "samplePixelSizeZ: " + header.samplePixelSizeZ + " nm \n";
-        for (int c = 0; c < header.channels.length; c++) {
-            info += "channel " + c + ": detector: " + header.channels[c].detector + "\n";
-            info += "channel " + c + ": dye: " + header.channels[c].dye + "\n";
-            info += "channel " + c + ": illuminationPower: " + header.channels[c].illuminationPower + " mW \n";
-            info += "channel " + c + ": exWavelength: " + header.channels[c].exWavelength + " nm \n";
-        }
-        try {
-            info += "encoded header: " + header.encode();
-        } catch (IOException ex) {
-            throw new RuntimeException("this should never happen");
-        }
-        return info;
-    }
-
     /**
      * Not finished method for saving livestacks as ome tiffs
      * 
@@ -838,7 +853,7 @@ public class LiveStack {
             }
             ImagePlus ip = new ImagePlus("", is);
             ip = HyperStackConverter.toHyperStack(ip, nrCh, nrZ, is.getSize() / nrCh / nrZ, "xyzct", "color");
-            ip.setProperty("Info", getHeaderString());
+            ip.setProperty("Info", header.getStringRepresentation());
             FileSaver fs = new FileSaver(ip);
             fs.saveAsTiffStack(outFile);
             return ip;
@@ -868,7 +883,7 @@ public class LiveStack {
             }
             ImagePlus ip = new ImagePlus("", is);
             ip = HyperStackConverter.toHyperStack(ip, nrCh, nrZ, is.getSize() / nrCh / nrZ, "xyzct", "color");
-            ip.setProperty("Info", getHeaderString());
+            ip.setProperty("Info", header.getStringRepresentation());
             FileSaver fs = new FileSaver(ip);
             fs.saveAsTiffStack(outFile);
             return ip;
@@ -1070,7 +1085,7 @@ public class LiveStack {
                     if (currentTime - lastTime > header.syncDelayTime) {
                         int diffSync = i - lastSync;
                         if (diffSync != simFramesBetweenSync) {
-                            System.out.println(i + " " + lastSync + " " + simFramesBetweenSync);
+                            //System.out.println(i + " " + lastSync + " " + simFramesBetweenSync);
                             for (int k = 0; k < diffSync; k++) { //remove broken sequences
                                 int remove = i - k;
                                 if (remove >= 0) channelList.remove(remove);
@@ -1145,7 +1160,7 @@ public class LiveStack {
             int count = 0;
             int lambda = header.channels[c].exWavelength;
             String outFile = outFile_woExtension + lambda + ".meta.txt";
-            System.out.print("\t\twriting to " + outFile + " ... ");
+            //System.out.print("\t\twriting to " + outFile + " ... ");
             FileWriter metaFile = new FileWriter(outFile);
             metaFile.write("# idxAl idxCh timeCam timeCapture avr seqNr HeaderBASE64\n");
             for (int allCount = 0; allCount < imgs.size(); allCount++) {
@@ -1171,7 +1186,7 @@ public class LiveStack {
                 }
             }
             metaFile.close();
-            System.out.println(" writing done");
+            //System.out.println(" writing done");
         }
     }
 

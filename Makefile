@@ -1,11 +1,11 @@
 #
 # fairSIM make file
 #
-# To work, either 'javac' has to point to a java 
+# To work, either 'javac8' has to point to a java 
 # compiler (vers. 1.8), or change the line below to
-# 'javac' instead of 'javac'
+# 'javac' instead of 'javac8'
 
-JC = javac
+JC = javac8
 JAR = jar
 
 # Options for the java compiler

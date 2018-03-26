@@ -55,6 +55,7 @@ import org.fairsim.linalg.Vec2d;
 import org.fairsim.controller.AdvancedGui;
 import org.fairsim.controller.EasyGui;
 import org.fairsim.transport.LiveStack;
+import org.fairsim.transport.LiveStackGui;
 import org.fairsim.utils.Conf.EntryNotFoundException;
 import org.fairsim.utils.Tool;
 import org.fairsim.utils.SimpleMT;
@@ -286,6 +287,9 @@ public class LiveControlPanel {
             pTab[ch] = new ParameterTab(reconRunner, ch, cfg);
             tabbedPane.addTab(channels[ch], pTab[ch].getPanel());
         }
+        
+        LiveStackGui lsg = new LiveStackGui(saveFolder);
+        tabbedPane.addTab("Livestack", lsg);
         
         JPanel finalPanel = new JPanel();
         finalPanel.setLayout(new BoxLayout(finalPanel, BoxLayout.Y_AXIS));

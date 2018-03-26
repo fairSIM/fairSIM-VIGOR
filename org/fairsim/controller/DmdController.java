@@ -345,9 +345,6 @@ public class DmdController implements SlmController {
             return "Error: Dmd is busy";
         }
         try {
-            if(isActive()){
-              deactivateBoard();  
-            }
             disconnect();
             gui.showText("Deactivation of the board was successful.");
             return "Disconnected from the DMD";

@@ -396,8 +396,8 @@
                               <Group type="102" alignment="0" attributes="0">
                                   <Component id="runDelayLabel" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="runDelaySlider" min="-2" pref="112" max="-2" attributes="0"/>
-                                  <EmptySpace max="32767" attributes="0"/>
+                                  <Component id="runDelaySlider" pref="36" max="32767" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
                                   <Component id="runMsLabel" min="-2" pref="50" max="-2" attributes="0"/>
                               </Group>
                           </Group>
@@ -406,11 +406,11 @@
                               <Group type="102" attributes="0">
                                   <Component id="runRecDelayLabel" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="runRecDelaySlider" pref="0" max="32767" attributes="0"/>
-                                  <EmptySpace min="-2" max="-2" attributes="0"/>
+                                  <Component id="runRecDelaySlider" pref="36" max="32767" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
                                   <Component id="runRecMsLabel" min="-2" pref="50" max="-2" attributes="0"/>
                               </Group>
-                              <Component id="runRecButton" pref="131" max="32767" attributes="0"/>
+                              <Component id="runRecButton" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                   </Group>

@@ -23,7 +23,6 @@ import java.util.List;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.fairsim.utils.Tool;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.ScriptInterface;
 

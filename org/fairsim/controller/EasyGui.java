@@ -637,18 +637,18 @@ public class EasyGui extends javax.swing.JPanel {
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, controlPanelLayout.createSequentialGroup()
                                 .addComponent(runDelayLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(runDelaySlider, javax.swing.GroupLayout.PREFERRED_SIZE, 112, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(runDelaySlider, javax.swing.GroupLayout.DEFAULT_SIZE, 36, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(runMsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addGap(18, 18, 18)
                         .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(controlPanelLayout.createSequentialGroup()
                                 .addComponent(runRecDelayLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(runRecDelaySlider, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                                .addComponent(runRecDelaySlider, javax.swing.GroupLayout.DEFAULT_SIZE, 36, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(runRecMsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(runRecButton, javax.swing.GroupLayout.DEFAULT_SIZE, 131, Short.MAX_VALUE))))
+                            .addComponent(runRecButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         controlPanelLayout.setVerticalGroup(
@@ -1219,7 +1219,7 @@ public class EasyGui extends javax.swing.JPanel {
     private javax.swing.JComboBox<String> blueComboBox;
     private javax.swing.JLabel blueDyeLabel;
     private javax.swing.JLabel blueLabel;
-    private javax.swing.JTextField blueTextField;
+    public javax.swing.JTextField blueTextField;
     private javax.swing.JPanel controlPanel;
     private javax.swing.JTextField dyeTextField;
     private javax.swing.JButton enableButton;
@@ -1227,7 +1227,7 @@ public class EasyGui extends javax.swing.JPanel {
     private javax.swing.JComboBox<String> greenComboBox;
     private javax.swing.JLabel greenDyeLabel;
     private javax.swing.JLabel greenLabel;
-    private javax.swing.JTextField greenTextField;
+    public javax.swing.JTextField greenTextField;
     private javax.swing.JList<String> itList;
     private javax.swing.JPanel itPanel;
     private javax.swing.JLabel jLabel1;
@@ -1239,7 +1239,7 @@ public class EasyGui extends javax.swing.JPanel {
     private javax.swing.JComboBox<String> redComboBox;
     private javax.swing.JLabel redDyeLabel;
     private javax.swing.JLabel redLabel;
-    private javax.swing.JTextField redTextField;
+    public javax.swing.JTextField redTextField;
     private javax.swing.JToggleButton registrationButton;
     private javax.swing.JToggleButton runButton;
     private javax.swing.JLabel runDelayLabel;
