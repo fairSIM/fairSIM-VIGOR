@@ -288,7 +288,7 @@ public class LiveControlPanel {
             tabbedPane.addTab(channels[ch], pTab[ch].getPanel());
         }
         
-        LiveStackGui lsg = new LiveStackGui(saveFolder);
+        LiveStackGui lsg = new LiveStackGui(saveFolder, avf);
         tabbedPane.addTab("Livestack", lsg);
         
         JPanel finalPanel = new JPanel();
@@ -460,6 +460,41 @@ public class LiveControlPanel {
     public SimSequenceExtractor getSequenceExtractor() {
         return this.seqDetection;
     }
+    
+    public static VectorFactory loadVectorFactory() {
+        String OS = System.getProperty("os.name").toLowerCase();
+        VectorFactory avf;
+
+        // following Factory for Linux-GPU-Reconstruction
+        if (OS.contains("nix") || OS.contains("nux") || OS.contains("aix")) {
+            String wd = System.getProperty("user.dir") + "/";
+            Tool.trace("loading library from: " + wd);
+            try {
+                System.load(wd + "libcudaimpl.so");
+                avf = AccelVectorFactory.getFactory();
+            } catch (UnsatisfiedLinkError ex) {
+                System.err.println("[fairSIM] Error: " + ex);
+                System.err.println("[fairSIM] Error: now loading not GPU supported version");
+                avf = Vec.getBasicVectorFactory();
+            }
+        } // following Factory for Windows-GPU-Reconstruction
+        else if (OS.contains("win")) {
+            String wd = System.getProperty("user.dir") + "\\";
+            Tool.trace("loading library from: " + wd);
+            try {
+                System.load(wd + "libcudaimpl.dll");
+                avf = AccelVectorFactory.getFactory();
+            } catch (UnsatisfiedLinkError ex) {
+                System.err.println("[fairSIM] Error: " + ex);
+                System.err.println("[fairSIM] Error: now loading not GPU supported version");
+                avf = Vec.getBasicVectorFactory();
+            }
+        } // following Factory for CPU-Reconstruction
+        else {
+            avf = Vec.getBasicVectorFactory();
+        }
+        return avf;
+    }
 
     /**
      * Thread updating dynamic display
@@ -599,36 +634,8 @@ public class LiveControlPanel {
 
         // load the CUDA library
         String OS = System.getProperty("os.name").toLowerCase();
-        VectorFactory avf;
+        VectorFactory avf = loadVectorFactory();
 
-        // following Factory for Linux-GPU-Reconstruction
-        if (OS.contains("nix") || OS.contains("nux") || OS.contains("aix")) {
-            String wd = System.getProperty("user.dir") + "/";
-            Tool.trace("loading library from: " + wd);
-            try {
-                System.load(wd + "libcudaimpl.so");
-                avf = AccelVectorFactory.getFactory();
-            } catch (UnsatisfiedLinkError ex) {
-                System.err.println("[fairSIM] Error: " + ex);
-                System.err.println("[fairSIM] Error: now loading not GPU supported version");
-                avf = Vec.getBasicVectorFactory();
-            }
-        } // following Factory for Windows-GPU-Reconstruction
-        else if (OS.contains("win")) {
-            String wd = System.getProperty("user.dir") + "\\";
-            Tool.trace("loading library from: " + wd);
-            try {
-                System.load(wd + "libcudaimpl.dll");
-                avf = AccelVectorFactory.getFactory();
-            } catch (UnsatisfiedLinkError ex) {
-                System.err.println("[fairSIM] Error: " + ex);
-                System.err.println("[fairSIM] Error: now loading not GPU supported version");
-                avf = Vec.getBasicVectorFactory();
-            }
-        } // following Factory for CPU-Reconstruction
-        else {
-            avf = Vec.getBasicVectorFactory();
-        }
         
         if (arg.length < 2) {
             System.out.println("Start with: config-file.xml [488] [568] [647] ...");

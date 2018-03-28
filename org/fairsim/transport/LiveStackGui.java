@@ -24,6 +24,8 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import org.fairsim.linalg.VectorFactory;
+import org.fairsim.livemode.LiveControlPanel;
 
 /**
  *
@@ -34,13 +36,15 @@ public class LiveStackGui extends javax.swing.JPanel {
     File lsDir;
     File tarDir;
     File[] files;
+    VectorFactory vf;
     
     /**
      * Creates new form LiveStackGui
      */
-    public LiveStackGui(String liveStackDirectory) throws IOException {
+    public LiveStackGui(String liveStackDirectory, VectorFactory vf) throws IOException {
         
         this.lsDir = new File(liveStackDirectory);
+        this.vf = vf;
         if (!lsDir.isDirectory()) throw new IOException(liveStackDirectory + " is not a Directory");
         tarDir = lsDir;
         files = new File[0];
@@ -84,13 +88,15 @@ public class LiveStackGui extends javax.swing.JPanel {
     
     private void printText(String text) {
         logTextArea.append(text + "\n");
+        logTextArea.setCaretPosition(logTextArea.getDocument().getLength());
     }
     
     private void printError(String message) {
         logTextArea.append("Error: " + message + "\n");
+        logTextArea.setCaretPosition(logTextArea.getDocument().getLength());
     }
     
-    private void converteFile(File f, boolean tiff, boolean meta, boolean rec, int recModeIdx) {
+    private void converteFile(File f, boolean tiff, boolean meta, boolean rec) {
         if (!(tiff | meta | rec)) printError("No action selected");
         else {
             try {
@@ -110,17 +116,8 @@ public class LiveStackGui extends javax.swing.JPanel {
                     ls.toMeta(tarDir + "/" + fileName);
                 }
                 if (rec) {
-                    LiveStack.ReconStack rs;
-                    if (recModeIdx == 0) {
-                        printText("Reconstruct stack by header parameters");
-                        rs = ls.reconstructByHeader();
-                    } else if (recModeIdx == 1) {
-                        printText("Reconstruct stack by individual fit");
-                        rs = ls.reconstructByIndividualFit();
-                    } else if (recModeIdx == 2) {
-                        printText("Reconstruct stack by best fit");
-                        rs = ls.reconstructByIndividualFit();
-                    } else throw new RuntimeException("Unknown reconstruction mode, expect 0, 1 or 2 instead of " + recModeIdx);
+                    printText("Reconstruct stack by header parameters");
+                    LiveStack.ReconStack rs = ls.reconstructByHeader(vf);
                     printText("Save widefield: " + tarDir + "/" + fileName + ".wf.tif");
                     rs.saveWfAsTiff(tarDir + "/" + fileName + ".wf.tif");
                     printText("Save reconstruction: " + tarDir + "/" + fileName + ".recon.tif");
@@ -128,13 +125,21 @@ public class LiveStackGui extends javax.swing.JPanel {
                     printText("Finished: " + f);
                 }
             } catch (Exception ex) {
+                ex.printStackTrace();
                 printError("Converting failed: " + f + " " + ex);
             }
         }
     }
     
+    private void setButtonsEnabled(boolean b) {
+        openButton.setEnabled(b);
+        changeButton.setEnabled(b);
+        convertSelectedButton.setEnabled(b);
+        convertAllButton.setEnabled(b);
+    }
+    
     public static void main(String[] args) throws IOException {
-        LiveStackGui lsg = new LiveStackGui("G:\\downloads");
+        LiveStackGui lsg = new LiveStackGui("G:\\downloads", LiveControlPanel.loadVectorFactory());
         JFrame testFrame = new JFrame("LiveStackGui test");
         testFrame.add(lsg);
         testFrame.pack();
@@ -154,16 +159,15 @@ public class LiveStackGui extends javax.swing.JPanel {
     private void initComponents() {
 
         logPanel = new javax.swing.JPanel();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        logScrollPane = new javax.swing.JScrollPane();
         logTextArea = new javax.swing.JTextArea();
         converterPanel = new javax.swing.JPanel();
         openButton = new javax.swing.JButton();
-        jScrollPane2 = new javax.swing.JScrollPane();
+        fileListScrollPane = new javax.swing.JScrollPane();
         fileList = new javax.swing.JList<>();
         tiffCheckBox = new javax.swing.JCheckBox();
         metaCheckBox = new javax.swing.JCheckBox();
         recCheckBox = new javax.swing.JCheckBox();
-        recComboBox = new javax.swing.JComboBox<>();
         targetLabel = new javax.swing.JLabel();
         targetTextField = new javax.swing.JTextField();
         changeButton = new javax.swing.JButton();
@@ -175,9 +179,8 @@ public class LiveStackGui extends javax.swing.JPanel {
         logPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Log"));
 
         logTextArea.setEditable(false);
-        logTextArea.setColumns(20);
-        logTextArea.setRows(5);
-        jScrollPane1.setViewportView(logTextArea);
+        logTextArea.setRows(10);
+        logScrollPane.setViewportView(logTextArea);
 
         javax.swing.GroupLayout logPanelLayout = new javax.swing.GroupLayout(logPanel);
         logPanel.setLayout(logPanelLayout);
@@ -185,14 +188,14 @@ public class LiveStackGui extends javax.swing.JPanel {
             logPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(logPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1)
+                .addComponent(logScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                 .addContainerGap())
         );
         logPanelLayout.setVerticalGroup(
             logPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(logPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1)
+                .addComponent(logScrollPane)
                 .addContainerGap())
         );
 
@@ -212,7 +215,7 @@ public class LiveStackGui extends javax.swing.JPanel {
                 fileListMouseClicked(evt);
             }
         });
-        jScrollPane2.setViewportView(fileList);
+        fileListScrollPane.setViewportView(fileList);
 
         tiffCheckBox.setText("save as tiff");
 
@@ -220,14 +223,6 @@ public class LiveStackGui extends javax.swing.JPanel {
 
         recCheckBox.setText("reconstruct");
         recCheckBox.setToolTipText("");
-        recCheckBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                recCheckBoxActionPerformed(evt);
-            }
-        });
-
-        recComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "by header parameters (fast)", "by individual fit (slow)", "by best fit (slow)" }));
-        recComboBox.setEnabled(false);
 
         targetLabel.setText("target directory:");
 
@@ -270,7 +265,7 @@ public class LiveStackGui extends javax.swing.JPanel {
                     .addGroup(converterPanelLayout.createSequentialGroup()
                         .addGroup(converterPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(openButton)
-                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 289, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(fileListScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 289, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(metaScrollPane))
                     .addGroup(converterPanelLayout.createSequentialGroup()
@@ -290,9 +285,7 @@ public class LiveStackGui extends javax.swing.JPanel {
                                 .addGap(18, 18, 18)
                                 .addComponent(metaCheckBox)
                                 .addGap(18, 18, 18)
-                                .addComponent(recCheckBox)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(recComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(recCheckBox)))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -303,14 +296,13 @@ public class LiveStackGui extends javax.swing.JPanel {
                 .addComponent(openButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(converterPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(metaScrollPane)
-                    .addComponent(jScrollPane2))
+                    .addComponent(metaScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 43, Short.MAX_VALUE)
+                    .addComponent(fileListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 43, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(converterPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(tiffCheckBox)
                     .addComponent(metaCheckBox)
-                    .addComponent(recCheckBox)
-                    .addComponent(recComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(recCheckBox))
                 .addGap(18, 18, 18)
                 .addGroup(converterPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(targetLabel)
@@ -366,10 +358,6 @@ public class LiveStackGui extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_changeButtonActionPerformed
 
-    private void recCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_recCheckBoxActionPerformed
-        recComboBox.setEnabled(recCheckBox.isSelected());
-    }//GEN-LAST:event_recCheckBoxActionPerformed
-
     private void fileListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_fileListMouseClicked
         int fileIdx = fileList.getSelectedIndex();
         if (fileIdx >= 0) {
@@ -394,14 +382,10 @@ public class LiveStackGui extends javax.swing.JPanel {
             if (fileIdx >= files.length) printError("Selected file not in list " + fileIdx);
             else {
                 File f = files[fileIdx];
-                changeButton.setEnabled(false);
-                convertSelectedButton.setEnabled(false);
-                convertAllButton.setEnabled(false);
+                setButtonsEnabled(false);
                 new Thread(() -> {
-                    converteFile(f, tiffCheckBox.isSelected(), metaCheckBox.isSelected(), recCheckBox.isSelected(), recComboBox.getSelectedIndex());
-                    changeButton.setEnabled(true);
-                    convertSelectedButton.setEnabled(true);
-                    convertAllButton.setEnabled(true);
+                    converteFile(f, tiffCheckBox.isSelected(), metaCheckBox.isSelected(), recCheckBox.isSelected());
+                    setButtonsEnabled(true);
                 }).start();
                 
             }
@@ -411,20 +395,15 @@ public class LiveStackGui extends javax.swing.JPanel {
 
     private void convertAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_convertAllButtonActionPerformed
         if (files.length > 0) {
-            changeButton.setEnabled(false);
-            convertSelectedButton.setEnabled(false);
-            convertAllButton.setEnabled(false);
+            setButtonsEnabled(false);
             boolean tiff = tiffCheckBox.isSelected();
             boolean meta = metaCheckBox.isSelected();
             boolean rec = recCheckBox.isSelected();
-            int recMode = recComboBox.getSelectedIndex();
             new Thread(() -> {
                 for (File f : files) {
-                    converteFile(f, tiff, meta, rec, recMode);
+                    converteFile(f, tiff, meta, rec);
                 }
-                changeButton.setEnabled(true);
-                convertSelectedButton.setEnabled(true);
-                convertAllButton.setEnabled(true);
+                setButtonsEnabled(true);
             }).start();
         } else printError("File list is empty");
     }//GEN-LAST:event_convertAllButtonActionPerformed
@@ -436,16 +415,15 @@ public class LiveStackGui extends javax.swing.JPanel {
     private javax.swing.JButton convertSelectedButton;
     private javax.swing.JPanel converterPanel;
     private javax.swing.JList<String> fileList;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane fileListScrollPane;
     private javax.swing.JPanel logPanel;
+    private javax.swing.JScrollPane logScrollPane;
     private javax.swing.JTextArea logTextArea;
     private javax.swing.JCheckBox metaCheckBox;
     private javax.swing.JScrollPane metaScrollPane;
     private javax.swing.JTextArea metaTextArea;
     private javax.swing.JButton openButton;
     private javax.swing.JCheckBox recCheckBox;
-    private javax.swing.JComboBox<String> recComboBox;
     private javax.swing.JLabel targetLabel;
     private javax.swing.JTextField targetTextField;
     private javax.swing.JCheckBox tiffCheckBox;

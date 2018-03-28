@@ -31,8 +31,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
-import org.fairsim.accel.AccelVectorFactory;
-import org.fairsim.linalg.Vec;
 import org.fairsim.linalg.Vec2d;
 import org.fairsim.linalg.VectorFactory;
 import org.fairsim.livemode.ReconstructionRunner;
@@ -49,6 +47,7 @@ import loci.formats.services.OMEXMLService;
 import ome.xml.model.enums.*;
 import ome.units.UNITS;
 import ome.units.quantity.*;
+import org.fairsim.livemode.LiveControlPanel;
 
 /**
  * Class to handle .livestack and .livesim files
@@ -59,7 +58,7 @@ public class LiveStack {
 
     private final Header header;
     private final List<ImageWrapper> imgs;
-
+    
     /**
      * private constructor for ImagePlus instance of ImageJ
      *
@@ -507,7 +506,7 @@ public class LiveStack {
         ImageStack is = new ImageStack(header.width, header.height);
         int nrCh = header.channels.length;
         long firstTime = imgs.get(0).timeCamera();
-        long secondTime = imgs.get(header.nrPhases * header.nrAngles).timeCamera();
+        long secondTime = imgs.get(1).timeCamera();
         int listSize = imgs.size();
         for (int imgCounter = 0; imgCounter < listSize; imgCounter++) {
             ImageWrapper iw = dump ? imgs.remove(0) : imgs.get(imgCounter);
@@ -529,7 +528,7 @@ public class LiveStack {
         calibration.pixelHeight = header.samplePixelSizeY / 1000.0;
         calibration.pixelDepth = header.samplePixelSizeZ / 1000.0;
         calibration.setTimeUnit("ms");
-        calibration.frameInterval = (secondTime - firstTime) / (header.nrPhases * header.nrAngles) / 1000.0;
+        calibration.frameInterval = (secondTime - firstTime) / 1000.0;
         calibration.fps = 1 / calibration.frameInterval * 1000.0;
         return ip;
     }
@@ -598,7 +597,10 @@ public class LiveStack {
      * 
      * @return a basic or gpu vectorfactory for sim reconstructions
      */
+    /*
     private static VectorFactory getVectorFactory() {
+        return LiveControlPanel.loadVectorFactory();
+        
         VectorFactory vf = null;
         String hd = System.getProperty("user.home") + "/documents/";
         String library = "libcudaimpl";
@@ -627,13 +629,15 @@ public class LiveStack {
             Tool.error("LiveStack: No VectorFactory loaded", true);
         }
         return vf;
+        
     }
+    */
     /**
      * constructs and initializes a sim reconstruction runner for this
      * livestack instance
      * @return a SimReconstructor for this livestack instance
      */
-    private SimReconstructor loadSimReconstructor() {
+    private SimReconstructor loadSimReconstructor(VectorFactory vf) {
         ReconstructionRunner.PerChannel[] pc = new ReconstructionRunner.PerChannel[header.channels.length];
         for (int i = 0; i < header.channels.length; i++) {      //get reconstructionParameters from LiveReconstruction
             if (header.channels[i].perChannel instanceof ReconstructionRunner.PerChannel) {
@@ -642,7 +646,7 @@ public class LiveStack {
                 throw new RuntimeException("need instance of ReconstructionRunner.PerChannel");
             }
         }
-        return new SimReconstructor(header.width, header.nrPhases, header.nrAngles, header.nrBands, pc);
+        return new SimReconstructor(vf, header.width, header.nrPhases, header.nrAngles, header.nrBands, pc);
     }
 
     /**
@@ -650,9 +654,9 @@ public class LiveStack {
      * livestack header
      * @return the reconstructed stack
      */
-    public ReconStack reconstructByHeader() {
+    public ReconStack reconstructByHeader(VectorFactory vf) {
         ImageWrapper[][][] iws = getSimSequences();
-        SimReconstructor recRunner = loadSimReconstructor();
+        SimReconstructor recRunner = loadSimReconstructor(vf);
         return recRunner.reconstruct(iws);
     }
     
@@ -661,8 +665,8 @@ public class LiveStack {
      * each sim sequence
      * @return the reconstructed stack
      */
-    public ReconStack reconstructByIndividualFit() {
-        SimReconstructor recRunner = loadSimReconstructor();
+    public ReconStack reconstructByIndividualFit(VectorFactory vf) {
+        SimReconstructor recRunner = loadSimReconstructor(vf);
         ImageWrapper[][][] iws = getSimSequences();
         ReconStack reconStack = null;
         int nrTime = iws.length;
@@ -693,8 +697,8 @@ public class LiveStack {
      * @param time
      * @return the reconstructed stack
      */
-    public ReconStack reconstructByFit(int time) {
-        SimReconstructor recRunner = loadSimReconstructor();
+    public ReconStack reconstructByFit(VectorFactory vf, int time) {
+        SimReconstructor recRunner = loadSimReconstructor(vf);
         ImageWrapper[][][] iws = getSimSequences();
         int nrCh = iws[0].length;
         int nrPa = iws[0][0].length;
@@ -717,8 +721,8 @@ public class LiveStack {
      * modulation depth
      * @return the reconstructed stack
      */
-    public ReconStack reconstructByBestFit() {
-        SimReconstructor recRunner = loadSimReconstructor();
+    public ReconStack reconstructByBestFit(VectorFactory vf) {
+        SimReconstructor recRunner = loadSimReconstructor(vf);
         ImageWrapper[][][] iws = getSimSequences();
         int nrTime = iws.length;
         int nrCh = iws[0].length;
@@ -852,10 +856,11 @@ public class LiveStack {
                 }
             }
             ImagePlus ip = new ImagePlus("", is);
-            ip = HyperStackConverter.toHyperStack(ip, nrCh, nrZ, is.getSize() / nrCh / nrZ, "xyzct", "color");
+            if (nrTime > 1 || nrCh > 1) ip = HyperStackConverter.toHyperStack(ip, nrCh, nrZ, is.getSize() / nrCh / nrZ, "xyzct", "color");
             ip.setProperty("Info", header.getStringRepresentation());
             FileSaver fs = new FileSaver(ip);
-            fs.saveAsTiffStack(outFile);
+            if (nrTime > 1 || nrCh > 1) fs.saveAsTiffStack(outFile);
+            else fs.saveAsTiff(outFile);
             return ip;
         }
         
@@ -882,10 +887,11 @@ public class LiveStack {
                 }
             }
             ImagePlus ip = new ImagePlus("", is);
-            ip = HyperStackConverter.toHyperStack(ip, nrCh, nrZ, is.getSize() / nrCh / nrZ, "xyzct", "color");
+            if (nrTime > 1 || nrCh > 1) ip = HyperStackConverter.toHyperStack(ip, nrCh, nrZ, is.getSize() / nrCh / nrZ, "xyzct", "color");
             ip.setProperty("Info", header.getStringRepresentation());
             FileSaver fs = new FileSaver(ip);
-            fs.saveAsTiffStack(outFile);
+            if (nrTime > 1 || nrCh > 1) fs.saveAsTiffStack(outFile);
+            else fs.saveAsTiff(outFile);
             return ip;
         }
     }
@@ -907,8 +913,8 @@ public class LiveStack {
          * @param nrBands amount of band for sim
          * @param perChannels array of parameters for sim reconstruction
          */
-        private SimReconstructor(int imageSizeInPixels, int nrPhases, int nrDirs, int nrBands, PerChannel[] perChannels) {
-            super(getVectorFactory(), 1, imageSizeInPixels, nrPhases, nrDirs, nrBands, perChannels);
+        private SimReconstructor(VectorFactory vf, int imageSizeInPixels, int nrPhases, int nrDirs, int nrBands, PerChannel[] perChannels) {
+            super(vf, 1, imageSizeInPixels, nrPhases, nrDirs, nrBands, perChannels);
         }
 
         /**
@@ -1255,7 +1261,8 @@ public class LiveStack {
             String wfFile = outdir.getAbsolutePath() + File.separator + file.getName() + ".wf.tif";
             System.out.println("\treconstructing ...");
             
-            ReconStack reconStack = ls.reconstructByHeader();
+            VectorFactory vf = LiveControlPanel.loadVectorFactory();
+            ReconStack reconStack = ls.reconstructByHeader(vf);
             reconStack.saveReconAsTiff(reconFile);
             reconStack.saveWfAsTiff(wfFile);
             
