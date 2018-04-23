@@ -22,12 +22,12 @@ RM = rm -vf
 .PHONY:	all org/fairsim/git-version.txt
 
 all:	
-	$(JC) $(JFLAGS) org/fairsim/*/*.java org/livesimextractor/fiji/*.java
+	$(JC) $(JFLAGS) org/fairsim/*/*.java 
 
 accelarator:
 	$(JC) $(JFLAGS) org/fairsim/accel/*.java
 fiji:
-	$(JC) $(JFLAGS) org/fairsim/fiji/*.java org/livesimextractor/fiji/*.java
+	$(JC) $(JFLAGS) org/fairsim/fiji/*.java 
 linalg:
 	$(JC) $(JFLAGS) org/fairsim/linalg/*.java
 livemode:

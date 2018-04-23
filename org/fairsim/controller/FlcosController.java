@@ -66,8 +66,14 @@ public class FlcosController implements SlmController {
     public String setRo(int ro) {
         //out.println("Try to set running order to: " + ro);
         try {
-            R4CommLib.rpcRoDeactivate();
-            R4CommLib.rpcRoSetSelected(ro);
+            while (R4CommLib.rpcRoGetSelected() != ro) {
+                R4CommLib.rpcRoSetSelected(ro);
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException ex) {
+                    Tool.error("Error: buildDownConnection interrupted, why?");
+                }
+            }
             gui.showText("Selected running order '" + ro + "'");
             return "Running order was set to: " + ro;
         } catch (AbstractException ex) {
@@ -84,7 +90,14 @@ public class FlcosController implements SlmController {
     public String activateRo() {
         //out.println("Try to activate selected running order");
         try {
-            R4CommLib.rpcRoActivate();
+            while (R4CommLib.rpcRoGetActivationState() != 86) {
+                R4CommLib.rpcRoActivate();
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException ex) {
+                    Tool.error("Error: buildDownConnection interrupted, why?");
+                }
+            }
             gui.showText("Activated running order '" + R4CommLib.rpcRoGetSelected() + "'");
             return "Selected running order [" + R4CommLib.rpcRoGetSelected() + "] got activated";
         } catch (AbstractException ex) {
@@ -123,33 +136,6 @@ public class FlcosController implements SlmController {
      */
     @Override
     public String getSlmSelectedRo() {
-        //out.println("Try to transfer Slm Information");
-//        try {
-//            String[] info = new String[6];
-//            info[0] = R4CommLib.libGetVersion();
-//            info[1] = R4CommLib.rpcMicroGetCodeTimestamp().split("\n")[0];
-//            byte at = R4CommLib.rpcRoGetActivationType();
-//            if (at == 1) {
-//                info[2] = "Immediate";
-//            } else if (at == 1) {
-//                info[2] = "Software";
-//            } else if (at == 4) {
-//                info[2] = "Hardware";
-//            } else {
-//                info[2] += "UNKNOWN";
-//            }
-//            info[3] = Integer.toString(R4CommLib.rpcRoGetDefault());
-//            info[4] = Integer.toString(R4CommLib.rpcRoGetSelected());
-//            info[5] = R4CommLib.rpcSysGetRepertoireName();
-//            gui.showText("Info-Array constructed");
-//            String serverOut = "Transfering info";
-//            for (String output : info) {
-//                serverOut += ";" + output;
-//            }
-//            return serverOut;
-//        } catch (AbstractException ex) {
-//            return catchedAbstractException(ex);
-//        }
     String string;
         try {
             string = Integer.toString(R4CommLib.rpcRoGetSelected());

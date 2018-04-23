@@ -18,12 +18,8 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 package org.fairsim.controller;
 
 import java.awt.Component;
-import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
 import org.fairsim.livemode.SimSequenceExtractor;
 
 /**
@@ -895,21 +891,7 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
         arduinoWakeUpCams();
         arduinoComboBox.setSelectedIndex(ro.arduinoRo);
         slmComboBox.setSelectedIndex(ro.deviceRo);
-        //else throw new EasyGui.EasyGuiException("Controller: Not supported device: " + ro.device);
-        slmDeactivate();
         slmSetSelected();
-        slmDeactivate();
-        slmActivate();
-        slmDeactivate();
-        slmDeactivate();
-        slmDeactivate();
-        slmDeactivate();
-        slmDeactivate();
-        slmActivate();
-        slmActivate();
-        slmActivate();
-        slmActivate();
-        slmActivate();
     }
     
     @Override

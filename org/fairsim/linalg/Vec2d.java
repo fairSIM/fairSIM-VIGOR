@@ -155,7 +155,7 @@ public final class Vec2d {
     // =======================================================
     
     /** Complex-valued, 2-dimensional vector, float base-type */
-    public interface Cplx extends Vec.Cplx, Size, java.io.Serializable { 
+    public interface Cplx extends Vec.Cplx, Size { 
         static final long serialVersionUID = 1;
 	
 	/** Get element x,y */
