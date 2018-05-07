@@ -45,7 +45,7 @@ public class CameraController {
     private final List<String> sendIps;
     private final CameraGroup[] groups;
     private static final int CAMBUFFER = 512;
-    private static final int FPSCOUNTS = 59;
+    private static final int FPSCOUNTS = 23;
     private int[] roi;
     private final int[] bigRoi, smallRoi;
     private int imageWidth;
