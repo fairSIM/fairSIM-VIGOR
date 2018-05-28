@@ -79,7 +79,7 @@
 <offset type="decimal">140</offset>
 <ChannelNumber type="int">568</ChannelNumber>
 <CamType type="string">pco.edge 4.2</CamType>
-<CamAdress type="string">d3gpu01</CamAdress>
+<CamAdress type="string">localhost</CamAdress>
 
 <sim-param>
 <nr-angles type="int"> 3 </nr-angles>
@@ -128,7 +128,7 @@
 <offset type="decimal">140</offset>
 <ChannelNumber type="int">647</ChannelNumber>
 <CamType type="string">pco.edge 4.2</CamType>
-<CamAdress type="string">localhost</CamAdress>
+<CamAdress type="string">d3gpu01</CamAdress>
 
 <sim-param>
 <nr-angles type="int"> 3 </nr-angles>

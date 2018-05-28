@@ -103,6 +103,27 @@ public class ReconstructionRunner {
         public void setParam(SimParam sp) {
             param = sp;
         }
+        
+        public void setWienParam(double wp) {
+            wienParam = wp;
+            param.setWienerFilter(wp);
+        }
+        
+        public void setAttStr(double attStr) {
+            this.attStr = attStr;
+        }
+        
+        public void setAttFWHM(double fwhm) {
+            attFWHM = fwhm;
+        }
+        
+        public void setApoCutOff(double af) {
+            param.setApoCutoff(af);
+        }
+        
+        public void setUseAttenuation(boolean att) {
+            useAttenuation = att;
+        }
     }
 
     public PerChannel getChannel(int i) {

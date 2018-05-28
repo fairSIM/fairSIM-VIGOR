@@ -637,7 +637,7 @@ public class LiveStack {
      * livestack instance
      * @return a SimReconstructor for this livestack instance
      */
-    private SimReconstructor loadSimReconstructor(VectorFactory vf) {
+    SimReconstructor loadSimReconstructor(VectorFactory vf) {
         ReconstructionRunner.PerChannel[] pc = new ReconstructionRunner.PerChannel[header.channels.length];
         for (int i = 0; i < header.channels.length; i++) {      //get reconstructionParameters from LiveReconstruction
             if (header.channels[i].perChannel instanceof ReconstructionRunner.PerChannel) {
@@ -648,15 +648,21 @@ public class LiveStack {
         }
         return new SimReconstructor(vf, header.width, header.nrPhases, header.nrAngles, header.nrBands, pc);
     }
+    
+    SimReconstructor loadSimReconstructor(VectorFactory vf, int chIdx, double wienParam, double attStr, double attFWHM, double apoCutOff, boolean useAtt) {
+        SimReconstructor sr = loadSimReconstructor(vf);
+        sr.setFilterParameters(chIdx, wienParam, attStr, attFWHM, apoCutOff, useAtt);
+        return sr;
+    }
 
     /**
      * reconstructs this livestack images via the sim parameters of the
      * livestack header
      * @return the reconstructed stack
      */
-    public ReconStack reconstructByHeader(VectorFactory vf) {
+    public ReconStack reconstructByHeader(SimReconstructor sr) {
         ImageWrapper[][][] iws = getSimSequences();
-        SimReconstructor recRunner = loadSimReconstructor(vf);
+        SimReconstructor recRunner = sr;
         return recRunner.reconstruct(iws);
     }
     
@@ -665,8 +671,8 @@ public class LiveStack {
      * each sim sequence
      * @return the reconstructed stack
      */
-    public ReconStack reconstructByIndividualFit(VectorFactory vf) {
-        SimReconstructor recRunner = loadSimReconstructor(vf);
+    public ReconStack reconstructByIndividualFit(SimReconstructor sr) {
+        SimReconstructor recRunner = sr;
         ImageWrapper[][][] iws = getSimSequences();
         ReconStack reconStack = null;
         int nrTime = iws.length;
@@ -697,8 +703,8 @@ public class LiveStack {
      * @param time
      * @return the reconstructed stack
      */
-    public ReconStack reconstructByFit(VectorFactory vf, int time) {
-        SimReconstructor recRunner = loadSimReconstructor(vf);
+    public ReconStack reconstructByFit(SimReconstructor sr, int time) {
+        SimReconstructor recRunner = sr;
         ImageWrapper[][][] iws = getSimSequences();
         int nrCh = iws[0].length;
         int nrPa = iws[0][0].length;
@@ -721,8 +727,8 @@ public class LiveStack {
      * modulation depth
      * @return the reconstructed stack
      */
-    public ReconStack reconstructByBestFit(VectorFactory vf) {
-        SimReconstructor recRunner = loadSimReconstructor(vf);
+    public ReconStack reconstructByBestFit(SimReconstructor sr) {
+        SimReconstructor recRunner = sr;
         ImageWrapper[][][] iws = getSimSequences();
         int nrTime = iws.length;
         int nrCh = iws[0].length;
@@ -899,7 +905,7 @@ public class LiveStack {
     /**
      * ReconstructionRunner for livestack files
      */
-    private class SimReconstructor extends ReconstructionRunner {
+    class SimReconstructor extends ReconstructionRunner {
 
         boolean running = false;
         boolean fitting = false;
@@ -915,6 +921,14 @@ public class LiveStack {
          */
         private SimReconstructor(VectorFactory vf, int imageSizeInPixels, int nrPhases, int nrDirs, int nrBands, PerChannel[] perChannels) {
             super(vf, 1, imageSizeInPixels, nrPhases, nrDirs, nrBands, perChannels);
+        }
+        
+        private void setFilterParameters(int chIdx, double wienParam, double attStr, double attFWHM, double apoCutOff, boolean useAtt) {
+            channels[chIdx].setWienParam(attStr);
+            channels[chIdx].setAttStr(attStr);
+            channels[chIdx].setAttFWHM(attFWHM);
+            channels[chIdx].setApoCutOff(apoCutOff);
+            channels[chIdx].setUseAttenuation(useAtt);
         }
 
         /**
@@ -1262,7 +1276,9 @@ public class LiveStack {
             System.out.println("\treconstructing ...");
             
             VectorFactory vf = LiveControlPanel.loadVectorFactory();
-            ReconStack reconStack = ls.reconstructByHeader(vf);
+            SimReconstructor sr = ls.loadSimReconstructor(vf);
+            //sr.setFilterParameters(0, 0, 0, 0, 0, true);
+            ReconStack reconStack = ls.reconstructByBestFit(sr);
             reconStack.saveReconAsTiff(reconFile);
             reconStack.saveWfAsTiff(wfFile);
             

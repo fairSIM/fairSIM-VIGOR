@@ -117,7 +117,8 @@ public class LiveStackGui extends javax.swing.JPanel {
                 }
                 if (rec) {
                     printText("Reconstruct stack by header parameters");
-                    LiveStack.ReconStack rs = ls.reconstructByHeader(vf);
+                    LiveStack.SimReconstructor sr = ls.loadSimReconstructor(vf);
+                    LiveStack.ReconStack rs = ls.reconstructByHeader(sr);
                     printText("Save widefield: " + tarDir + "/" + fileName + ".wf.tif");
                     rs.saveWfAsTiff(tarDir + "/" + fileName + ".wf.tif");
                     printText("Save reconstruction: " + tarDir + "/" + fileName + ".recon.tif");
