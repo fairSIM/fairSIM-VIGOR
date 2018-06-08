@@ -633,7 +633,7 @@ public class LiveControlPanel {
         SimpleMT.setNrThreads(Math.max(SimpleMT.getNrThreads() - 2, 2));
 
         // load the CUDA library
-        String OS = System.getProperty("os.name").toLowerCase();
+        //String OS = System.getProperty("os.name").toLowerCase();
         VectorFactory avf = loadVectorFactory();
 
         

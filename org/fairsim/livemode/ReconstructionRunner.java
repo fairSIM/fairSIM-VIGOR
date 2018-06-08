@@ -100,6 +100,10 @@ public class ReconstructionRunner {
             }
         }
         
+        public SimParam getParam() {
+            return param;
+        }
+        
         public void setParam(SimParam sp) {
             param = sp;
         }

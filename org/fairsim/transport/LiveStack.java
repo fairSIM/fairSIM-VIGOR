@@ -48,6 +48,7 @@ import ome.xml.model.enums.*;
 import ome.units.UNITS;
 import ome.units.quantity.*;
 import org.fairsim.livemode.LiveControlPanel;
+import org.fairsim.sim_algorithm.OtfProvider;
 
 /**
  * Class to handle .livestack and .livesim files
@@ -930,6 +931,19 @@ public class LiveStack {
             channels[chIdx].setApoCutOff(apoCutOff);
             channels[chIdx].setUseAttenuation(useAtt);
         }
+        
+        /**
+         * sets a new 2D-OTF
+         * @param chIdx channel index 0, 1, 2
+         * @param na NA of the optical system
+         * @param lambda emission wavelength in nm
+         * @param a curvature factor
+         */
+        private void setOtfFromEstimate(int chIdx, double na, double lambda, double a) {
+            SimParam param = channels[chIdx].getParam();
+            OtfProvider otf = OtfProvider.fromEstimate(na, lambda, a);
+            param.otf(otf);
+        }
 
         /**
          * Thread.sleep with caught InterruptedException
@@ -1277,6 +1291,7 @@ public class LiveStack {
             
             VectorFactory vf = LiveControlPanel.loadVectorFactory();
             SimReconstructor sr = ls.loadSimReconstructor(vf);
+            //sr.setOtfFromEstimate(0, 1.4, 600, 0.3);
             //sr.setFilterParameters(0, 0, 0, 0, 0, true);
             ReconStack reconStack = ls.reconstructByBestFit(sr);
             reconStack.saveReconAsTiff(reconFile);

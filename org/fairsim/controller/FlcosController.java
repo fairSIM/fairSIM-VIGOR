@@ -66,14 +66,26 @@ public class FlcosController implements SlmController {
     public String setRo(int ro) {
         //out.println("Try to set running order to: " + ro);
         try {
-            while (R4CommLib.rpcRoGetSelected() != ro) {
-                R4CommLib.rpcRoSetSelected(ro);
+            do {
+                R4CommLib.rpcRoDeactivate();
                 try {
-                    Thread.sleep(50);
+                    Thread.sleep(25);
                 } catch (InterruptedException ex) {
                     Tool.error("Error: buildDownConnection interrupted, why?");
                 }
-            }
+                R4CommLib.rpcRoSetSelected(ro);
+                try {
+                    Thread.sleep(25);
+                } catch (InterruptedException ex) {
+                    Tool.error("Error: buildDownConnection interrupted, why?");
+                }
+                R4CommLib.rpcRoActivate();
+                try {
+                    Thread.sleep(25);
+                } catch (InterruptedException ex) {
+                    Tool.error("Error: buildDownConnection interrupted, why?");
+                }
+            } while (R4CommLib.rpcRoGetSelected() != ro);
             gui.showText("Selected running order '" + ro + "'");
             return "Running order was set to: " + ro;
         } catch (AbstractException ex) {
