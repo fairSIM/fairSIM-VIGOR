@@ -37,16 +37,6 @@ import org.fairsim.livemode.ReconstructionRunner;
 import org.fairsim.sim_algorithm.SimParam;
 import org.fairsim.utils.Base64;
 import org.fairsim.utils.Tool;
-import loci.common.services.DependencyException;
-import loci.common.services.ServiceException;
-import loci.common.services.ServiceFactory;
-import loci.formats.out.OMETiffWriter;
-import loci.formats.*;
-import loci.formats.meta.IMetadata;
-import loci.formats.services.OMEXMLService;
-import ome.xml.model.enums.*;
-import ome.units.UNITS;
-import ome.units.quantity.*;
 import org.fairsim.livemode.LiveControlPanel;
 import org.fairsim.sim_algorithm.OtfProvider;
 
@@ -534,105 +524,6 @@ public class LiveStack {
         return ip;
     }
     
-    /**
-     * Not finished method for saving livestacks as ome tiffs
-     * 
-     * @throws DependencyException
-     * @throws ServiceException
-     * @throws FormatException
-     * @throws IOException
-     * @deprecated
-     */
-    @Deprecated
-    private int saveOmeTiff(String outFile, boolean dump) throws DependencyException, ServiceException, FormatException, IOException {
-        int imgsPerChannel = sortAndFillupStack();
-        int nrCh = header.channels.length;
-        OMETiffWriter writer = new OMETiffWriter();
-        String id = outFile;
-        int dot = id.lastIndexOf(".");
-        String outId = (dot >= 0 ? id.substring(0, dot) : id) + ".ome.tif";
-        int pixelType = FormatTools.UINT16;
-        ServiceFactory factory = new ServiceFactory();
-        OMEXMLService service = factory.getInstance(OMEXMLService.class);
-        IMetadata omexmlMeta = service.createOMEXMLMetadata();
-        MetadataTools.populateMetadata(omexmlMeta, 0, null, false, "XYZCT",
-                FormatTools.getPixelTypeString(pixelType), header.width, header.height, header.zSlices, nrCh, imgsPerChannel, 1);
-        omexmlMeta.setDatasetID("date:1", 0);
-        omexmlMeta.setDatasetDescription("SIM TIRF:0 b:2 a:3 p:3", 0);
-        omexmlMeta.setInstrumentID("fastSIM:1", 0);
-        omexmlMeta.setObjectiveID("fastSIM-Olympus:1", 0, 0);
-        omexmlMeta.setObjectiveImmersion(Immersion.OIL, 0, 0);
-        omexmlMeta.setObjectiveLensNA(1.45, 0, 0);
-        omexmlMeta.setObjectiveManufacturer("Olympus", 0, 0);
-        omexmlMeta.setObjectiveModel("TIRF", 0, 0);
-        omexmlMeta.setObjectiveNominalMagnification(60., 0, 0);
-        int planeCount = imgsPerChannel * nrCh;
-        for (int p = 0; p < planeCount; p++) {
-            omexmlMeta.setPlaneExposureTime(new Time(1234., UNITS.MILLISECOND), 0, p);
-        }
-        // configure OME-TIFF writer
-        writer.setMetadataRetrieve(omexmlMeta);
-        writer.setId(outId);
-        int imgCounter;
-        for (imgCounter = 0; imgCounter < imgs.size(); imgCounter++) {
-            ImageWrapper iw = dump ? imgs.remove(0) : imgs.get(imgCounter);
-            for (int c = 0; c < nrCh; c++) {
-                if (iw.pos1() == header.channels[c].exWavelength) {
-                    byte[] plane = new byte[2 * header.width * header.height];
-                    short[] pixels = iw.getPixels();
-                    for (int i = 0; i < pixels.length; i++) {
-                        plane[2 * i] = (byte) (10 + 10 * (pixels[i] >> 8));
-                        plane[2 * i + 1] = (byte) (10 + 10 * (pixels[i] & 0x00FF));
-                    }
-                    // write plane to output file
-                    writer.saveBytes(imgCounter, plane);
-                    imgCounter++;
-                }
-            }
-        }
-        writer.close();
-        return imgCounter;
-    }
-    
-    /**
-     * 
-     * @return a basic or gpu vectorfactory for sim reconstructions
-     */
-    /*
-    private static VectorFactory getVectorFactory() {
-        return LiveControlPanel.loadVectorFactory();
-        
-        VectorFactory vf = null;
-        String hd = System.getProperty("user.home") + "/documents/";
-        String library = "libcudaimpl";
-        String extension = null;
-        Tool.trace("loading " + library + " library from: " + hd);
-        String OS = System.getProperty("os.name").toLowerCase();
-        if (OS.contains("nix") || OS.contains("nux") || OS.contains("aix")) {
-            extension = "so";
-        } else if (OS.contains("win")) {
-            extension = "dll";
-        }
-        try {
-            if (extension == null) {
-                throw new UnsatisfiedLinkError("No unix or windows system found");
-            } else {
-                System.load(hd + library + "." + extension);
-                vf = AccelVectorFactory.getFactory();
-            }
-        } catch (UnsatisfiedLinkError ex) {
-            System.err.println("[fairSIM]: " + ex);
-            System.err.println("[fairSIM]: loading not GPU supported version");
-            //ex.printStackTrace();
-            vf = Vec.getBasicVectorFactory();
-        }
-        if (vf == null) {
-            Tool.error("LiveStack: No VectorFactory loaded", true);
-        }
-        return vf;
-        
-    }
-    */
     /**
      * constructs and initializes a sim reconstruction runner for this
      * livestack instance

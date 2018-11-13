@@ -34,8 +34,8 @@
 
 <offset type="decimal">140</offset>
 <ChannelNumber type="int">488</ChannelNumber>
-<CamType type="string">pco.edge 4.2</CamType>
-<CamAdress type="string">Bory</CamAdress>
+<CamType type="string">pco.edge 4.2 CLHS</CamType>
+<CamAdress type="string">seascape</CamAdress>
 
 <sim-param>
 <nr-angles type="int"> 3 </nr-angles>
@@ -78,8 +78,8 @@
 
 <offset type="decimal">140</offset>
 <ChannelNumber type="int">568</ChannelNumber>
-<CamType type="string">pco.edge 4.2</CamType>
-<CamAdress type="string">localhost</CamAdress>
+<CamType type="string">pco.edge 4.2 CLHS</CamType>
+<CamAdress type="string">d3gpu01</CamAdress>
 
 <sim-param>
 <nr-angles type="int"> 3 </nr-angles>
@@ -117,9 +117,8 @@
 <emission type="int"> 600 </emission>
 </otf2d>
 
-
-
 </channel-568>
+
 
 <!--- Channel DARK RED -->
 
@@ -127,8 +126,8 @@
 
 <offset type="decimal">140</offset>
 <ChannelNumber type="int">647</ChannelNumber>
-<CamType type="string">pco.edge 4.2</CamType>
-<CamAdress type="string">d3gpu01</CamAdress>
+<CamType type="string">pco.edge 4.2 CL</CamType>
+<CamAdress type="string">bory</CamAdress>
 
 <sim-param>
 <nr-angles type="int"> 3 </nr-angles>

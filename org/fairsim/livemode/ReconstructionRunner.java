@@ -705,7 +705,7 @@ public class ReconstructionRunner {
 
                 // find the highest peak in corr of band0 to highest band 
                 // with min dist 0.5*otfCutoff from origin, store in 'param'
-                double fitExclude = .5;
+                double fitExclude = .8;
                 double minDist = fitExclude * otfPr.getCutoff() / sp.pxlSizeCyclesMicron();
                 double[] peak = Correlation.locatePeak(c1, minDist);
 

@@ -67,10 +67,10 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
     public void stopSequenceAcquisition() throws CameraException {
         try {
             for (String cam : cams) {
-                mmc.setCameraDevice(cam);
-                mmc.stopSequenceAcquisition();
+                mmc.stopSequenceAcquisition(cam);
             }
         } catch (Exception ex) {
+            ex.printStackTrace();
             throw new CameraException("Stopping Acquisition went wrong");
         }
     }

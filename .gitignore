@@ -14,3 +14,4 @@ external/*.dmg
 target/*
 *_sync_*
 *.so
+vigor-tmp/

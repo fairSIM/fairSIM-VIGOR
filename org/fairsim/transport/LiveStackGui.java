@@ -126,7 +126,7 @@ public class LiveStackGui extends javax.swing.JPanel {
                     printText("Finished: " + f);
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+                //ex.printStackTrace();
                 printError("Converting failed: " + f + " " + ex);
             }
         }

@@ -305,6 +305,7 @@ public class ParameterTab {
 	/** scans a folder and loads all parameter sets matching a pattern */
 	void fillListFromFolder() {
 	    File [] listOfFiles = paramDir.listFiles();
+            Arrays.sort(listOfFiles);
 	    for ( File i : listOfFiles ) {
 		if (i.getName().startsWith("param_ch"+ourChannel.chNumber)) {
 		    try {

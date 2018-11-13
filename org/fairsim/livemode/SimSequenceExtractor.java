@@ -441,7 +441,7 @@ public class SimSequenceExtractor {
                             if(syncMode == 0) {
                                 curTimeStamp = iw.timeCamera();
                                 if (isTimeDelaySync(curTimeStamp, lastTimeStamp) && !(k == 0 && i == 0))
-                                    Tool.trace("Mode 0 timeStamp sync frame found in sequence " + iw.seqNr() + " " + (curTimeStamp - lastTimeStamp));
+                                    Tool.trace("Mode 0 timeStamp sync frame found in sequence " + iw.seqNr() + " " + (curTimeStamp - lastTimeStamp) + " " + iw.pos1());
                                 lastTimeStamp = curTimeStamp;
                             } else if (syncMode == 1) {
                                 curTimeStamp = iw.timeCamera();

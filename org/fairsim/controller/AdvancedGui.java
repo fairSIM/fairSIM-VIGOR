@@ -76,7 +76,7 @@ public class AdvancedGui extends javax.swing.JPanel implements EasyGui.AdvGui, M
                 for (int j = 0; j < camCounts; j++) {
                     if (i != j && camAdresses[i].equals(camAdresses[j])) {
                         camAdresses[j] = null;
-                        Tool.error("[fairSIM] Camera adress of channel '" + channelNames[j] + "' equals camera adress of channel " + channelNames[i], false);
+                        Tool.trace("[fairSIM] Camera adress of channel '" + channelNames[j] + "' equals camera adress of channel " + channelNames[i]);
                     }
                 }
             }
