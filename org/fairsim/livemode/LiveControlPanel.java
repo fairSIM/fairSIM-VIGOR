@@ -153,7 +153,7 @@ public class LiveControlPanel {
                 "raw stream recording"));
         recorderPanel.setLayout(new GridLayout(2, 1, 2, 2));
 
-        filePrefix = new JTextField("fastSIM", 30);
+        filePrefix = new JTextField(cfg.getStr("Microscope").val(), 30);
 
         recordButton = new JButton("record");
         recordButton.addActionListener(new ActionListener() {

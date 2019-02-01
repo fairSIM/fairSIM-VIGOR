@@ -32,6 +32,7 @@ public class CameraClient extends AbstractClient {
     double exposure, fps;
     boolean queued, sended;
     private CameraGroup[] groups;
+    private String[] roiNames;
 
     /**
      * constructor
@@ -42,6 +43,10 @@ public class CameraClient extends AbstractClient {
     public CameraClient(String serverAdress, int serverPort, ClientGui gui) {
         super(serverAdress, serverPort, gui);
         //this.gui = gui;
+    }
+    
+    String[] getRoiNames() {
+        return roiNames;
     }
 
     /**
@@ -76,6 +81,8 @@ public class CameraClient extends AbstractClient {
             for (int i = 0; i < len; i++) {
                 roi[i] = Integer.parseInt(sRois[i]);
             }
+        } else if (answer.startsWith("Transfering names of rois")) {
+            roiNames = Tool.decodeArray(answer);
         } else if (answer.startsWith("Transfering groups")) {
             // updates thze config groups
             String[] groupStrings = Tool.decodeArray(answer);

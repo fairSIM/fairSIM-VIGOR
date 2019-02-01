@@ -52,16 +52,16 @@ public class CameraServer extends AbstractServer {
      * @param imageSize squared sending image size
      * @return answer for the client
      */
-    private String setRoi(int x, int y, int width, int height, int imageSize) {
+    private String setRoi(int x, int y, int width, int height, int sendinWidth, int sendingHigth) {
         //cc.stopAcquisition();
         try {
             String output;
             try {
-                cc.setRoi(x, y, width, height, imageSize);
+                cc.setRoi(x, y, width, height, sendinWidth, sendingHigth);
                 output = "ROI successfully set";
             } catch (DataFormatException ex) {
                 int[] roi = cc.getRoi();
-                output = "ROI was set to: (" + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ", " + roi[4] + ")";
+                output = "ROI was set to: (" + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ", " + roi[4] + ", " + roi[5] + ")";
             }
             gui.showText(output);
             return output;
@@ -70,39 +70,52 @@ public class CameraServer extends AbstractServer {
         }
     }
     
-    /**
-     * sets the 512 region of interest of the camera
-     * @return answer for the client
-     */
-    private String setBigRoi() {
+    private String setRoi(int idx) {
         int[] roi;
         try {
-            cc.setBigRoi();
+            cc.setRoi(idx);
             roi = cc.getRoi();
-            String output = "ROI was set to: (" + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ", " + roi[4] + ")";
+            String output = "ROI was set to: (" + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ", " + roi[4] + ", " + roi[5] + ")";
             gui.showText(output);
             return output;
         } catch (CameraException | DataFormatException ex) {
             return ex.toString();
         } 
     }
-    
-    /**
-     * sets the 256 region of interest of the camera
-     * @return answer for the client
-     */
-    private String setSmallRoi() {
-        int[] roi;
-        try {
-            cc.setSmallRoi();
-            roi = cc.getRoi();
-            String output = "ROI was set to: (" + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ", " + roi[4] + ")";
-            gui.showText(output);
-            return output;
-        } catch (CameraException | DataFormatException ex) {
-            return ex.toString();
-        } 
-    }
+//    
+//    /**
+//     * sets the 512 region of interest of the camera
+//     * @return answer for the client
+//     */
+//    private String setBigRoi() {
+//        int[] roi;
+//        try {
+//            cc.setBigRoi();
+//            roi = cc.getRoi();
+//            String output = "ROI was set to: (" + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ", " + roi[4] + ")";
+//            gui.showText(output);
+//            return output;
+//        } catch (CameraException | DataFormatException ex) {
+//            return ex.toString();
+//        } 
+//    }
+//    
+//    /**
+//     * sets the 256 region of interest of the camera
+//     * @return answer for the client
+//     */
+//    private String setSmallRoi() {
+//        int[] roi;
+//        try {
+//            cc.setSmallRoi();
+//            roi = cc.getRoi();
+//            String output = "ROI was set to: (" + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ", " + roi[4] + ")";
+//            gui.showText(output);
+//            return output;
+//        } catch (CameraException | DataFormatException ex) {
+//            return ex.toString();
+//        } 
+//    }
 
     /**
      * 
@@ -116,6 +129,12 @@ public class CameraServer extends AbstractServer {
         } catch (CameraException ex) {
             return ex.toString();
         }
+    }
+    
+    private String getRoiNames() {
+        String[] roiNames = cc.getRoiNames();
+        gui.showText("Transfering names of rois");
+        return Tool.encodeArray("Transfering names of rois", roiNames);
     }
 
     /**
@@ -228,6 +247,8 @@ public class CameraServer extends AbstractServer {
     protected String handleCommand(String input) {
         if (input.equals("get roi")) {
             return getRoi();
+        } else if (input.equals("get roi names")) {
+            return getRoiNames();
         } else if (input.equals("get exposure")) {
             return getExposureTime();
         } else if (input.equals("get groups")) {
@@ -236,16 +257,17 @@ public class CameraServer extends AbstractServer {
             return getStatus();
         } else if (input.startsWith("set roi")) {
             String[] sRoi = Tool.decodeArray(input);
-            int x = Integer.parseInt(sRoi[0]);
-            int y = Integer.parseInt(sRoi[1]);
-            int w = Integer.parseInt(sRoi[2]);
-            int h = Integer.parseInt(sRoi[3]);
-            int s = Integer.parseInt(sRoi[4]);
-            return setRoi(x, y, w, h, s);
-        } else if (input.equals("set big roi")) {
-            return setBigRoi();
-        } else if (input.equals("set small roi")) {
-            return setSmallRoi();
+            int idx = Integer.parseInt(sRoi[0]);
+            return setRoi(idx);
+//            int y = Integer.parseInt(sRoi[1]);
+//            int w = Integer.parseInt(sRoi[2]);
+//            int h = Integer.parseInt(sRoi[3]);
+//            int s = Integer.parseInt(sRoi[4]);
+//            return setRoi(x, y, w, h, s);
+//        } else if (input.equals("set big roi")) {
+//            return setBigRoi();
+//        } else if (input.equals("set small roi")) {
+//            return setSmallRoi();
         } else if (input.startsWith("set exposure")) {
             String exposureString = input.split(";")[1];
             double exposureDouble = Double.parseDouble(exposureString);

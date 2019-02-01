@@ -113,6 +113,20 @@ public class CameraPanel extends javax.swing.JPanel implements AbstractClient.Cl
         this.setEnabled(false);
         enabled = false;
     }
+    
+    /**
+     * updates the roi
+     */
+    private void updateRoiNames() {
+        sendInstruction("get roi names");
+        if (instructionDone) {
+            String[] roiNames = client.getRoiNames();
+            this.roiBox.removeAllItems();
+            for (String s : roiNames) {
+                roiBox.addItem(s);
+            }
+        }
+    }
 
     /**
      * updates the roi
@@ -122,7 +136,7 @@ public class CameraPanel extends javax.swing.JPanel implements AbstractClient.Cl
         if (instructionDone) {
             int[] roi = client.roi;
             //recivingPixelSize = roi[4];
-            roiLabel.setText("ROI: " + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ", " + roi[4]);
+            roiLabel.setText("ROI: " + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ", " + roi[4] + ", " + roi[5]);
             //motherGui.calculateViewSize();
         }
     }
@@ -277,8 +291,7 @@ public class CameraPanel extends javax.swing.JPanel implements AbstractClient.Cl
     void setRoi() {
         try {
             int roiId = roiBox.getSelectedIndex();
-            if (roiId == 0) sendInstruction("set big roi");
-            else if (roiId == 1) sendInstruction("set small roi");
+            sendInstruction("set roi;" + roiId);
             if (instructionDone) {
                 updateRoi();
             }
@@ -402,6 +415,7 @@ public class CameraPanel extends javax.swing.JPanel implements AbstractClient.Cl
     @Override
     public void registerClient() {
         updateRoi();
+        updateRoiNames();
         updateExposure();
         updateGroups();
         enableControllers();

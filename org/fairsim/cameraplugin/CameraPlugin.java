@@ -49,12 +49,23 @@ public class CameraPlugin implements org.micromanager.api.MMPlugin {
      * went wrong
      */
     public void startSequenceAcquisition() throws CameraException {
+        
         try {
-            for (String cam : cams) {
-                mmc.setCameraDevice(cam);
-                mmc.startContinuousSequenceAcquisition(1);
+            if (mmc.getVersionInfo().equals("MMCore version 8.1.0")) {
+                for (String cam : cams) {
+                    mmc.setCameraDevice(cam);
+                    mmc.startContinuousSequenceAcquisition(1);
+                }
+            } else {
+                if (cams.length > 1) {
+                    mmc.setCameraDevice("Multi Camera");
+                    mmc.startContinuousSequenceAcquisition(1);
+                } else {
+                    mmc.startContinuousSequenceAcquisition(1);
+                }
             }
         } catch (Exception ex) {
+            ex.printStackTrace();
             throw new CameraException("Starting Acquisition went wrong");
         }
     }

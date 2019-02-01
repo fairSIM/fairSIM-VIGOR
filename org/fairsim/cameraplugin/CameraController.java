@@ -44,13 +44,16 @@ public class CameraController {
     private final int[] channels;
     private final List<String> sendIps;
     private final CameraGroup[] groups;
-    private static final int CAMBUFFER = 512;
+    private static final int CAMBUFFER = 2048;
     private static final int FPSCOUNTS = 23;
     private int[] roi;
-    private final int[] bigRoi, smallRoi;
+    private String[] roiStrings;
+    private int[][] rois;
+    //private final int[] bigRoi, smallRoi;
     private int imageWidth;
     private int imageHeight;
-    private int sendImageSize;
+    private int sendImageWidth, sendImageHeight;
+    //private int sendImageSize;
     private final boolean[] mirrored;
     private final ImageSender isend;
     double  fps;
@@ -84,11 +87,19 @@ public class CameraController {
                 else if (mx[i].equals("false")) mirrored[i] = false;
                 else throw new IOException("Only true or false as MirroredX flags allowed");
             }
-            bigRoi = cfg.getInt("BigRoi").vals();
-            smallRoi = cfg.getInt("SmallRoi").vals();
+            Conf.Folder roiCfg = cfg.cd("rois");
+            roiStrings = roiCfg.getEntryArray();
+            rois = new int[roiStrings.length][];
+            for (int i = 0; i < roiStrings.length; i++) {
+                String roiName = roiStrings[i];
+                System.out.println(roiName);
+                rois[i] = roiCfg.getInt(roiName).vals();
+            }
+            //bigRoi = cfg.getInt("BigRoi").vals();
+            //smallRoi = cfg.getInt("SmallRoi").vals();
             String[] ips = cfg.getStr("SendIps").val().split(" ");
             try {
-                setRoi(bigRoi[0], bigRoi[1], bigRoi[2], bigRoi[3], bigRoi[4], true);
+                setRoi(rois[0][0], rois[0][1], rois[0][2], rois[0][3], rois[0][4], rois[0][5], true);
             } catch (DataFormatException ex) {
             }
             for (String ip : ips) {
@@ -111,7 +122,7 @@ public class CameraController {
         }
 
         // starts the GUI
-        this.gui = new CameraServerGui(sendImageSize, sendImageSize, this);
+        this.gui = new CameraServerGui(sendImageWidth, sendImageHeight, this);
     }
     
     int[] getChannels() {
@@ -129,30 +140,34 @@ public class CameraController {
      * with micro manager went wrong
      * @throws DataFormatException if ROI could not be set as preferred
      */
-    void setRoi(int x, int y, int width, int height, int sendImageSize) throws CameraException, DataFormatException {
-        setRoi(x, y, width, height, sendImageSize, false);
+    void setRoi(int x, int y, int width, int height, int sendImageWidth, int sendImageHeight) throws CameraException, DataFormatException {
+        setRoi(x, y, width, height, sendImageWidth, sendImageHeight, false);
     }
     
-    /**
-     * 
-     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if communication
-     * with micro manager went wrong
-     * @throws DataFormatException if ROI could not be set as preferred
-     */
-    void setBigRoi() throws CameraException, DataFormatException {
-        setRoi(bigRoi[0], bigRoi[1], bigRoi[2], bigRoi[3], bigRoi[4]);
+    void setRoi(int idx) throws CameraException, DataFormatException {
+        setRoi(rois[idx][0], rois[idx][1], rois[idx][2], rois[idx][3], rois[idx][4], rois[idx][5]);
     }
+    /*
+//    /**
+//     * 
+//     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if communication
+//     * with micro manager went wrong
+//     * @throws DataFormatException if ROI could not be set as preferred
+//     */
+//    void setBigRoi() throws CameraException, DataFormatException {
+//        setRoi(rois[0][0], rois[0][1], rois[0][2], rois[0][3], rois[0][4], rois[0][5]);
+//    }
     
-    /**
-     * 
-     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if communication
-     * with micro manager went wrong
-     * @throws DataFormatException if ROI could not be set as preferred
-     */
-    void setSmallRoi() throws CameraException, DataFormatException {
-        setRoi(smallRoi[0], smallRoi[1], smallRoi[2], smallRoi[3], smallRoi[4]);
-    }
-
+//    /**
+//     * 
+//     * @throws org.fairsim.cameraplugin.CameraPlugin.CameraException if communication
+//     * with micro manager went wrong
+//     * @throws DataFormatException if ROI could not be set as preferred
+//     */
+//    void setSmallRoi() throws CameraException, DataFormatException {
+//        setRoi(smallRoi[0], smallRoi[1], smallRoi[2], smallRoi[3], smallRoi[4]);
+//    }
+    
     /**
      * sets the region of interest of the camera
      * @param x upper left x value
@@ -165,7 +180,7 @@ public class CameraController {
      * with micro manager went wrong
      * @throws DataFormatException if ROI could not be set as preferred
      */
-    private void setRoi(int x, int y, int width, int height, int sendSize, boolean firstTime) throws CameraException, DataFormatException {
+    private void setRoi(int x, int y, int width, int height, int sendSizeWidth, int sendSizeHeight, boolean firstTime) throws CameraException, DataFormatException {
         cp.stopSequenceAcquisition();
         cp.setROI(x, y, width, height);
         roi = cp.getRoi();
@@ -174,11 +189,12 @@ public class CameraController {
         if (imageWidth != roi[2] || imageHeight != roi[3]) {
             throw new RuntimeException("This should never happen!");
         }
-        sendImageSize = sendSize;
-        if (imageWidth < sendImageSize) sendImageSize = imageWidth;
-        if (imageHeight < sendImageSize) sendImageSize = imageHeight;
+        sendImageWidth = sendSizeWidth;
+        sendImageHeight = sendSizeHeight;
+        if (imageWidth < sendImageWidth) sendImageWidth = imageWidth;
+        if (imageHeight < sendImageHeight) sendImageHeight = imageHeight;
         if (!firstTime) {
-            gui.refreshView(sendImageSize, sendImageSize);
+            gui.refreshView(sendImageWidth, sendImageHeight);
         }
         if (roi[0] != x || roi[1] != y || roi[2] != width || roi[3] != height) {
             throw new DataFormatException("ROI was set wrong");
@@ -194,12 +210,21 @@ public class CameraController {
     int[] getRoi() throws CameraException {
         int rawRoi[] = cp.getRoi();
         int len = rawRoi.length;
-        int[] extendedRoi = new int[len + 1];
+        int[] extendedRoi = new int[len + 2];
         for (int i = 0; i < len; i++) {
             extendedRoi[i] = rawRoi[i];
         }
-        extendedRoi[len] = sendImageSize;
+        extendedRoi[len] = sendImageWidth;
+        extendedRoi[len+1] = sendImageHeight;
         return extendedRoi;
+    }
+    
+    String[] getRoiNames() {
+        return roiStrings;
+    }
+    
+    int[][] getRois() {
+        return rois;
     }
 
     /**
@@ -310,10 +335,10 @@ public class CameraController {
         private short[] queueImage(int channelIdx, short[] imgData, int count, long timeStamp) {
             ImageWrapper iw;            
             if (mirrored[channelIdx]) {
-                iw = ImageWrapper.copyImageCropMirrorXCentered(imgData, sendImageSize, sendImageSize, imageWidth, imageHeight, 0, 0, 0, channels[channelIdx], count);
+                iw = ImageWrapper.copyImageCropMirrorXCentered(imgData, sendImageWidth, sendImageHeight, imageWidth, imageHeight, 0, 0, 0, channels[channelIdx], count);
                 
             } else {
-                iw = ImageWrapper.copyImageCropCentered(imgData, sendImageSize, sendImageSize, imageWidth, imageHeight, 0, 0, 0, channels[channelIdx], count);
+                iw = ImageWrapper.copyImageCropCentered(imgData, sendImageWidth, sendImageHeight, imageWidth, imageHeight, 0, 0, 0, channels[channelIdx], count);
             }
             iw.setTimeCamera(timeStamp);
             iw.setTimeCapture(System.currentTimeMillis() * 1000);
@@ -326,7 +351,6 @@ public class CameraController {
             }
             iw.setSeqNr(sn);
             seqNrMapping.put(channelIdx, sn + 1);
-            
             imagesQueued = imagesQueued && isend.queueImage(iw);
             imagesSended = imagesSended && isend.canSend();
             
