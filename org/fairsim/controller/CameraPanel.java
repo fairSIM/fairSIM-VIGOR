@@ -372,11 +372,21 @@ public class CameraPanel extends javax.swing.JPanel implements AbstractClient.Cl
         setExposureTime();
         //sets the roi of this running order for the camera
         int size = ro.allowBigRoi ? 512 : 256;
-        if (client.roi[4] != size) {
-            if (size == 512) roiBox.setSelectedIndex(0);
-            else if (size == 256) roiBox.setSelectedIndex(1);
-            else throw new EasyGui.EasyGuiException("Camera: No ROI found");
-            setRoi();
+        if (client.roi[4] != size || client.roi[5] != size) {
+            int idx = -1;
+            ComboBoxModel<String> model = roiBox.getModel();
+            for (int i = 0; i < model.getSize(); i++) {
+                String roiName = model.getElementAt(i);
+                if (roiName.equals("Roi" + size + "x" + size)) {
+                    idx =i;
+                    break;
+                }
+            }
+            if (idx < 0 ) throw new EasyGui.EasyGuiException("Camera: No ROI found for: " + "Roi" + size + "x" + size);
+            else {
+                roiBox.setSelectedIndex(idx);
+                setRoi();
+            }
         }
     }
 

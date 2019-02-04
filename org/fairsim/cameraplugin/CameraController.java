@@ -106,6 +106,7 @@ public class CameraController {
                 sendIps.add(ip);
             }
         } catch (Conf.SomeIOException ex) {
+            ex.printStackTrace();
             throw new FileNotFoundException(filename);
         } catch (Conf.EntryNotFoundException ex) {
             ex.printStackTrace();
