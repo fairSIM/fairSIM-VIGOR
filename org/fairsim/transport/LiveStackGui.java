@@ -107,10 +107,6 @@ public class LiveStackGui extends javax.swing.JPanel {
                     throw new IOException("Expected .livestack or .livestack.tif file");
                 if (fileName.endsWith(".livestack.tif"))
                     fileName = fileName.substring(0, fileName.length() - 4);
-                if (tiff) {
-                    printText("Save as Tiff: " + fileName + ".tif");
-                    ls.saveAsTiff(tarDir + "/" + fileName + ".tif");
-                }
                 if (meta) {
                     printText("Save meta file: " + fileName + "---.meta.txt");
                     ls.toMeta(tarDir + "/" + fileName);
@@ -124,6 +120,10 @@ public class LiveStackGui extends javax.swing.JPanel {
                     printText("Save reconstruction: " + tarDir + "/" + fileName + ".recon.tif");
                     rs.saveReconAsTiff(tarDir + "/" + fileName + ".recon.tif");
                     printText("Finished: " + f);
+                }
+                if (tiff) {
+                    printText("Save as Tiff: " + fileName + ".tif");
+                    ls.saveAsTiff(tarDir + "/" + fileName + ".tif", true);
                 }
             } catch (Exception ex) {
                 //ex.printStackTrace();

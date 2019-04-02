@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import java.util.Random;
+import javax.swing.JScrollPane;
 
 import org.fairsim.linalg.Vec2d;
 import org.fairsim.utils.Tool;
@@ -383,7 +384,7 @@ public class PlainImageDisplay {
 	// layout of the complete display
 	mainPanel.setLayout( new BoxLayout( mainPanel, BoxLayout.LINE_AXIS));
 	//mainPanel.add(labelPanel);
-	mainPanel.add( p1 );
+	mainPanel.add( new JScrollPane(p1) );
 	mainPanel.add(channelsPanel);
 
 	refresh();
