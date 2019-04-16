@@ -93,10 +93,10 @@ public class ControllerServer extends AbstractServer {
                 serverOut = arduino.getRoList();
             } else if (input.startsWith("movie;")) {
                 int[] movieArray = Tool.decodeIntArray(input);
-                serverOut = arduino.startMovie(movieArray[0], movieArray[1]);
+                serverOut = arduino.startMovie(movieArray);
             } else if (input.startsWith("photo;")) {
-                int runningOrder = Integer.parseInt(input.split(";")[1]);
-                serverOut = arduino.takePhoto(runningOrder);
+                int[] photoArray = Tool.decodeIntArray(input);
+                serverOut = arduino.takePhoto(photoArray);
             } else if (input.length() == 1) {
                 char c = input.charAt(0);
                 serverOut = arduino.sendChar(c);

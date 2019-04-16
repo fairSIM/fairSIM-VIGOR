@@ -271,8 +271,9 @@ public class ArduinoController implements SerialPortEventListener {
      * @param runningOrder running order for the photo
      * @return answer for the arduino
      */
-    public String takePhoto(int runningOrder) {
-        arduinoCommands.add("p;" + runningOrder);
+    public String takePhoto(int[] sendArray) {
+        String sendString = Tool.encodeArray("p", sendArray);
+        arduinoCommands.add(sendString);
         return getArduinoAnswer();
     }
     
@@ -282,8 +283,9 @@ public class ArduinoController implements SerialPortEventListener {
      * @param breakTime delays between sim sequences
      * @return answer from the arduino
      */
-    public String startMovie(int runningOrder, int breakTime) {
-        arduinoCommands.add("m;" + runningOrder + ";" + breakTime);
+    public String startMovie(int[] sendArray) {
+        String sendString = Tool.encodeArray("m", sendArray);
+        arduinoCommands.add(sendString);
         return getArduinoAnswer();
     }
 
