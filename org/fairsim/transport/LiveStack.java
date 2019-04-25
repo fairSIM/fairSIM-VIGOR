@@ -495,6 +495,7 @@ public class LiveStack {
     public ImagePlus convertToImagePlus(boolean dump) {
         int iwPerChannel = sortAndFillupStack();
         iwPerChannel /= header.nrPhases * header.nrAngles;
+        iwPerChannel *= header.nrPhases * header.nrAngles;
         ImageStack is = new ImageStack(header.width, header.height);
         int nrCh = header.channels.length;
         long firstTime = imgs.get(0).timeCamera();
