@@ -57,16 +57,21 @@ public class TestAccel {
 	}
 
 	String wd = System.getProperty("user.dir")+"/accel/";
-	System.out.println("loading library from: "+wd);
 
 	String vers=".";
+	boolean isWindows = System.getProperty("os.name").toLowerCase().contains("win");
+
+	String dllext = (isWindows)?("dll"):("so");
+	
+	System.out.println("loading library from: "+wd+ "("+ ((isWindows)?("win"):("linux"))+")" );
+
 
 	if (arg[0].equals("CPU")) {
-	    System.load(wd+"libstdcimpl.so");
+	    System.load(wd+"libstdcimpl."+dllext);
 	    vers="nCPU";
 	} 
 	if (arg[0].equals("CUDA")) {
-	    System.load(wd+"libcudaimpl.so");
+	    System.load(wd+"libcudaimpl."+dllext);
 	    vers="CUDA";
 	}
 

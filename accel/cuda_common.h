@@ -18,6 +18,11 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 #ifndef _INC_FAIRSIMJNICUDA_HEADERS
 #define _INC_FAIRSIMJNICUDA_HEADERS
 
+#ifndef M_PI 
+#define M_PI 3.14159265358979323846264338327950288
+#endif
+
+
 static const int  nrReduceThreads = 128 ;    // <-- 2^n, 1024 max.
 static const int  nrCuThreads = 256;
 

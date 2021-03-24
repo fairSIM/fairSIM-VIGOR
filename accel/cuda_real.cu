@@ -19,7 +19,7 @@ along with fairSIM.  If not, see <http://www.gnu.org/licenses/>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <complex.h>
+#include <ccomplex>
 #include <stdint.h>
 
 #include <cufft.h>

@@ -2,3 +2,7 @@
 org_fairsim_accel_*.h
 lib*.so
 *.o
+*.obj
+*.dll
+*.exp
+*.lib
