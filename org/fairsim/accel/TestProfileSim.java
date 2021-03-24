@@ -177,9 +177,15 @@ public class TestProfileSim  extends Thread {
 
 	// set the accelerator module
 	String wd = System.getProperty("user.dir")+"/accel/";
-	Tool.trace("loading library from: "+wd);
+	
+	String vers=".";
+	boolean isWindows = System.getProperty("os.name").toLowerCase().contains("win");
 
-	System.load(wd+"libcudaimpl.so");
+	String dllext = (isWindows)?("dll"):("so");
+	
+	Tool.trace("loading library from: "+wd+ "("+ ((isWindows)?("win"):("linux"))+")" );
+
+	System.load(wd+"libcudaimpl."+dllext);
 	Tool.trace("Running with CUDA support now");
 	
 	AccelVectorFactory avf = AccelVectorFactory.getFactory();
