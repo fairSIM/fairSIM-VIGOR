@@ -7,6 +7,7 @@ ifeq ($(OS), Windows_NT)
 DLL=dll
 OBJ=obj
 INCL=-I /c/Program\ Files/Java/jdk1.8.0_231/include/ -I /c/Program\ Files/Java/jdk1.8.0_231/include/win32
+INCL+=-I /c/java/jdk-12/include/ -I /c/java/jdk-12/include/win32/
 
 else
 
@@ -23,27 +24,27 @@ headers=org_fairsim_accel_AccelVectorReal.h org_fairsim_accel_AccelVectorReal2d.
     org_fairsim_accel_FFTProvider.h org_fairsim_accel_AccelVectorFactory.h 
 
 org_fairsim_accel_AccelVectorReal.h: ../org/fairsim/accel/AccelVectorReal.java
-	javah -cp ../ org.fairsim.accel.AccelVectorReal
+	javac -h ./ -cp ../ ../org/fairsim/accel/AccelVectorReal.java
 	touch $@
 
 org_fairsim_accel_AccelVectorReal2d.h: ../org/fairsim/accel/AccelVectorReal.java
-	javah -cp ../ org.fairsim.accel.AccelVectorReal2d
+	javac -h ./ -cp ../ ../org/fairsim/accel/AccelVectorReal2d.java
 	touch $@
 
 org_fairsim_accel_AccelVectorCplx.h:   ../org/fairsim/accel/AccelVectorCplx.java
-	javah -cp ../ org.fairsim.accel.AccelVectorCplx
+	javac -h ./ -cp ../ ../org/fairsim/accel/AccelVectorCplx.java
 	touch $@
 
 org_fairsim_accel_AccelVectorCplx2d.h: ../org/fairsim/accel/AccelVectorCplx.java
-	javah -cp ../ org.fairsim.accel.AccelVectorCplx2d
+	javac -h ./ -cp ../ ../org/fairsim/accel/AccelVectorCplx2d.java
 	touch $@
 
 org_fairsim_accel_FFTProvider.h: ../org/fairsim/accel/FFTProvider.java
-	javah -cp ../ org.fairsim.accel.FFTProvider
+	javac -h ./ -cp ../ ../org/fairsim/accel/FFTProvider.java
 	touch $@
 
 org_fairsim_accel_AccelVectorFactory.h: ../org/fairsim/accel/AccelVectorFactory.java
-	javah -cp ../ org.fairsim.accel.AccelVectorFactory
+	javac -h ./ -cp ../ ../org/fairsim/accel/AccelVectorFactory.java
 	touch $@
 
 headerfiles: $(headers)
