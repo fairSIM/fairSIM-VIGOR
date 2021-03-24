@@ -2,6 +2,25 @@
 
 fileMissing=0
 
+# Check if we have all commands installed that this script needs
+
+function failcmd() {
+    if [ -x "$( command -v $1 )" ] ; then
+	return 0
+    else
+	1>&2 echo "Command \"$1\" not found, please install"
+	exit -1
+    fi
+}
+
+failcmd wget
+failcmd ar
+failcmd xz
+failcmd tar
+failcmd 7z
+failcmd awk
+failcmd sha256sum
+
 # Get the ImageJ base library (in version 1.49v, which is the lowest we support in the VIGOR-branch)
 if [ ! -e ij149v.jar ] ; then
     fileMissing=1
@@ -21,7 +40,7 @@ fi
 # Get the original version of JTransforms
 if [ ! -e JTransforms-3.1.jar ] ; then 
     fileMissing=1
-    wget http://central.maven.org/maven2/com/github/wendykierp/JTransforms/3.1/JTransforms-3.1.jar
+    wget https://repo1.maven.org/maven2/com/github/wendykierp/JTransforms/3.1/JTransforms-3.1.jar
     else
     echo "found JTransforms"
 fi
@@ -29,7 +48,7 @@ fi
 # Get JTransforms JLargeArray dependency
 if [ ! -e JLargeArrays-1.6.jar ] ; then
     fileMissing=1
-    wget http://central.maven.org/maven2/pl/edu/icm/JLargeArrays/1.6/JLargeArrays-1.6.jar
+    wget https://repo1.maven.org/maven2/pl/edu/icm/JLargeArrays/1.6/JLargeArrays-1.6.jar
     else
     echo "found JTransforms JLargeArray"
 fi
@@ -37,7 +56,7 @@ fi
 # Get the Apache fast math dependencies
 if [ ! -e commons-math3-3.6.1.jar ] ; then
     fileMissing=1
-    wget http://central.maven.org/maven2/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar
+    wget https://repo1.maven.org/maven2/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar
     else
     echo "found Apache fast math"
 fi
@@ -72,7 +91,8 @@ if [ ! -e rt-1.6.jar ] ; then
     ar -x openjdk.deb
 
     # extract the rt.jar from the data.tar
-    tar -xf data.tar.xz ./usr/lib/jvm/java-6-openjdk-amd64/jre/lib/rt.jar
+    xz -d data.tar.xz
+    tar -xf data.tar ./usr/lib/jvm/java-6-openjdk-amd64/jre/lib/rt.jar
     mv ./usr/lib/jvm/java-6-openjdk-amd64/jre/lib/rt.jar ../rt-1.6.jar
     cd ..
 
@@ -104,7 +124,13 @@ if [ ! -e MMCoreJ.jar -o ! -e MMJ_.jar ] ; then
 
 
     # downloading the micromanager install dmg (easier to handle than the exe)
-    wget -c "http://valelab4.ucsf.edu/~MM/builds/1.4/Mac/Micro-Manager1.4.22.dmg"
+    wget --no-check-certificate -c "http://valelab4.ucsf.edu/~MM/builds/1.4/Mac/Micro-Manager1.4.22.dmg"
+
+    if [ "763bfa641ca2afb3f94d692174d4b8607a0ec9d322bb8b40ea621077981d6a5e" != $(sha256sum ./Micro-Manager1.4.22.dmg | awk '{print $1}') ] ; then
+	echo "ERROR: checksum MicroManager"
+	exit -1
+    fi
+
 
     mkdir tmp-mm-jar
     cd tmp-mm-jar
