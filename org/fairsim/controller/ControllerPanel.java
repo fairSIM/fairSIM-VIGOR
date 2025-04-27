@@ -380,15 +380,43 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
             breakTime = Integer.parseInt(arduinoBreakTimeTextField.getText());
         } catch (NumberFormatException ex) {}
         if (breakTime < 0) breakTime = 0;
-        startArduinoProgramm("movie;" + arduinoComboBox.getSelectedIndex() + ";" + breakTime);
+        String xms = arduinoComboBox.getSelectedItem().toString();
+        if (xms.endsWith("Xms")) {
+            int rEnd = 1, gEnd = 1, bEnd = 1;
+            try {
+                rEnd = Integer.parseInt(arduinoREndTextField.getText());
+                gEnd = Integer.parseInt(arduinoGEndTextField.getText());
+                bEnd = Integer.parseInt(arduinoBEndTextField.getText());
+            } catch (NumberFormatException ex) {}
+            if (rEnd < 0) rEnd = 1;
+            if (gEnd < 0) gEnd = 1;
+            if (bEnd < 0) bEnd = 1;
+            startArduinoProgramm("movie;" + arduinoComboBox.getSelectedIndex() + ";" + breakTime + ";" + bEnd + ";" + gEnd + ";" + rEnd);
+        } else startArduinoProgramm("movie;" + arduinoComboBox.getSelectedIndex() + ";" + breakTime);
     }
     
     /**
      * starts the selected photo running order of the arduino from this gui
      */
    void arduinoPhoto() {
-        seqDetection.resetChannelBufferThreads();
-        sendArduinoInstruction("photo;" + arduinoComboBox.getSelectedIndex());
+       seqDetection.resetChannelBufferThreads();
+       
+       String xms = arduinoComboBox.getSelectedItem().toString();
+        if (xms.endsWith("Xms")) {
+            int rEnd = 1, gEnd = 1, bEnd = 1;
+            try {
+                rEnd = Integer.parseInt(arduinoREndTextField.getText());
+                gEnd = Integer.parseInt(arduinoGEndTextField.getText());
+                bEnd = Integer.parseInt(arduinoBEndTextField.getText());
+            } catch (NumberFormatException ex) {}
+            if (rEnd < 0) rEnd = 1;
+            if (gEnd < 0) gEnd = 1;
+            if (bEnd < 0) bEnd = 1;
+            sendArduinoInstruction("photo;" + arduinoComboBox.getSelectedIndex() + ";" + bEnd + ";" + gEnd + ";" + rEnd);
+        } else sendArduinoInstruction("photo;" + arduinoComboBox.getSelectedIndex());
+        
+        
+        
         if (controllerInstructionDone) {
             setRGBButtonSelected(false);
         }
@@ -504,6 +532,9 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
         arduinoDelayLabel = new javax.swing.JLabel();
         arduinoPhotoButton = new javax.swing.JButton();
         arduinoLasersLabel = new javax.swing.JLabel();
+        arduinoREndTextField = new javax.swing.JTextField();
+        arduinoGEndTextField = new javax.swing.JTextField();
+        arduinoBEndTextField = new javax.swing.JTextField();
 
         slmPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("SLM-Controller"));
         slmPanel.setName(""); // NOI18N
@@ -675,6 +706,15 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
 
         arduinoLasersLabel.setText("Lasers:");
 
+        arduinoREndTextField.setBackground(new java.awt.Color(255, 0, 0));
+        arduinoREndTextField.setText("1");
+
+        arduinoGEndTextField.setBackground(new java.awt.Color(0, 255, 0));
+        arduinoGEndTextField.setText("1");
+
+        arduinoBEndTextField.setBackground(new java.awt.Color(0, 255, 255));
+        arduinoBEndTextField.setText("1");
+
         javax.swing.GroupLayout arduinoPanelLayout = new javax.swing.GroupLayout(arduinoPanel);
         arduinoPanel.setLayout(arduinoPanelLayout);
         arduinoPanelLayout.setHorizontalGroup(
@@ -682,14 +722,6 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
             .addGroup(arduinoPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(arduinoPanelLayout.createSequentialGroup()
-                        .addComponent(arduinoStartButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(arduinoStopButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(arduinoPhotoButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(arduinoComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(arduinoPanelLayout.createSequentialGroup()
                         .addComponent(arduinoConnectButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -701,7 +733,23 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(arduinoGreenButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(arduinoBlueButton)))
+                        .addComponent(arduinoBlueButton))
+                    .addGroup(arduinoPanelLayout.createSequentialGroup()
+                        .addComponent(arduinoStartButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(arduinoStopButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(arduinoPhotoButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(arduinoPanelLayout.createSequentialGroup()
+                                .addComponent(arduinoREndTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(arduinoGEndTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(arduinoBEndTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(arduinoComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(arduinoBreakTimeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -728,6 +776,11 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
                     .addGroup(arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(arduinoStopButton)
                         .addComponent(arduinoStartButton)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(arduinoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(arduinoREndTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(arduinoGEndTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(arduinoBEndTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -743,8 +796,8 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(slmPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(arduinoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(arduinoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -844,16 +897,19 @@ public class ControllerPanel extends javax.swing.JPanel implements AbstractClien
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    javax.swing.JTextField arduinoBEndTextField;
     private javax.swing.JToggleButton arduinoBlueButton;
     javax.swing.JTextField arduinoBreakTimeTextField;
     javax.swing.JComboBox<String> arduinoComboBox;
     private javax.swing.JButton arduinoConnectButton;
     private javax.swing.JLabel arduinoDelayLabel;
     private javax.swing.JButton arduinoDisconnectButton;
+    javax.swing.JTextField arduinoGEndTextField;
     private javax.swing.JToggleButton arduinoGreenButton;
     private javax.swing.JLabel arduinoLasersLabel;
     private javax.swing.JPanel arduinoPanel;
     private javax.swing.JButton arduinoPhotoButton;
+    javax.swing.JTextField arduinoREndTextField;
     private javax.swing.JToggleButton arduinoRedButton;
     private javax.swing.JButton arduinoStartButton;
     private javax.swing.JButton arduinoStopButton;

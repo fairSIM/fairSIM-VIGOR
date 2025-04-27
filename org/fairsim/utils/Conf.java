@@ -49,6 +49,7 @@ import java.util.Locale;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.DoubleBuffer;
+import java.util.Set;
 
 /** Wrappers around entries to a configuration file */
 public class Conf {
@@ -110,6 +111,14 @@ public class Conf {
 
 	// ------ General element management ------
 	
+        /** Returns an array with all entry names*/
+        public String[] getEntryArray() {
+            Set<String> keySet = subEntry.keySet();
+            String[] entrys = new String[keySet.size()];
+            entrys = keySet.toArray(entrys);
+            return entrys;
+        }
+        
 	/** Add an entry to the folder  */
 	public <T extends Entry> T setEntry(String name, T e) {
 	    subEntry.put( name, e );

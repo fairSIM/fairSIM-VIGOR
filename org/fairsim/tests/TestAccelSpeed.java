@@ -119,7 +119,7 @@ public class TestAccelSpeed implements PlugIn {
 	    set=true;
 	}
 	if (arg[1].equals("CUDA")) {
-	    System.load(wd+"libcudaimpl.so");
+	    System.load(wd+"../libcudaimpl.dll");
 	    Tool.trace("Running with CUDA support now");
 	    Vec.setVectorFactory( AccelVectorFactory.getFactory()); 
 	    set=true;

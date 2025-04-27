@@ -493,16 +493,19 @@ public class LiveStack {
      * @return this livestack instance as ImagePlus instance
      */
     public ImagePlus convertToImagePlus(boolean dump) {
-        sortAndFillupStack();
+        int iwPerChannel = sortAndFillupStack();
+        iwPerChannel /= header.nrPhases * header.nrAngles;
+        iwPerChannel *= header.nrPhases * header.nrAngles;
         ImageStack is = new ImageStack(header.width, header.height);
         int nrCh = header.channels.length;
         long firstTime = imgs.get(0).timeCamera();
         long secondTime = imgs.get(1).timeCamera();
         int listSize = imgs.size();
+        int[] channelCounter = new int[nrCh];
         for (int imgCounter = 0; imgCounter < listSize; imgCounter++) {
             ImageWrapper iw = dump ? imgs.remove(0) : imgs.get(imgCounter);
             for (int c = 0; c < nrCh; c++) {
-                if (iw.pos1() == header.channels[c].exWavelength) {
+                if (iw.pos1() == header.channels[c].exWavelength && iwPerChannel > channelCounter[c]++) {
                     ShortProcessor sp = new ShortProcessor(iw.width(), iw.height(), iw.getPixels(), null);
                     String sliceLabel = iw.getHeaderAsString();
                     is.addSlice(sliceLabel, sp);

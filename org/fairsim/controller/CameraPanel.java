@@ -113,6 +113,20 @@ public class CameraPanel extends javax.swing.JPanel implements AbstractClient.Cl
         this.setEnabled(false);
         enabled = false;
     }
+    
+    /**
+     * updates the roi
+     */
+    private void updateRoiNames() {
+        sendInstruction("get roi names");
+        if (instructionDone) {
+            String[] roiNames = client.getRoiNames();
+            this.roiBox.removeAllItems();
+            for (String s : roiNames) {
+                roiBox.addItem(s);
+            }
+        }
+    }
 
     /**
      * updates the roi
@@ -122,7 +136,7 @@ public class CameraPanel extends javax.swing.JPanel implements AbstractClient.Cl
         if (instructionDone) {
             int[] roi = client.roi;
             //recivingPixelSize = roi[4];
-            roiLabel.setText("ROI: " + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ", " + roi[4]);
+            roiLabel.setText("ROI: " + roi[0] + ", " + roi[1] + ", " + roi[2] + ", " + roi[3] + ", " + roi[4] + ", " + roi[5]);
             //motherGui.calculateViewSize();
         }
     }
@@ -277,8 +291,7 @@ public class CameraPanel extends javax.swing.JPanel implements AbstractClient.Cl
     void setRoi() {
         try {
             int roiId = roiBox.getSelectedIndex();
-            if (roiId == 0) sendInstruction("set big roi");
-            else if (roiId == 1) sendInstruction("set small roi");
+            sendInstruction("set roi;" + roiId);
             if (instructionDone) {
                 updateRoi();
             }
@@ -359,11 +372,21 @@ public class CameraPanel extends javax.swing.JPanel implements AbstractClient.Cl
         setExposureTime();
         //sets the roi of this running order for the camera
         int size = ro.allowBigRoi ? 512 : 256;
-        if (client.roi[4] != size) {
-            if (size == 512) roiBox.setSelectedIndex(0);
-            else if (size == 256) roiBox.setSelectedIndex(1);
-            else throw new EasyGui.EasyGuiException("Camera: No ROI found");
-            setRoi();
+        if (client.roi[4] != size || client.roi[5] != size) {
+            int idx = -1;
+            ComboBoxModel<String> model = roiBox.getModel();
+            for (int i = 0; i < model.getSize(); i++) {
+                String roiName = model.getElementAt(i);
+                if (roiName.equals("Roi" + size + "x" + size)) {
+                    idx =i;
+                    break;
+                }
+            }
+            if (idx < 0 ) throw new EasyGui.EasyGuiException("Camera: No ROI found for: " + "Roi" + size + "x" + size);
+            else {
+                roiBox.setSelectedIndex(idx);
+                setRoi();
+            }
         }
     }
 
@@ -402,6 +425,7 @@ public class CameraPanel extends javax.swing.JPanel implements AbstractClient.Cl
     @Override
     public void registerClient() {
         updateRoi();
+        updateRoiNames();
         updateExposure();
         updateGroups();
         enableControllers();

@@ -74,7 +74,7 @@ public class ImageDiskWriter {
 
 
     /** start (or restart to a new file) streaming data to disk */
-    public void startRecording(String prefix, LiveStack.Header header) throws java.io.IOException {
+    public void startRecording(String suffix, LiveStack.Header header) throws java.io.IOException {
 
 	// stop current recording process (if any)
 	if (fileRunner != null)
@@ -82,9 +82,9 @@ public class ImageDiskWriter {
 
 	// generate filename
 	String nowAsISO = header.timestamp;
-	File outfile = new File( saveFolder , prefix+"_"+nowAsISO+".livestack");
+	File outfile = new File( saveFolder, nowAsISO+"_"+suffix+".livestack");
 
-	fileRunner = new ImageSaveThread( outfile, prefix+"_"+nowAsISO, header );
+	fileRunner = new ImageSaveThread( outfile, nowAsISO+"_"+suffix, header );
 	fileRunner.start();
     }
 

@@ -2,8 +2,11 @@
     <camera-settings>
         <Channel type="int">488 568 647</Channel>
         <MirroredX type="string">true false true</MirroredX> 
-        <BigRoi type="int">761 765 520 520 512</BigRoi> <!-- top left X, top left Y, width, height, squared croped size -->
-        <SmallRoi type="int">901 897 256 260 256</SmallRoi> <!-- top left X, top left Y, width, height, squared croped size -->
+        <rois>
+            <Roi512x512 type="int">761 765 520 520 512 512</Roi512x512> <!-- top left X, top left Y, width, height, squared croped size -->
+            <Roi256x256 type="int">901 897 256 260 256 256</Roi256x256> <!-- top left X, top left Y, width, height, squared croped size -->
+            <Roi2048x512 type="int">0 765 2048 520 2048 512</Roi2048x512>
+        </rois>
         <SendIps type="string">localhost</SendIps>
     </camera-settings>
 </fairsim>

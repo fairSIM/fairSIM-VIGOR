@@ -5,7 +5,7 @@
 <TCPPort type="int">32322</TCPPort>
 
 <RawPxlCount type="int">512</RawPxlCount>
-<RawPxlSize type="decimal">0.211</RawPxlSize>
+<RawPxlSize type="decimal">0.071</RawPxlSize>
 <RawPxlSizeZ type="decimal">0.211</RawPxlSizeZ>
 
 <Microscope type="string">cSIM</Microscope>
@@ -64,9 +64,9 @@
 </dir-0>
 </sim-param>
 <otf2d>
-<NA type="decimal"> 0.40000e+00 </NA>
-<a-estimate type="decimal"> 5.00000e-01 </a-estimate>
-<emission type="int"> 580 </emission>
+<NA type="decimal"> 1.35000e+00 </NA>
+<a-estimate type="decimal"> 3.00000e-01 </a-estimate>
+<emission type="int"> 600 </emission>
 </otf2d>
 
 </channel-532>

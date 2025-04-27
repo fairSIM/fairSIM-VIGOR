@@ -311,6 +311,7 @@ public class ParameterTab {
 		    try {
 			Conf cfg = Conf.loadFile( i.getPath());
 			SimParam sp = SimParam.loadConfig( cfg.r());
+                        sp.otf(ourChannel.param.otf());  // work around for missing OTF after loading SimParam from File
 			availableParameters.addElement( sp );
 		    } catch ( Exception e ) {
 			Tool.error("Loading "+i.getName()+"failed: "+e, false);
