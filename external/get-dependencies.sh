@@ -24,7 +24,7 @@ failcmd sha256sum
 # Get the ImageJ base library (in version 1.49v, which is the lowest we support in the VIGOR-branch)
 if [ ! -e ij149v.jar ] ; then
     fileMissing=1
-    wget https://imagej.nih.gov/ij/download/jars/ij149v.jar
+    wget -c https://wsr.imagej.net/download/jars/ij149v.jar
     else
     echo "found ImageJ"
 fi
@@ -34,7 +34,7 @@ if [ ! -e jtransforms_fairSIM_fork.jar ] ; then
     fileMissing=1
     wget https://github.com/fairSIM/JTransforms/releases/download/v1.0.0/jtransforms_fairSIM_fork.jar
     else
-    echo "found JTransforms"
+    echo "found JTransforms (fairSIM fork)"
 fi
 
 # Get the original version of JTransforms
@@ -42,7 +42,7 @@ if [ ! -e JTransforms-3.1.jar ] ; then
     fileMissing=1
     wget https://repo1.maven.org/maven2/com/github/wendykierp/JTransforms/3.1/JTransforms-3.1.jar
     else
-    echo "found JTransforms"
+    echo "found JTransforms (upstream)"
 fi
 
 # Get JTransforms JLargeArray dependency
@@ -124,7 +124,8 @@ if [ ! -e MMCoreJ.jar -o ! -e MMJ_.jar ] ; then
 
 
     # downloading the micromanager install dmg (easier to handle than the exe)
-    wget --no-check-certificate -c "http://valelab4.ucsf.edu/~MM/builds/1.4/Mac/Micro-Manager1.4.22.dmg"
+    #wget --no-check-certificate -c "http://valelab4.ucsf.edu/~MM/builds/1.4/Mac/Micro-Manager1.4.22.dmg"
+    wget -c "https://download.micro-manager.org/release/1.4/Mac/Micro-Manager1.4.22.dmg"
 
     if [ "763bfa641ca2afb3f94d692174d4b8607a0ec9d322bb8b40ea621077981d6a5e" != $(sha256sum ./Micro-Manager1.4.22.dmg | awk '{print $1}') ] ; then
 	echo "ERROR: checksum MicroManager"
